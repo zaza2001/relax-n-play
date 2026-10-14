@@ -484,23 +484,46 @@ signInAnonymously(auth)
       if (!guess) return showToast("ჩაწერეთ სიტყვა!");
 
       const activeCard = gameState.cards[gameState.activeCardId];
-      const isCorrect = (guess === activeCard.word.toLowerCase());
+      const targetWord = activeCard.word.toLowerCase();
+      
+      const isCorrect = (guess === targetWord);
 
       const updatedCards = [...gameState.cards];
       let newP1Score = gameState.p1Score;
       let newP2Score = gameState.p2Score;
 
       if (isCorrect) {
+        // სრულიად სწორი სიტყვა
         updatedCards[gameState.activeCardId].isGuessed = true;
         updatedCards[gameState.activeCardId].guessedBy = playerRole;
         if (playerRole === 'player1') newP1Score += 10;
         else newP2Score += 10;
         showToast("სწორია! +10 ქულა 🎉");
       } else {
-        showToast("არასწორია! სვლა გადადის ❌");
+        // თუ მთლიანი სიტყვა არ არის სწორი, ვამოწმებთ რომელი ასოები დაემთხვა
+        // (ვქმნით ან ვანახლებთ გამოცნობილი ასოების ნიღაბს/მასკას ბარათში)
+        let currentMask = activeCard.guessedMask || "_".repeat(targetWord.length);
+        let newMaskArray = currentMask.split("");
+        
+        let matchedAny = false;
+        for (let i = 0; i < targetWord.length; i++) {
+          // თუ შეტანილი სიტყვის რომელიმე ასო ემთხვევა მიზნობრივი სიტყვის ასოს
+          if (i < guess.length && guess[i] === targetWord[i]) {
+            newMaskArray[i] = targetWord[i]; // ვტოვებთ/ვხსნით ამ ასოს
+            matchedAny = true;
+          }
+        }
+        
+        updatedCards[gameState.activeCardId].guessedMask = newMaskArray.join("");
+        
+        if (matchedAny) {
+          showToast("ნაწილობრივ სწორია! სვლა გადადის 🔄");
+        } else {
+          showToast("არასწორია! სვლა გადადის ❌");
+        }
       }
 
-      // Next Turn
+      // Next Turn (სვლის გადართვა მეორე მოთამაშეზე)
       const nextTurn = (playerRole === 'player1') ? 'player2' : 'player1';
 
       try {
@@ -509,13 +532,16 @@ signInAnonymously(auth)
           p1Score: newP1Score,
           p2Score: newP2Score,
           currentTurn: nextTurn,
-          activeCardId: null
+          activeCardId: null // სვლის დასრულებისას აქტიური ბარათი იხურება
         });
+      } else {
+        // თუ გინდათ, რომ აქტიური ბარათი არ დაიხუროს არასწორი ცდისას, 
+        // activeCardId: null-ის მაგივრად შეგიძლია იგივე დატოვო, მაგრამ რადგან სვლა გადადის, 
+        // ჯობია ახალმა მოთამაშემ აირჩიოს, ან შენი ლოგიკის მიხედვით მიუსადაგო.
       } catch (err) {
         console.error("Error submitting guess:", err);
       }
     };
-
     // Copy room code to clipboard
     window.copyRoomCode = function() {
       if (!roomCode) return;
