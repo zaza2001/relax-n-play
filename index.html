@@ -174,16 +174,15 @@
     import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // Standard fallback or embedded Firebase Config
-    const firebaseConfig = typeof __firebase_config !== 'undefined' 
-      ? JSON.parse(__firebase_config) 
-      : {
-          apiKey: "AIzaSyDemoConfigKeyForGeorgianWordGame123",
-          authDomain: "demo-georgian-words.firebaseapp.com",
-          projectId: "demo-georgian-words",
-          storageBucket: "demo-georgian-words.appspot.com",
-          messagingSenderId: "123456789012",
-          appId: "1:123456789012:web:demo123456789012"
-        };
+  const firebaseConfig = {
+  apiKey: "AIzaSyCcRzuTsNoomOkF4MC7sFRqwO8CAC2zfsw",
+  authDomain: "word-game-b362f.firebaseapp.com",
+  projectId: "word-game-b362f",
+  storageBucket: "word-game-b362f.firebasestorage.app",
+  messagingSenderId: "211112101325",
+  appId: "1:211112101325:web:c001476b9ac5b3f529b084",
+  measurementId: "G-XPCCCCDKS3"
+};
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'georgian-words-app';
 
