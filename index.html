@@ -473,6 +473,7 @@ signInAnonymously(auth)
     };
 
     // Submit word guess
+   // Submit word guess
     window.submitGuess = async function() {
       if (!gameState || gameState.currentTurn !== playerRole) return;
       if (gameState.activeCardId === null) return;
@@ -501,13 +502,11 @@ signInAnonymously(auth)
         showToast("სწორია! +10 ქულა 🎉");
       } else {
         // თუ მთლიანი სიტყვა არ არის სწორი, ვამოწმებთ რომელი ასოები დაემთხვა
-        // (ვქმნით ან ვანახლებთ გამოცნობილი ასოების ნიღაბს/მასკას ბარათში)
         let currentMask = activeCard.guessedMask || "_".repeat(targetWord.length);
         let newMaskArray = currentMask.split("");
         
         let matchedAny = false;
         for (let i = 0; i < targetWord.length; i++) {
-          // თუ შეტანილი სიტყვის რომელიმე ასო ემთხვევა მიზნობრივი სიტყვის ასოს
           if (i < guess.length && guess[i] === targetWord[i]) {
             newMaskArray[i] = targetWord[i]; // ვტოვებთ/ვხსნით ამ ასოს
             matchedAny = true;
@@ -534,15 +533,10 @@ signInAnonymously(auth)
           currentTurn: nextTurn,
           activeCardId: null // სვლის დასრულებისას აქტიური ბარათი იხურება
         });
-      } else {
-        // თუ გინდათ, რომ აქტიური ბარათი არ დაიხუროს არასწორი ცდისას, 
-        // activeCardId: null-ის მაგივრად შეგიძლია იგივე დატოვო, მაგრამ რადგან სვლა გადადის, 
-        // ჯობია ახალმა მოთამაშემ აირჩიოს, ან შენი ლოგიკის მიხედვით მიუსადაგო.
       } catch (err) {
         console.error("Error submitting guess:", err);
       }
-    };
-    // Copy room code to clipboard
+    };    // Copy room code to clipboard
     window.copyRoomCode = function() {
       if (!roomCode) return;
       navigator.clipboard.writeText(roomCode);
