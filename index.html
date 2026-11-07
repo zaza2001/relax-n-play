@@ -51,12 +51,17 @@
 
     <!-- Lobby / Room Joining Screen -->
     <div id="lobby-screen" class="w-full max-w-md glass-panel p-6 md:p-8 rounded-3xl shadow-2xl text-center">
-      <div class="mb-8">
+      <div class="mb-6">
         <div class="w-16 h-16 bg-indigo-600/30 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl border border-indigo-500/30">
           <i class="fa-solid fa-gamepad"></i>
         </div>
         <h2 class="text-2xl font-bold mb-1">ონლაინ რეჟიმი</h2>
-        <p class="text-sm text-slate-400">შეიყვანეთ კოდი ან შექმენით ახალი ოთახი</p>
+        <p class="text-sm text-slate-400">შეიყვანეთ თქვენი სახელი და შექმენით ან შეუერთდით ოთახს</p>
+      </div>
+
+      <!-- Player Name Input (Required First) -->
+      <div class="mb-6">
+        <input type="text" id="player-name-input" maxlength="15" placeholder="თქვენი სახელი (მაგ: ზაზა)" class="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-2xl text-center text-lg font-semibold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
       </div>
 
       <!-- Actions -->
@@ -105,7 +110,7 @@
     <div id="game-screen" class="hidden w-full flex flex-col space-y-4">
       
       <!-- Status & Score Bar -->
-      <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <!-- Player 1 Score -->
         <div id="p1-card" class="glass-panel p-3 md:p-4 rounded-2xl flex items-center justify-between border-l-4 border-indigo-500">
           <div>
@@ -124,13 +129,13 @@
           <i class="fa-solid fa-user-group text-pink-400/40 text-2xl"></i>
         </div>
 
-        <!-- Turn Indicator Header -->
-        <div class="col-span-2 md:col-span-1 glass-panel p-3 md:p-4 rounded-2xl flex items-center justify-between border-l-4 border-amber-500">
-          <div>
-            <div class="text-xs text-slate-400 font-semibold">სვლის სტატუსი</div>
-            <div id="turn-banner" class="text-sm md:text-base font-bold text-amber-400">იტვირთება...</div>
+        <!-- Round & Turn Status Info -->
+        <div class="glass-panel p-3 md:p-4 rounded-2xl flex flex-col justify-center border-l-4 border-amber-500 text-center sm:text-left">
+          <div class="flex justify-between items-center">
+            <span class="text-xs text-slate-400 font-semibold" id="round-indicator">რაუნდი 1 / 3</span>
+            <span id="timer-badge" class="text-xs font-mono font-bold px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-lg border border-amber-500/30">⏱ 15წმ</span>
           </div>
-          <i class="fa-solid fa-hourglass-half text-amber-400/40 text-2xl"></i>
+          <div id="turn-banner" class="text-sm md:text-base font-bold text-amber-400 mt-1">იტვირთება...</div>
         </div>
       </div>
 
@@ -170,72 +175,79 @@
   <!-- Firebase Integration Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    // Standard fallback or embedded Firebase Config
-  const firebaseConfig = {
-  apiKey: "AIzaSyCcRzuTSNoomOKf4MC7sFRqwO8CAc2zfsw",
-  authDomain: "word-game-b362f.firebaseapp.com",
-  projectId: "word-game-b362f",
-  storageBucket: "word-game-b362f.firebasestorage.app",
-  messagingSenderId: "211112101325",
-  appId: "1:211112101325:web:c001476b9ac5b3f529b084",
-  measurementId: "G-XPCCCCDKS3"
-};
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    
+    const firebaseConfig = {
+      apiKey: "AIzaSyCcRzuTSNoomOKf4MC7sFRqwO8CAc2zfsw",
+      authDomain: "word-game-b362f.firebaseapp.com",
+      projectId: "word-game-b362f",
+      storageBucket: "word-game-b362f.firebasestorage.app",
+      messagingSenderId: "211112101325",
+      appId: "1:211112101325:web:c001476b9ac5b3f529b084",
+      measurementId: "G-XPCCCCDKS3"
+    };
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'georgian-words-app';
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-const auth = getAuth(app);
+    const auth = getAuth(app);
 
-signInAnonymously(auth)
-  .then(() => {
-    console.log("წარმატებით შევიდა ანონიმურად!");
-  })
-  .catch((error) => {
-    console.error("ავტორიზაციის შეცდომა:", error.code, error.message);
-  });
-    // Words collection in Georgian
-    const WORDS_LIST = [
-      { word: "დათვი", category: "ცხოველი" },
-      { word: "მგელი", category: "ცხოველი" },
-      { word: "ვეფხვი", category: "ცხოველი" },
-      { word: "მზე", category: "ბუნება" },
-      { word: "გველი", category: "ქვეწარმავალი" },
-      { word: "ცხვარი", category: "ცხოველი" },
-      { word: "ბეღურა", category: "მფრინველი" },
-      { word: "ხაჭაპური", category: "საჭმელი" },
-      { word: "ნაძვისხე", category: "ბუნება" },
-      { word: "გული", category: "ორგანო" },
-      { word: "ღვიძლი", category: "ორგანო" },
-      { word: "თირკმელი", category: "ორგანო" },
-      { word: "ქარბორბალა", category: "კატაკლიზმა" },
-      { word: "მიწისძვრა", category: "კატაკლიზმა" },
-      { word: "ლოკოკინა", category: "ქვეწარმავალი" },
-      { word: "მთვარე", category: "ბუნება" },
-      { word: "კომპიუტერი", category: "ტექნიკა" },
-      { word: "ტელეფონი", category: "ტექნიკა" },
-      { word: "წიგნი", category: "განათლება" },
-      { word: "მანქანა", category: "ტრანსპორტი" },
-      { word: "თვითმფრინავი", category: "ტრანსპორტი" },
-      { word: "ვაშლი", category: "ხილი" },
-      { word: "საზამთრო", category: "ხილი" },
-      { word: "ავტობუსი", category: "ტრანსპორტი" },
-      { word: "შაურმა", category: "ფასთ-ფუდი" },
-      { word: "ქუთაისი", category: "ქალაქი" },
-      { word: "მყინვარწვერი", category: "ბუნება" }
-    ];
+    signInAnonymously(auth).catch((error) => {
+      console.error("ავტორიზაციის შეცდომა:", error);
+    });
+
+    // 3 რაუნდის სიტყვები სირთულის მიხედვით
+    const ROUND_WORDS = {
+      1: [ // მარტივი სიტყვები
+        { word: "მზე", category: "ბუნება" },
+        { word: "ვაშლი", category: "ხილი" },
+        { word: "დათვი", category: "ცხოველი" },
+        { word: "მგელი", category: "ცხოველი" },
+        { word: "წიგნი", category: "განათლება" },
+        { word: "მანქანა", category: "ტრანსპორტი" },
+        { word: "გული", category: "ორგანო" },
+        { word: "კატა", category: "ცხოველი" },
+        { word: "ძაღლი", category: "ცხოველი" },
+        { word: "პური", category: "საჭმელი" }
+      ],
+      2: [ // საშუალო სირთულის
+        { word: "ხაჭაპური", category: "საჭმელი" },
+        { word: "ხინკალი", category: "საჭმელი" },
+        { word: "კომპიუტერი", category: "ტექნიკა" },
+        { word: "თვითმფრინავი", category: "ტრანსპორტი" },
+        { word: "ვარსკვლავი", category: "კოსმოსი" },
+        { word: "ქუთაისი", category: "ქალაქი" },
+        { word: "თბილისი", category: "ქალაქი" },
+        { word: "ფეხბურთი", category: "სპორტი" },
+        { word: "ტელეფონი", category: "ტექნიკა" },
+        { word: "საზამთრო", category: "ხილი" }
+      ],
+      3: [ // ყველაზე რთული სიტყვები (მოკლე დრო: 10წმ)
+        { word: "მყინვარწვერი", category: "ბუნება" },
+        { word: "ქარბორბალა", category: "კატაკლიზმა" },
+        { word: "მიწისძვრა", category: "კატაკლიზმა" },
+        { word: "პროგრამისტი", category: "პროფესია" },
+        { word: "ალგორითმი", category: "ტექნოლოგია" },
+        { word: "ინტერნეტი", category: "ტექნოლოგია" },
+        { word: "უნივერსიტეტი", category: "განათლება" },
+        { word: "კალათბურთი", category: "სპორტი" },
+        { word: "გალაქტიკა", category: "კოსმოსი" },
+        { word: "თირკმელი", category: "ორგანო" }
+      ]
+    };
 
     // Local State
     let currentUser = null;
     let roomCode = null;
     let playerRole = null; // 'player1' or 'player2'
+    let playerName = "";
     let roomUnsubscribe = null;
     let gameState = null;
+    let clientTimerInterval = null;
 
-    // Toast Notification helper
     window.showToast = function(msg) {
       const toast = document.getElementById('toast');
       document.getElementById('toast-message').innerText = msg;
@@ -247,27 +259,22 @@ signInAnonymously(auth)
       document.getElementById('toast').classList.add('hidden');
     };
 
-    // Authenticate user anonymously first
     async function initAuth() {
+      if (currentUser) return currentUser;
       try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          const res = await signInWithCustomToken(auth, __initial_auth_token);
-          currentUser = res.user;
-        } else {
-          const res = await signInAnonymously(auth);
-          currentUser = res.user;
-        }
+        const res = await signInAnonymously(auth);
+        currentUser = res.user;
+        return currentUser;
       } catch (err) {
         console.error("Auth error:", err);
+        return null;
       }
     }
 
-    // Generate random 4-digit numeric code
     function generateCode() {
       return Math.floor(1000 + Math.random() * 9000).toString();
     }
 
-    // Mask word (e.g. "დათვი" -> "დ***ი")
     function maskWord(word) {
       if (!word) return "";
       if (word.length <= 2) return word;
@@ -277,43 +284,54 @@ signInAnonymously(auth)
       return `${first}${middle}${last}`;
     }
 
-    // Get Firestore room reference
     function getRoomRef(code) {
       return doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code);
     }
 
-    // Create a new Room
+    // შექმნა ოთახის (Player 1)
     window.createRoom = async function() {
-      if (!currentUser) await initAuth();
+      const nameInput = document.getElementById('player-name-input').value.trim();
+      if (!nameInput) return showToast("გთხოვთ შეიყვანოთ თქვენი სახელი!");
+      playerName = nameInput;
+
+      await initAuth();
       if (!currentUser) return showToast("ავტორიზაციის შეცდომა");
 
       roomCode = generateCode();
       playerRole = 'player1';
 
-      // Pick 8 random words
-      const shuffled = [...WORDS_LIST].sort(() => 0.5 - Math.random());
+      const roundNum = 1;
+      const wordsPool = ROUND_WORDS[roundNum];
+      const shuffled = [...wordsPool].sort(() => 0.5 - Math.random());
       const selectedWords = shuffled.slice(0, 8);
 
-      const cards = selectedWords.map((item, index) => ({
-        id: index,
-        word: item.word,
-        category: item.category,
-        masked: maskWord(item.word),
-        isRevealed: false,
-        isGuessed: false,
-        guessedBy: null
-      }));
+      const cards = selectedWords.map((item, index) => {
+        const initialMask = maskWord(item.word);
+        return {
+          id: index,
+          word: item.word,
+          category: item.category,
+          masked: initialMask,
+          guessedMask: initialMask,
+          isGuessed: false,
+          guessedBy: null
+        };
+      });
 
       const initialRoomData = {
         code: roomCode,
-        player1: currentUser.uid,
-        player2: null,
+        player1Id: currentUser.uid,
+        player1Name: playerName,
+        player2Id: null,
+        player2Name: null,
         currentTurn: 'player1',
         activeCardId: null,
         p1Score: 0,
         p2Score: 0,
+        round: 1,
+        turnDeadline: null, // ტაიმერისთვის
         cards: cards,
-        status: 'waiting', // waiting, playing, finished
+        status: 'waiting',
         createdAt: new Date().toISOString()
       };
 
@@ -328,13 +346,19 @@ signInAnonymously(auth)
       }
     };
 
-    // Join Existing Room
+    // შესვლა ოთახში (Player 2)
     window.joinRoom = async function() {
-      if (!currentUser) await initAuth();
+      const nameInput = document.getElementById('player-name-input').value.trim();
+      if (!nameInput) return showToast("გთხოვთ შეიყვანოთ თქვენი სახელი!");
+      playerName = nameInput;
+
       const codeInput = document.getElementById('room-code-input').value.trim();
       if (codeInput.length !== 4) {
         return showToast("შეიყვანეთ ვალიდური 4-ნიშნა კოდი");
       }
+
+      await initAuth();
+      if (!currentUser) return showToast("ავტორიზაციის შეცდომა");
 
       roomCode = codeInput;
       const ref = getRoomRef(roomCode);
@@ -346,17 +370,23 @@ signInAnonymously(auth)
         }
 
         const data = snap.data();
-        if (data.player2 && data.player2 !== currentUser.uid) {
+        if (data.player2Id && data.player2Id !== currentUser.uid) {
           return showToast("ოთახი უკვე სავსეა");
         }
 
-        playerRole = (data.player1 === currentUser.uid) ? 'player1' : 'player2';
+        playerRole = (data.player1Id === currentUser.uid) ? 'player1' : 'player2';
 
+        const updateData = {};
         if (playerRole === 'player2') {
-          await updateDoc(ref, {
-            player2: currentUser.uid,
-            status: 'playing'
-          });
+          updateData.player2Id = currentUser.uid;
+          updateData.player2Name = playerName;
+          updateData.status = 'playing';
+          // თამაშის დაწყებისას ვუნიშნავთ ტაიმერის დროის ლიმიტს (15 წამი 1 რაუნდისთვის)
+          updateData.turnDeadline = Date.now() + 15000;
+        }
+
+        if (Object.keys(updateData).length > 0) {
+          await updateDoc(ref, updateData);
         }
 
         listenToRoom(roomCode);
@@ -366,20 +396,23 @@ signInAnonymously(auth)
       }
     };
 
-    // Listen for Realtime Changes from Firestore
     function listenToRoom(code) {
       if (roomUnsubscribe) roomUnsubscribe();
 
       roomUnsubscribe = onSnapshot(getRoomRef(code), (snapshot) => {
         if (!snapshot.exists()) return;
         gameState = snapshot.data();
+        
+        // სახელი განახლდება როლიდან გამომდინარე
+        if (playerRole === 'player1') playerName = gameState.player1Name;
+        else if (gameState.player2Name) playerName = gameState.player2Name;
+
         updateUI(gameState);
       }, (err) => {
         console.error("Snapshot error:", err);
       });
     }
 
-    // Render UI state based on database updates
     function updateUI(state) {
       if (state.status === 'waiting') {
         switchScreen('waiting-screen');
@@ -388,42 +421,46 @@ signInAnonymously(auth)
 
       switchScreen('game-screen');
 
-      // Score Update
+      // სქორები და სახეები
       document.getElementById('p1-score').innerText = `${state.p1Score} ქულა`;
       document.getElementById('p2-score').innerText = `${state.p2Score} ქულა`;
 
-      // Highlight Player Cards
-      const p1Card = document.getElementById('p1-card');
-      const p2Card = document.getElementById('p2-card');
+      document.getElementById('p1-label').innerText = state.player1Name || "მოთამაშე 1";
+      document.getElementById('p2-label').innerText = state.player2Name || "მოთამაშე 2 (მოლოდინში...)";
 
-      if (playerRole === 'player1') {
-        document.getElementById('p1-label').innerText = "შენ (მოთამაშე 1)";
-        document.getElementById('p2-label').innerText = "მოწინააღმდეგე";
-      } else {
-        document.getElementById('p1-label').innerText = "მოწინააღმდეგე";
-        document.getElementById('p2-label').innerText = "შენ (მოთამაშე 2)";
-      }
+      document.getElementById('round-indicator').innerText = `რაუნდი ${state.round} / 3`;
 
-      // Turn logic
       const isMyTurn = (state.currentTurn === playerRole);
       const turnBanner = document.getElementById('turn-banner');
+
+      if (state.status === 'finished') {
+        turnBanner.innerText = "🏆 თამაში დასრულებულია!";
+        turnBanner.className = "text-sm md:text-base font-bold text-purple-400";
+        document.getElementById('guess-controls').classList.add('hidden');
+        clearInterval(clientTimerInterval);
+        return;
+      }
 
       if (isMyTurn) {
         turnBanner.innerText = "შენი სვლაა!";
         turnBanner.className = "text-sm md:text-base font-bold text-emerald-400 animate-pulse";
       } else {
-        turnBanner.innerText = "მოწინააღმდეგის სვლაა...";
+        const activeName = state.currentTurn === 'player1' ? state.player1Name : state.player2Name;
+        turnBanner.innerText = `${activeName}-ის სვლაა...`;
         turnBanner.className = "text-sm md:text-base font-bold text-slate-400";
       }
 
-      // Render Active Card details
+      // კლიენტის მხარეს ტაიმერის ამოქმედება/განახლება
+      manageClientTimer(state);
+
+      // ბარათის არჩევა & მასკა
       const maskedDisplay = document.getElementById('masked-word-display');
       const categoryDisplay = document.getElementById('word-category-display');
       const guessControls = document.getElementById('guess-controls');
 
       if (state.activeCardId !== null && state.cards[state.activeCardId]) {
         const activeCard = state.cards[state.activeCardId];
-        maskedDisplay.innerText = activeCard.masked;
+        maskedDisplay.innerText = activeCard.guessedMask || activeCard.masked;
         categoryDisplay.innerText = `კატეგორია: ${activeCard.category}`;
 
         if (isMyTurn && !activeCard.isGuessed) {
@@ -437,13 +474,13 @@ signInAnonymously(auth)
         guessControls.classList.add('hidden');
       }
 
-      // Render Cards Grid
+      // ბარათების ბადე (Grid)
       const grid = document.getElementById('cards-grid');
       grid.innerHTML = '';
 
       state.cards.forEach((card) => {
         const btn = document.createElement('button');
-        btn.disabled = !isMyTurn || card.isGuessed;
+        btn.disabled = !isMyTurn || card.isGuessed || state.status === 'finished';
 
         let bgColor = "bg-slate-800/90 border-slate-700 hover:border-indigo-500";
         let statusIcon = '<i class="fa-solid fa-lock text-slate-500"></i>';
@@ -463,9 +500,11 @@ signInAnonymously(auth)
         btn.className = `card-tile p-4 rounded-2xl border flex flex-col items-center justify-center space-y-2 text-center min-h-[100px] ${bgColor} ${(!isMyTurn || card.isGuessed) ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`;
         btn.onclick = () => selectCard(card.id);
 
+        const currentDisplayMask = card.isGuessed ? card.word : (card.guessedMask || card.masked);
+
         btn.innerHTML = `
           <div class="text-xs uppercase tracking-wider text-slate-400 font-medium">${card.category}</div>
-          <div class="text-xl font-mono font-bold">${card.isGuessed ? card.word : card.masked}</div>
+          <div class="text-xl font-mono font-bold">${currentDisplayMask}</div>
           <div>${statusIcon}</div>
         `;
 
@@ -473,7 +512,51 @@ signInAnonymously(auth)
       });
     }
 
-    // Select a card from grid
+    // ტაიმერის ლოგიკა კლიენტისთვის
+    function manageClientTimer(state) {
+      clearInterval(clientTimerInterval);
+      const timerBadge = document.getElementById('timer-badge');
+
+      if (!state.turnDeadline || state.status === 'finished') {
+        timerBadge.innerText = "⏱ --";
+        return;
+      }
+
+      const updateTimerDisplay = async () => {
+        const remaining = Math.max(0, Math.floor((state.turnDeadline - Date.now()) / 1000));
+        timerBadge.innerText = `⏱ ${remaining}წმ`;
+
+        if (remaining <= 0) {
+          clearInterval(clientTimerInterval);
+          // თუ დრო ამოიწურა და ჩვენ ვართ სვლაზე, ავტომატურად გადავრთავთ სვლას ჯარიმით
+          if (state.currentTurn === playerRole && playerRole === 'player1') {
+            await handleTimeOut(state);
+          }
+        }
+      };
+
+      updateTimerDisplay();
+      clientTimerInterval = setInterval(updateTimerDisplay, 1000);
+    }
+
+    // როდესაც დრო იწურება (15წმ / 10წმ)
+    async function handleTimeOut(state) {
+      if (state.status === 'finished') return;
+      const nextTurn = (playerRole === 'player1') ? 'player2' : 'player1';
+      const roundTimeLimit = state.round === 3 ? 10000 : 15000;
+
+      try {
+        await updateDoc(getRoomRef(roomCode), {
+          currentTurn: nextTurn,
+          activeCardId: null,
+          turnDeadline: Date.now() + roundTimeLimit
+        });
+        showToast("⏰ დრო ამოიწურა! სვლა გადავიდა.");
+      } catch (err) {
+        console.error("Timeout handle error:", err);
+      }
+    }
+
     window.selectCard = async function(cardId) {
       if (!gameState || gameState.currentTurn !== playerRole) return;
       if (gameState.cards[cardId].isGuessed) return;
@@ -487,8 +570,7 @@ signInAnonymously(auth)
       }
     };
 
-    // Submit word guess
-   // Submit word guess
+    // სიტყვის გამოცნობა
     window.submitGuess = async function() {
       if (!gameState || gameState.currentTurn !== playerRole) return;
       if (gameState.activeCardId === null) return;
@@ -501,7 +583,6 @@ signInAnonymously(auth)
 
       const activeCard = gameState.cards[gameState.activeCardId];
       const targetWord = activeCard.word.toLowerCase();
-      
       const isCorrect = (guess === targetWord);
 
       const updatedCards = [...gameState.cards];
@@ -509,21 +590,20 @@ signInAnonymously(auth)
       let newP2Score = gameState.p2Score;
 
       if (isCorrect) {
-        // სრულიად სწორი სიტყვა
         updatedCards[gameState.activeCardId].isGuessed = true;
         updatedCards[gameState.activeCardId].guessedBy = playerRole;
+        updatedCards[gameState.activeCardId].guessedMask = activeCard.word;
         if (playerRole === 'player1') newP1Score += 10;
         else newP2Score += 10;
         showToast("სწორია! +10 ქულა 🎉");
       } else {
-        // თუ მთლიანი სიტყვა არ არის სწორი, ვამოწმებთ რომელი ასოები დაემთხვა
-        let currentMask = activeCard.guessedMask || "_".repeat(targetWord.length);
+        let currentMask = activeCard.guessedMask || activeCard.masked;
         let newMaskArray = currentMask.split("");
-        
         let matchedAny = false;
+        
         for (let i = 0; i < targetWord.length; i++) {
           if (i < guess.length && guess[i] === targetWord[i]) {
-            newMaskArray[i] = targetWord[i]; // ვტოვებთ/ვხსნით ამ ასოს
+            newMaskArray[i] = targetWord[i];
             matchedAny = true;
           }
         }
@@ -537,42 +617,82 @@ signInAnonymously(auth)
         }
       }
 
-      // Next Turn (სვლის გადართვა მეორე მოთამაშეზე)
+      // ვამოწმებთ დამთავრდა თუ არა ყველა ბარათი ამ რაუნდში
+      const allGuessed = updatedCards.every(c => c.isGuessed);
+      let nextRound = gameState.round;
+      let newStatus = gameState.status;
+      let nextCards = updatedCards;
+
+      if (allGuessed) {
+        if (gameState.round < 3) {
+          // გადავდივართ შემდეგ რაუნდში უფრო რთული სიტყვებით
+          nextRound = gameState.round + 1;
+          showToast(`🏆 რაუნდი ${gameState.round} დასრულდა! იწყება რაუნდი ${nextRound}`);
+          
+          const pool = ROUND_WORDS[nextRound];
+          const shuffled = [...pool].sort(() => 0.5 - Math.random());
+          nextCards = shuffled.slice(0, 8).map((item, index) => {
+            const m = maskWord(item.word);
+            return {
+              id: index,
+              word: item.word,
+              category: item.category,
+              masked: m,
+              guessedMask: m,
+              isGuessed: false,
+              guessedBy: null
+            };
+          });
+        } else {
+          // მესამე რაუნდიც დასრულდა -> თამაში მთავრდება
+          newStatus = 'finished';
+          showToast("🏁 თამაში დასრულდა! გამოვლინდა გამარჯვებული!");
+        }
+      }
+
       const nextTurn = (playerRole === 'player1') ? 'player2' : 'player1';
+      const timeLimit = (nextRound === 3) ? 10000 : 15000; // მესამე რაუნდში 10 წამი
 
       try {
         await updateDoc(getRoomRef(roomCode), {
-          cards: updatedCards,
+          cards: nextCards,
           p1Score: newP1Score,
           p2Score: newP2Score,
           currentTurn: nextTurn,
-          activeCardId: null // სვლის დასრულებისას აქტიური ბარათი იხურება
+          activeCardId: null,
+          round: nextRound,
+          status: newStatus,
+          turnDeadline: Date.now() + timeLimit
         });
       } catch (err) {
         console.error("Error submitting guess:", err);
       }
-    };    // Copy room code to clipboard
+    };
+
     window.copyRoomCode = function() {
       if (!roomCode) return;
       navigator.clipboard.writeText(roomCode);
       showToast("კოდი დაკოპირებულია!");
     };
 
-    // Reset game state for room
     window.resetGame = async function() {
       if (!roomCode) return;
-      const shuffled = [...WORDS_LIST].sort(() => 0.5 - Math.random());
+      const roundNum = 1;
+      const shuffled = [...ROUND_WORDS[roundNum]].sort(() => 0.5 - Math.random());
       const selectedWords = shuffled.slice(0, 8);
 
-      const cards = selectedWords.map((item, index) => ({
-        id: index,
-        word: item.word,
-        category: item.category,
-        masked: maskWord(item.word),
-        isRevealed: false,
-        isGuessed: false,
-        guessedBy: null
-      }));
+      const cards = selectedWords.map((item, index) => {
+        const initialMask = maskWord(item.word);
+        return {
+          id: index,
+          word: item.word,
+          category: item.category,
+          masked: initialMask,
+          guessedMask: initialMask,
+          isGuessed: false,
+          guessedBy: null
+        };
+      });
 
       try {
         await updateDoc(getRoomRef(roomCode), {
@@ -580,15 +700,17 @@ signInAnonymously(auth)
           p1Score: 0,
           p2Score: 0,
           currentTurn: 'player1',
-          activeCardId: null
+          activeCardId: null,
+          round: 1,
+          status: 'playing',
+          turnDeadline: Date.now() + 15000
         });
-        showToast("თამაში განახლდა!");
+        showToast("თამაში თავიდან დაიწყო!");
       } catch (err) {
         console.error("Error resetting game:", err);
       }
     };
 
-    // Screen Switching Helper
     function switchScreen(screenId) {
       document.getElementById('lobby-screen').classList.add('hidden');
       document.getElementById('waiting-screen').classList.add('hidden');
