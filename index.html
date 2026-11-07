@@ -59,12 +59,10 @@
         <p class="text-sm text-slate-400">შეიყვანეთ თქვენი სახელი და შექმენით ან შეუერთდით ოთახს</p>
       </div>
 
-      <!-- Player Name Input (Required First) -->
       <div class="mb-6">
         <input type="text" id="player-name-input" maxlength="15" placeholder="თქვენი სახელი (მაგ: ზაზა)" class="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-2xl text-center text-lg font-semibold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
       </div>
 
-      <!-- Actions -->
       <div class="space-y-4">
         <button onclick="createRoom()" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center text-lg active:scale-95">
           <i class="fa-solid fa-plus-circle mr-2"></i>ოთახის შექმნა
@@ -104,6 +102,33 @@
         <div class="w-2 h-2 bg-amber-400 rounded-full animate-ping"></div>
         <span>ველით მეორე მოთამაშეს...</span>
       </div>
+    </div>
+
+    <!-- Jheirani (Rock Paper Scissors) Screen -->
+    <div id="jheirani-screen" class="hidden w-full max-w-md glass-panel p-8 rounded-3xl shadow-2xl text-center space-y-6">
+      <div>
+        <div class="w-16 h-16 bg-purple-600/30 text-purple-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl border border-purple-500/30">
+          <i class="fa-solid fa-hand-fist"></i>
+        </div>
+        <h2 class="text-2xl font-bold mb-1">ჯეირანი (ქვა-მაკრატელი-ქაღალდი)</h2>
+        <p id="jheirani-status" class="text-sm text-slate-400">აირჩიეთ ფიგურა, რომ გაიგოთ ვინ დაიწყებს პირველი!</p>
+      </div>
+
+      <div id="jheirani-choices" class="grid grid-cols-3 gap-3">
+        <button onclick="playJheirani('rock')" class="p-4 bg-slate-800 hover:bg-indigo-900/60 border border-slate-700 rounded-2xl flex flex-col items-center space-y-2 transition-all active:scale-95">
+          <i class="fa-solid fa-hand-back-fist text-3xl text-indigo-400"></i>
+          <span class="text-xs font-semibold">ქვა</span>
+        </button>
+        <button onclick="playJheirani('paper')" class="p-4 bg-slate-800 hover:bg-indigo-900/60 border border-slate-700 rounded-2xl flex flex-col items-center space-y-2 transition-all active:scale-95">
+          <i class="fa-solid fa-hand text-3xl text-indigo-400"></i>
+          <span class="text-xs font-semibold">ქაღალდი</span>
+        </button>
+        <button onclick="playJheirani('scissors')" class="p-4 bg-slate-800 hover:bg-indigo-900/60 border border-slate-700 rounded-2xl flex flex-col items-center space-y-2 transition-all active:scale-95">
+          <i class="fa-solid fa-hand-scissors text-3xl text-indigo-400"></i>
+          <span class="text-xs font-semibold">მაკრატელი</span>
+        </button>
+      </div>
+      <div id="jheirani-result-msg" class="text-sm font-bold text-amber-400 hidden"></div>
     </div>
 
     <!-- Main Game Board Screen -->
@@ -190,7 +215,6 @@
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'georgian-words-app';
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
@@ -199,9 +223,8 @@
       console.error("ავტორიზაციის შეცდომა:", error);
     });
 
-    // 3 რაუნდის სიტყვები სირთულის მიხედვით
     const ROUND_WORDS = {
-      1: [ // მარტივი სიტყვები
+      1: [
         { word: "მზე", category: "ბუნება" },
         { word: "ვაშლი", category: "ხილი" },
         { word: "დათვი", category: "ცხოველი" },
@@ -213,7 +236,7 @@
         { word: "ძაღლი", category: "ცხოველი" },
         { word: "პური", category: "საჭმელი" }
       ],
-      2: [ // საშუალო სირთულის
+      2: [
         { word: "ხაჭაპური", category: "საჭმელი" },
         { word: "ხინკალი", category: "საჭმელი" },
         { word: "კომპიუტერი", category: "ტექნიკა" },
@@ -225,7 +248,7 @@
         { word: "ტელეფონი", category: "ტექნიკა" },
         { word: "საზამთრო", category: "ხილი" }
       ],
-      3: [ // ყველაზე რთული სიტყვები (მოკლე დრო: 10წმ)
+      3: [
         { word: "მყინვარწვერი", category: "ბუნება" },
         { word: "ქარბორბალა", category: "კატაკლიზმა" },
         { word: "მიწისძვრა", category: "კატაკლიზმა" },
@@ -239,10 +262,9 @@
       ]
     };
 
-    // Local State
     let currentUser = null;
     let roomCode = null;
-    let playerRole = null; // 'player1' or 'player2'
+    let playerRole = null; 
     let playerName = "";
     let roomUnsubscribe = null;
     let gameState = null;
@@ -288,7 +310,6 @@
       return doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code);
     }
 
-    // შექმნა ოთახის (Player 1)
     window.createRoom = async function() {
       const nameInput = document.getElementById('player-name-input').value.trim();
       if (!nameInput) return showToast("გთხოვთ შეიყვანოთ თქვენი სახელი!");
@@ -301,8 +322,7 @@
       playerRole = 'player1';
 
       const roundNum = 1;
-      const wordsPool = ROUND_WORDS[roundNum];
-      const shuffled = [...wordsPool].sort(() => 0.5 - Math.random());
+      const shuffled = [...ROUND_WORDS[roundNum]].sort(() => 0.5 - Math.random());
       const selectedWords = shuffled.slice(0, 8);
 
       const cards = selectedWords.map((item, index) => {
@@ -329,9 +349,10 @@
         p1Score: 0,
         p2Score: 0,
         round: 1,
-        turnDeadline: null, // ტაიმერისთვის
+        turnDeadline: null,
         cards: cards,
-        status: 'waiting',
+        status: 'waiting', // waiting, jheirani, playing, finished
+        jheirani: { p1Choice: null, p2Choice: null, winner: null },
         createdAt: new Date().toISOString()
       };
 
@@ -346,7 +367,6 @@
       }
     };
 
-    // შესვლა ოთახში (Player 2)
     window.joinRoom = async function() {
       const nameInput = document.getElementById('player-name-input').value.trim();
       if (!nameInput) return showToast("გთხოვთ შეიყვანოთ თქვენი სახელი!");
@@ -380,9 +400,7 @@
         if (playerRole === 'player2') {
           updateData.player2Id = currentUser.uid;
           updateData.player2Name = playerName;
-          updateData.status = 'playing';
-          // თამაშის დაწყებისას ვუნიშნავთ ტაიმერის დროის ლიმიტს (15 წამი 1 რაუნდისთვის)
-          updateData.turnDeadline = Date.now() + 15000;
+          updateData.status = 'jheirani'; // ორივეს შესვლის მერე ჯეირანი ირთვება
         }
 
         if (Object.keys(updateData).length > 0) {
@@ -403,7 +421,6 @@
         if (!snapshot.exists()) return;
         gameState = snapshot.data();
         
-        // სახელი განახლდება როლიდან გამომდინარე
         if (playerRole === 'player1') playerName = gameState.player1Name;
         else if (gameState.player2Name) playerName = gameState.player2Name;
 
@@ -419,14 +436,19 @@
         return;
       }
 
+      if (state.status === 'jheirani') {
+        switchScreen('jheirani-screen');
+        updateJheiraniUI(state);
+        return;
+      }
+
       switchScreen('game-screen');
 
-      // სქორები და სახეები
       document.getElementById('p1-score').innerText = `${state.p1Score} ქულა`;
       document.getElementById('p2-score').innerText = `${state.p2Score} ქულა`;
 
       document.getElementById('p1-label').innerText = state.player1Name || "მოთამაშე 1";
-      document.getElementById('p2-label').innerText = state.player2Name || "მოთამაშე 2 (მოლოდინში...)";
+      document.getElementById('p2-label').innerText = state.player2Name || "მოთამაშე 2";
 
       document.getElementById('round-indicator').innerText = `რაუნდი ${state.round} / 3`;
 
@@ -450,10 +472,8 @@
         turnBanner.className = "text-sm md:text-base font-bold text-slate-400";
       }
 
-      // კლიენტის მხარეს ტაიმერის ამოქმედება/განახლება
       manageClientTimer(state);
 
-      // ბარათის არჩევა & მასკა
       const maskedDisplay = document.getElementById('masked-word-display');
       const categoryDisplay = document.getElementById('word-category-display');
       const guessControls = document.getElementById('guess-controls');
@@ -474,7 +494,6 @@
         guessControls.classList.add('hidden');
       }
 
-      // ბარათების ბადე (Grid)
       const grid = document.getElementById('cards-grid');
       grid.innerHTML = '';
 
@@ -512,7 +531,75 @@
       });
     }
 
-    // ტაიმერის ლოგიკა კლიენტისთვის
+    // ჯეირნის არჩევანი და ლოგიკა
+    window.playJheirani = async function(choice) {
+      if (!gameState || gameState.status !== 'jheirani') return;
+      const jData = gameState.jheirani || { p1Choice: null, p2Choice: null };
+
+      if (playerRole === 'player1' && jData.p1Choice) return;
+      if (playerRole === 'player2' && jData.p2Choice) return;
+
+      const updatePayload = {};
+      if (playerRole === 'player1') updatePayload["jheirani.p1Choice"] = choice;
+      if (playerRole === 'player2') updatePayload["jheirani.p2Choice"] = choice;
+
+      try {
+        await updateDoc(getRoomRef(roomCode), updatePayload);
+        showToast("არჩევანი დაფიქსირდა! ველოდებით მეორეს...");
+        
+        // ვამოწმებთ თუ ორივემ აირჩია, გამოვთვალოთ შედეგი
+        // (რადგან onSnapshot-შიც შეგვიძლია განახლება, მოდი გამოვთვალოთ)
+        setTimeout(async () => {
+          const freshSnap = await getDoc(getRoomRef(roomCode));
+          if (!freshSnap.exists()) return;
+          const freshData = freshSnap.data();
+          const j = freshData.jheirani;
+
+          if (j.p1Choice && j.p2Choice && freshData.status === 'jheirani') {
+            let winnerRole = 'player1'; // ფრის შემთხვევაში პლედი 1 იწყებს
+            if (j.p1Choice === j.p2Choice) {
+              winnerRole = 'player1'; 
+            } else if (
+              (j.p1Choice === 'rock' && j.p2Choice === 'scissors') ||
+              (j.p1Choice === 'paper' && j.p2Choice === 'rock') ||
+              (j.p1Choice === 'scissors' && j.p2Choice === 'paper')
+            ) {
+              winnerRole = 'player1';
+            } else {
+              winnerRole = 'player2';
+            }
+
+            await updateDoc(getRoomRef(roomCode), {
+              status: 'playing',
+              currentTurn: winnerRole,
+              turnDeadline: Date.now() + 15000,
+              "jheirani.winner": winnerRole
+            });
+          }
+        }, 1000);
+
+      } catch (err) {
+        console.error("Jheirani choice error:", err);
+      }
+    };
+
+    function updateJheiraniUI(state) {
+      const j = state.jheirani || {};
+      const statusEl = document.getElementById('jheirani-status');
+      const choicesEl = document.getElementById('jheirani-choices');
+      const msgEl = document.getElementById('jheirani-result-msg');
+
+      const myChoice = playerRole === 'player1' ? j.p1Choice : j.p2Choice;
+
+      if (myChoice) {
+        choicesEl.classList.add('opacity-50', 'pointer-events-none');
+        statusEl.innerText = "არჩევანი გაკეთებულია! ველით მოწინააღმდეგეს...";
+      } else {
+        choicesEl.classList.remove('opacity-50', 'pointer-events-none');
+        statusEl.innerText = "აირჩიეთ ფიგურა, რომ გაიგოთ ვინ დაიწყებს პირველი!";
+      }
+    }
+
     function manageClientTimer(state) {
       clearInterval(clientTimerInterval);
       const timerBadge = document.getElementById('timer-badge');
@@ -528,7 +615,6 @@
 
         if (remaining <= 0) {
           clearInterval(clientTimerInterval);
-          // თუ დრო ამოიწურა და ჩვენ ვართ სვლაზე, ავტომატურად გადავრთავთ სვლას ჯარიმით
           if (state.currentTurn === playerRole && playerRole === 'player1') {
             await handleTimeOut(state);
           }
@@ -539,7 +625,6 @@
       clientTimerInterval = setInterval(updateTimerDisplay, 1000);
     }
 
-    // როდესაც დრო იწურება (15წმ / 10წმ)
     async function handleTimeOut(state) {
       if (state.status === 'finished') return;
       const nextTurn = (playerRole === 'player1') ? 'player2' : 'player1';
@@ -570,7 +655,6 @@
       }
     };
 
-    // სიტყვის გამოცნობა
     window.submitGuess = async function() {
       if (!gameState || gameState.currentTurn !== playerRole) return;
       if (gameState.activeCardId === null) return;
@@ -617,7 +701,6 @@
         }
       }
 
-      // ვამოწმებთ დამთავრდა თუ არა ყველა ბარათი ამ რაუნდში
       const allGuessed = updatedCards.every(c => c.isGuessed);
       let nextRound = gameState.round;
       let newStatus = gameState.status;
@@ -625,7 +708,6 @@
 
       if (allGuessed) {
         if (gameState.round < 3) {
-          // გადავდივართ შემდეგ რაუნდში უფრო რთული სიტყვებით
           nextRound = gameState.round + 1;
           showToast(`🏆 რაუნდი ${gameState.round} დასრულდა! იწყება რაუნდი ${nextRound}`);
           
@@ -644,14 +726,13 @@
             };
           });
         } else {
-          // მესამე რაუნდიც დასრულდა -> თამაში მთავრდება
           newStatus = 'finished';
           showToast("🏁 თამაში დასრულდა! გამოვლინდა გამარჯვებული!");
         }
       }
 
       const nextTurn = (playerRole === 'player1') ? 'player2' : 'player1';
-      const timeLimit = (nextRound === 3) ? 10000 : 15000; // მესამე რაუნდში 10 წამი
+      const timeLimit = (nextRound === 3) ? 10000 : 15000;
 
       try {
         await updateDoc(getRoomRef(roomCode), {
@@ -702,10 +783,11 @@
           currentTurn: 'player1',
           activeCardId: null,
           round: 1,
-          status: 'playing',
-          turnDeadline: Date.now() + 15000
+          status: 'jheirani', // თავიდან ჯეირანში გადადის
+          jheirani: { p1Choice: null, p2Choice: null, winner: null },
+          turnDeadline: null
         });
-        showToast("თამაში თავიდან დაიწყო!");
+        showToast("თამაში თავიდან დაიწყო — ითამაშეთ ჯეირანი!");
       } catch (err) {
         console.error("Error resetting game:", err);
       }
@@ -714,6 +796,7 @@
     function switchScreen(screenId) {
       document.getElementById('lobby-screen').classList.add('hidden');
       document.getElementById('waiting-screen').classList.add('hidden');
+      document.getElementById('jheirani-screen').classList.add('hidden');
       document.getElementById('game-screen').classList.add('hidden');
 
       document.getElementById(screenId).classList.remove('hidden');
