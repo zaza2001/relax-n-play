@@ -742,11 +742,28 @@
         const snap = await getDoc(getRoomRef(roomCode));
         if (!snap.exists()) return;
         const d = snap.data();
-        if (d.jheirani.p1Choice && d.jheirani.p2Choice && d.status === 'jheirani') {
+        const j = d.jheirani;
+
+        if (j.p1Choice && j.p2Choice && d.status === 'jheirani') {
+          let winnerRole = 'player1'; // ფრის შემთხვევაში პირველი იწყებს
+
+          if (j.p1Choice === j.p2Choice) {
+            winnerRole = 'player1'; // ფრე
+          } else if (
+            (j.p1Choice === 'rock' && j.p2Choice === 'scissors') ||       // ქვა ამარცხებს მაკრატელს
+            (j.p1Choice === 'scissors' && j.p2Choice === 'paper') ||     // მაკრატელი ამარცხებს ქაღალდს
+            (j.p1Choice === 'paper' && j.p2Choice === 'rock')            // ქაღალდი ამარცხებს ქვას
+          ) {
+            winnerRole = 'player1';
+          } else {
+            winnerRole = 'player2';
+          }
+
           await updateDoc(getRoomRef(roomCode), {
             status: 'playing',
-            currentTurn: 'player1',
-            turnDeadline: Date.now() + getRoundTimeLimit(1)
+            currentTurn: winnerRole,
+            turnDeadline: Date.now() + getRoundTimeLimit(1),
+            "jheirani.winner": winnerRole
           });
         }
       }, 1000);
