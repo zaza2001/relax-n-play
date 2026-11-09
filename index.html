@@ -773,20 +773,23 @@
 
       const updatedCards = [...gameState.cards];
       let p1s = gameState.p1Score, p2s = gameState.p2Score;
+      let keepTurn = false;
 
       if (isCorrect) {
         updatedCards[gameState.activeCardId].isGuessed = true;
         updatedCards[gameState.activeCardId].guessedBy = playerRole;
         updatedCards[gameState.activeCardId].guessedMask = activeCard.word;
         if (playerRole === 'player1') p1s += 10; else p2s += 10;
-        showToast("სწორია! +10 ქულა 🎉");
+        showToast("სწორია! +10 ქულა 🎉 - აირჩიეთ შემდეგი ბარათი!");
+        keepTurn = true; // სწორი პასუხისას ტოვებს სვლას, რომ ახალი ბარათი აირჩიოს
       } else {
         let maskArr = (activeCard.guessedMask || activeCard.masked).split("");
         for (let i = 0; i < targetWord.length; i++) {
           if (i < guess.length && guess[i] === targetWord[i]) maskArr[i] = targetWord[i];
         }
         updatedCards[gameState.activeCardId].guessedMask = maskArr.join("");
-        showToast("ცდა დაფიქსირდა!");
+        showToast("ცდა დაფიქსირდა! სვლა გადადის ❌");
+        keepTurn = false;
       }
 
       const allGuessed = updatedCards.every(c => c.isGuessed);
@@ -810,7 +813,7 @@
         }
       }
 
-      const nextTurn = playerRole === 'player1' ? 'player2' : 'player1';
+      const nextTurn = keepTurn ? playerRole : (playerRole === 'player1' ? 'player2' : 'player1');
       const timeLimit = getRoundTimeLimit(nextRound);
 
       await updateDoc(getRoomRef(roomCode), {
