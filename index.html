@@ -146,7 +146,7 @@
       </div>
     </div>
 
-    <!-- Jheirani Screen (for Words game) -->
+    <!-- Jheirani Screen -->
     <div id="jheirani-screen" class="hidden w-full max-w-md glass-panel p-8 rounded-3xl shadow-2xl text-center space-y-6">
       <div>
         <div class="w-16 h-16 bg-purple-600/30 text-purple-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl border border-purple-500/30">
@@ -370,6 +370,13 @@
       return doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code);
     }
 
+    function getRoundTimeLimit(roundNum) {
+      if (roundNum === 1) return 15000; // 15 წამი
+      if (roundNum === 2) return 20000; // 20 წამი
+      if (roundNum === 3) return 39000; // 39 წამი
+      return 15000;
+    }
+
     function generateBuraDeck() {
       const suits = ['♠', '♣', '♥', '♦'];
       const values = [
@@ -490,12 +497,15 @@
         playerRole = (data.player1Id === currentUser.uid) ? 'player1' : 'player2';
 
         if (playerRole === 'player2') {
-          await updateDoc(ref, {
+          const updateObj = {
             player2Id: currentUser.uid,
             player2Name: playerName,
-            status: data.gameMode === 'words' ? 'jheirani' : 'playing',
-            ...(data.gameMode === 'words' ? { turnDeadline: Date.now() + 15000 } : {})
-          });
+            status: data.gameMode === 'words' ? 'jheirani' : 'playing'
+          };
+          if (data.gameMode === 'words') {
+            updateObj.turnDeadline = Date.now() + getRoundTimeLimit(1);
+          }
+          await updateDoc(ref, updateObj);
         }
 
         listenToRoom(roomCode);
@@ -598,6 +608,49 @@
       });
     }
 
+    function manageClientTimer(state) {
+      clearInterval(clientTimerInterval);
+      const timerBadge = document.getElementById('timer-badge');
+
+      if (!state.turnDeadline || state.status === 'finished') {
+        timerBadge.innerText = "⏱ --";
+        return;
+      }
+
+      const updateTimerDisplay = async () => {
+        const remaining = Math.max(0, Math.floor((state.turnDeadline - Date.now()) / 1000));
+        timerBadge.innerText = `⏱ ${remaining}წმ`;
+
+        if (remaining <= 0) {
+          clearInterval(clientTimerInterval);
+          if (state.currentTurn && state.status === 'playing') {
+            await handleTimeOut(state);
+          }
+        }
+      };
+
+      updateTimerDisplay();
+      clientTimerInterval = setInterval(updateTimerDisplay, 1000);
+    }
+
+    async function handleTimeOut(state) {
+      if (state.status === 'finished') return;
+      
+      const nextTurn = (state.currentTurn === 'player1') ? 'player2' : 'player1';
+      const timeLimit = getRoundTimeLimit(state.round);
+
+      try {
+        await updateDoc(getRoomRef(roomCode), {
+          currentTurn: nextTurn,
+          activeCardId: null,
+          turnDeadline: Date.now() + timeLimit
+        });
+        showToast("⏰ დრო ამოიწურა! სვლა ავტომატურად გადავიდა.");
+      } catch (err) {
+        console.error("Timeout handle error:", err);
+      }
+    }
+
     function updateBuraUI(state) {
       const opponentName = playerRole === 'player1' ? state.player2Name : state.player1Name;
       const myHand = playerRole === 'player1' ? state.p1Hand : state.p2Hand;
@@ -693,33 +746,11 @@
           await updateDoc(getRoomRef(roomCode), {
             status: 'playing',
             currentTurn: 'player1',
-            turnDeadline: Date.now() + 15000
+            turnDeadline: Date.now() + getRoundTimeLimit(1)
           });
         }
       }, 1000);
     };
-
-    function manageClientTimer(state) {
-      clearInterval(clientTimerInterval);
-      const timerBadge = document.getElementById('timer-badge');
-      if (!state.turnDeadline || state.status === 'finished') {
-        timerBadge.innerText = "⏱ --";
-        return;
-      }
-      const updateTimer = async () => {
-        const remaining = Math.max(0, Math.floor((state.turnDeadline - Date.now()) / 1000));
-        timerBadge.innerText = `⏱ ${remaining}წმ`;
-        if (remaining <= 0) {
-          clearInterval(clientTimerInterval);
-          if (state.currentTurn === playerRole && playerRole === 'player1') {
-            const nextTurn = playerRole === 'player1' ? 'player2' : 'player1';
-            await updateDoc(getRoomRef(roomCode), { currentTurn: nextTurn, turnDeadline: Date.now() + 15000 });
-          }
-        }
-      };
-      updateTimer();
-      clientTimerInterval = setInterval(updateTimer, 1000);
-    }
 
     window.selectCard = async function(cardId) {
       if (!gameState || gameState.currentTurn !== playerRole) return;
@@ -780,7 +811,7 @@
       }
 
       const nextTurn = playerRole === 'player1' ? 'player2' : 'player1';
-      const timeLimit = (nextRound === 3) ? 10000 : 15000;
+      const timeLimit = getRoundTimeLimit(nextRound);
 
       await updateDoc(getRoomRef(roomCode), {
         cards: nextCards,
