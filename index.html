@@ -272,7 +272,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     
     const firebaseConfig = {
       apiKey: "AIzaSyCcRzuTSNoomOKf4MC7sFRqwO8CAc2zfsw",
@@ -371,9 +371,9 @@
     }
 
     function getRoundTimeLimit(roundNum) {
-      if (roundNum === 1) return 15000; // 15 წამი
-      if (roundNum === 2) return 20000; // 20 წამი
-      if (roundNum === 3) return 39000; // 39 წამი
+      if (roundNum === 1) return 15000;
+      if (roundNum === 2) return 20000;
+      if (roundNum === 3) return 39000;
       return 15000;
     }
 
@@ -446,7 +446,7 @@
           p1Score: 0,
           p2Score: 0,
           round: 1,
-          turnDeadline: null,
+          turnDeadline: Date.now() + 15000,
           cards: cards,
           jheirani: { p1Choice: null, p2Choice: null, winner: null }
         };
@@ -748,11 +748,11 @@
           let winnerRole = 'player1';
 
           if (j.p1Choice === j.p2Choice) {
-            winnerRole = 'player1'; // ფრე
+            winnerRole = 'player1';
           } else if (
-            (j.p1Choice === 'rock' && j.p2Choice === 'scissors') ||       // ქვა ამარცხებს მაკრატელს
-            (j.p1Choice === 'scissors' && j.p2Choice === 'paper') ||     // მაკრატელი ამარცხებს ქაღალდს
-            (j.p1Choice === 'paper' && j.p2Choice === 'rock')            // ქაღალდი ამარცხებს ქვას
+            (j.p1Choice === 'rock' && j.p2Choice === 'scissors') ||
+            (j.p1Choice === 'scissors' && j.p2Choice === 'paper') ||
+            (j.p1Choice === 'paper' && j.p2Choice === 'rock')
           ) {
             winnerRole = 'player1';
           } else {
@@ -776,7 +776,10 @@
     };
 
     window.submitGuess = async function() {
-      if (!gameState || gameState.currentTurn !== playerRole) return;
+      if (!gameState || gameState.currentTurn !== playerRole) {
+        showToast("ახლა თქვენი სვლა არ არის!");
+        return;
+      }
       if (gameState.activeCardId === null) return;
 
       const input = document.getElementById('guess-input');
@@ -798,7 +801,7 @@
         updatedCards[gameState.activeCardId].guessedMask = activeCard.word;
         if (playerRole === 'player1') p1s += 10; else p2s += 10;
         showToast("სწორია! +10 ქულა 🎉 - აირჩიეთ შემდეგი ბარათი!");
-        nextTurn = playerRole; // სწორი პასუხისას ტოვებს სვლას, რომ ახალი ბარათი აირჩიოს
+        nextTurn = playerRole; // სწორი პასუხისას სვლა რჩება მას
       } else {
         let maskArr = (activeCard.guessedMask || activeCard.masked).split("");
         for (let i = 0; i < targetWord.length; i++) {
@@ -832,6 +835,8 @@
 
       const timeLimit = getRoundTimeLimit(nextRound);
 
+      // განახლება ბაზაში: ტაიმერის აცდენის თავიდან ასაცილებლად ვიყენებთ Date.now() + timeLimit, 
+      // თუმცა მთავარია კომპიუტერსა და ტელეფონზე ავტომატური დრო იყოს ჩართული.
       await updateDoc(getRoomRef(roomCode), {
         cards: nextCards,
         p1Score: p1s,
