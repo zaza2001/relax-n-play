@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>მეგობრების თამაშები - Multiplayer & AI</title>
+  <title>Multiplayer & AI</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
@@ -72,7 +72,7 @@
     <!-- Header -->
     <header class="text-center mb-6 w-full">
       <h1 class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 mb-2">
-        <i class="fa-solid font-bold fa-dice mr-2"></i>მეგობრების თამაშები
+        <i class="fa-solid font-bold fa-dice mr-2"></i>Jast Fun(test name)
       </h1>
       <p class="text-xs md:text-sm text-slate-400">აირჩიე თამაში და ითამაშე რეალურ დროში ან AI-სთან</p>
     </header>
@@ -543,7 +543,7 @@
         player1Name: playerName,
         player2Id: null,
         player2Name: null,
-        status: 'waiting',
+        status: 'waiting', // ყოველთვის waiting რომ მეორე მოთამაშემ შემოვიდეს
         createdAt: new Date().toISOString()
       };
 
@@ -588,7 +588,6 @@
       } else if (gameMode === 'boxes') {
         initialRoomData = {
           ...initialRoomData,
-          status: 'jheirani',
           round: 1,
           boxes: generateBoxesForRound(1),
           p1Money: 0,
@@ -633,7 +632,7 @@
           const updateObj = {
             player2Id: currentUser.uid,
             player2Name: playerName,
-            status: data.gameMode === 'bura' ? 'playing' : 'jheirani'
+            status: 'jheirani' // როცა მეორე შემოვა, ყველა თამაშისთვის იწყება ჯეირანი
           };
           if (data.gameMode === 'words') {
             updateObj.turnDeadline = Date.now() + getRoundTimeLimit(1);
@@ -875,7 +874,7 @@
           setTimeout(async () => {
             await updateDoc(getRoomRef(roomCode), {
               showOpponentMoney: false,
-              currentTurn: playerRole // ვისაც რაუნდი დაუმთავრდა, იმასვე აგრძელებინებს ან პირიქით
+              currentTurn: playerRole
             });
           }, 4000);
         }
