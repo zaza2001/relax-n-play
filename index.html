@@ -72,7 +72,7 @@
     <!-- Header -->
     <header class="text-center mb-6 w-full">
       <h1 class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 mb-2">
-        <i class="fa-solid font-bold fa-dice mr-2"></i>რაღაცნაირი თამაში
+        <i class="fa-solid font-bold fa-dice mr-2"></i>მეგობრების თამაშები
       </h1>
       <p class="text-xs md:text-sm text-slate-400">აირჩიე თამაში და ითამაშე რეალურ დროში ან AI-სთან</p>
     </header>
@@ -443,12 +443,12 @@
       return btn;
     }
 
-    // --- ყუთების ახალი სქემა (2, 6, 8, 10, 4) ---
+    // --- ყუთების სქემა (2, 6, 8, 10, 4) ---
     function generateBoxesForRound(roundNum) {
       const counts = { 1: 2, 2: 6, 3: 8, 4: 10, 5: 4 };
       const totalBoxes = counts[roundNum] || 2;
       let boxes = [];
-      const possibleAmounts = [10, 50, 100, 250, 500, 1,-200, -300];
+      const possibleAmounts = [100, 500, 1000, 2500, 5000, 10000, 25000, 50000];
       
       for (let i = 0; i < totalBoxes; i++) {
         const randomAmount = possibleAmounts[Math.floor(Math.random() * possibleAmounts.length)];
@@ -702,7 +702,7 @@
         return;
       }
 
-      turnBanner.innerText = isMyTurn ? "შენი სვლაა!" : "მოწინააღმდეგის (AI) სვლაა...";
+      turnBanner.innerText = isMyTurn ? "შენი სვლაა!" : "მოწინააღმდეგის სვლაა...";
       turnBanner.className = isMyTurn ? "text-sm md:text-base font-bold text-emerald-400 animate-pulse" : "text-sm md:text-base font-bold text-slate-400";
 
       manageClientTimer(state);
@@ -861,7 +861,24 @@
       gameState.showOpponentMoney = showOppMoney;
 
       if (!isAiMode) {
-        await updateDoc(getRoomRef(roomCode), gameState);
+        await updateDoc(getRoomRef(roomCode), {
+          boxes: nextBoxes,
+          p1Money: p1m,
+          p2Money: p2m,
+          round: nextRound,
+          status: newStatus,
+          currentTurn: showOppMoney ? playerRole : nextTurn,
+          showOpponentMoney: showOppMoney
+        });
+        
+        if (showOppMoney && newStatus !== 'finished') {
+          setTimeout(async () => {
+            await updateDoc(getRoomRef(roomCode), {
+              showOpponentMoney: false,
+              currentTurn: playerRole // ვისაც რაუნდი დაუმთავრდა, იმასვე აგრძელებინებს ან პირიქით
+            });
+          }, 4000);
+        }
       } else {
         updateUI(gameState);
         if (showOppMoney && newStatus !== 'finished') {
@@ -982,7 +999,7 @@
         : '--';
 
       const isMyTurn = (state.currentTurn === playerRole);
-      document.getElementById('bura-status').innerText = isMyTurn ? "თქვენი სვლაა!" : "მოწინააღმდეგის (AI) სვლაა...";
+      document.getElementById('bura-status').innerText = isMyTurn ? "თქვენი სვლაა!" : "მოწინააღმდეგის სვლაა...";
       document.getElementById('bura-status').className = isMyTurn ? "text-lg font-bold text-emerald-400 animate-pulse" : "text-lg font-bold text-slate-400";
 
       const oppHandVisual = document.getElementById('bura-opponent-hand-visual');
