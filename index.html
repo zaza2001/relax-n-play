@@ -448,7 +448,7 @@
       const counts = { 1: 2, 2: 6, 3: 8, 4: 10, 5: 4 };
       const totalBoxes = counts[roundNum] || 2;
       let boxes = [];
-      const possibleAmounts = [100, 500, 1000, 2500, 5000, 10000, 25000, 50000];
+      const possibleAmounts = [1, 10, 20, 50, -30, -40, 100, 400, 500, -500];
       
       for (let i = 0; i < totalBoxes; i++) {
         const randomAmount = possibleAmounts[Math.floor(Math.random() * possibleAmounts.length)];
