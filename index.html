@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>მეგობრების თამაშები - Multiplayer</title>
+  <title>მეგობრების თამაშები - Multiplayer & AI</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
@@ -72,9 +72,9 @@
     <!-- Header -->
     <header class="text-center mb-6 w-full">
       <h1 class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 mb-2">
-        <i class="fa-solid font-bold fa-dice mr-2"></i>მეგობრების თამაშები
+        <i class="fa-solid font-bold fa-dice mr-2"></i>რაღაცნაირი თამაში
       </h1>
-      <p class="text-xs md:text-sm text-slate-400">აირჩიე თამაში და ითამაშე რეალურ დროში</p>
+      <p class="text-xs md:text-sm text-slate-400">აირჩიე თამაში და ითამაშე რეალურ დროში ან AI-სთან</p>
     </header>
 
     <!-- Notification Toast -->
@@ -89,7 +89,7 @@
         <div class="w-16 h-16 bg-indigo-600/30 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl border border-indigo-500/30">
           <i class="fa-solid fa-gamepad"></i>
         </div>
-        <h2 class="text-2xl font-bold mb-1">ონლაინ ლობი</h2>
+        <h2 class="text-2xl font-bold mb-1">თამაშის მენიუ</h2>
         <p class="text-sm text-slate-400">შეიყვანეთ სახელი და აირჩიეთ თამაში</p>
       </div>
 
@@ -99,27 +99,40 @@
         <div class="text-left">
           <label class="text-xs text-slate-400 font-semibold ml-2">აირჩიეთ თამაში:</label>
           <select id="game-mode-select" class="w-full mt-1 px-4 py-3 bg-slate-800 border border-slate-700 rounded-2xl text-white font-medium focus:outline-none focus:border-indigo-500">
-            <option value="words">🔤 სიტყვების გამოცნობა (Multiplayer)</option>
+            <option value="words">🔤 სიტყვების გამოცნობა</option>
             <option value="bura">🃏 ბურა (5 კარტი)</option>
+            <option value="boxes">💰 თანხის ყუთები (Cash Boxes)</option>
           </select>
         </div>
       </div>
 
       <div class="space-y-4">
-        <button onclick="createRoom()" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center text-lg active:scale-95">
-          <i class="fa-solid fa-plus-circle mr-2"></i>ოთახის შექმნა
+        <button onclick="createRoom()" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center text-base active:scale-95">
+          <i class="fa-solid fa-plus-circle mr-2"></i>ონლაინ ოთახის შექმნა
         </button>
 
-        <div class="relative flex py-2 items-center">
+        <div class="space-y-2">
+          <input type="text" id="room-code-input" maxlength="4" placeholder="4-ნიშნა კოდი" class="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-2xl text-center text-lg tracking-widest uppercase font-mono focus:outline-none focus:border-indigo-500">
+          <button onclick="joinRoom()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 font-bold rounded-2xl border border-slate-700 transition-all flex items-center justify-center active:scale-95 text-sm">
+            <i class="fa-solid fa-right-to-bracket mr-2"></i>ონლაინ ოთახში შესვლა
+          </button>
+        </div>
+
+        <div class="relative flex py-1 items-center">
           <div class="flex-grow border-t border-slate-700"></div>
-          <span class="flex-shrink mx-4 text-slate-500 text-xs font-semibold uppercase tracking-wider">ან</span>
+          <span class="flex-shrink mx-4 text-slate-500 text-xs font-semibold uppercase tracking-wider">ან ოფლაინში</span>
           <div class="flex-grow border-t border-slate-700"></div>
         </div>
 
-        <div class="space-y-2">
-          <input type="text" id="room-code-input" maxlength="4" placeholder="4-ნიშნა კოდი" class="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-2xl text-center text-xl tracking-widest uppercase font-mono focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
-          <button onclick="joinRoom()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 font-bold rounded-2xl border border-slate-700 transition-all flex items-center justify-center active:scale-95">
-            <i class="fa-solid fa-right-to-bracket mr-2"></i>ოთახში შესვლა
+        <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/80 space-y-3">
+          <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider">🤖 ეთამაშე კომპიუტერს (AI)</div>
+          <select id="ai-difficulty" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm font-medium focus:outline-none focus:border-emerald-500">
+            <option value="easy">მარტივი (Easy)</option>
+            <option value="medium" selected>საშუალო (Medium)</option>
+            <option value="hard">რთული (Hard)</option>
+          </select>
+          <button onclick="startAiGame()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-xl shadow-lg transition-all flex items-center justify-center text-sm active:scale-95">
+            <i class="fa-solid fa-robot mr-2"></i>თამაში AI-სთან
           </button>
         </div>
       </div>
@@ -175,7 +188,7 @@
     <!-- Word Game Screen -->
     <div id="game-screen" class="hidden w-full flex flex-col space-y-4">
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div id="p1-card" class="glass-panel p-3 md:p-4 rounded-2xl flex items-center justify-between border-l-4 border-indigo-500">
+        <div class="glass-panel p-3 md:p-4 rounded-2xl flex items-center justify-between border-l-4 border-indigo-500">
           <div>
             <div class="text-xs text-slate-400 font-semibold" id="p1-label">მოთამაშე 1</div>
             <div id="p1-score" class="text-xl md:text-2xl font-bold text-indigo-400">0 ქულა</div>
@@ -183,12 +196,12 @@
           <i class="fa-solid fa-user text-indigo-400/40 text-2xl"></i>
         </div>
 
-        <div id="p2-card" class="glass-panel p-3 md:p-4 rounded-2xl flex items-center justify-between border-l-4 border-pink-500">
+        <div class="glass-panel p-3 md:p-4 rounded-2xl flex items-center justify-between border-l-4 border-pink-500">
           <div>
-            <div class="text-xs text-slate-400 font-semibold" id="p2-label">მოთამაშე 2</div>
+            <div class="text-xs text-slate-400 font-semibold" id="p2-label">მოწინააღმდეგე</div>
             <div id="p2-score" class="text-xl md:text-2xl font-bold text-pink-400">0 ქულა</div>
           </div>
-          <i class="fa-solid fa-user-group text-pink-400/40 text-2xl"></i>
+          <i class="fa-solid fa-robot text-pink-400/40 text-2xl"></i>
         </div>
 
         <div class="glass-panel p-3 md:p-4 rounded-2xl flex flex-col justify-center border-l-4 border-amber-500 text-center sm:text-left">
@@ -264,15 +277,51 @@
         <div class="text-xs font-bold text-indigo-400 uppercase">თქვენი კარტები:</div>
         <div id="bura-my-hand" class="flex justify-center gap-3 overflow-x-auto py-2"></div>
       </div>
+      
+      <div class="text-center pt-2">
+        <button onclick="resetGame()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition-all">
+          <i class="fa-solid fa-rotate-right mr-1"></i>მთავარ მენიუში დაბრუნება
+        </button>
+      </div>
+    </div>
+
+    <!-- Cash Boxes Game Screen -->
+    <div id="boxes-screen" class="hidden w-full flex flex-col space-y-4">
+      <div class="glass-panel p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-2">
+        <div>
+          <div class="text-xs text-slate-400">თამაში: <span class="text-emerald-400 font-bold">თანხის ყუთები (Cash Boxes)</span></div>
+          <div id="boxes-round-title" class="text-lg font-bold text-amber-400 mt-1">რაუნდი 1 / 5 (ყუთები: 2)</div>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm font-semibold">
+            შენი ბალანსი: <span id="my-box-balance" class="text-emerald-400 font-bold ml-1">0 ₾</span>
+          </div>
+          <div id="opponent-box-balance-container" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm font-semibold hidden">
+            მოწინააღმდეგის ბალანსი: <span id="opponent-box-balance" class="text-pink-400 font-bold ml-1">0 ₾</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-panel p-4 rounded-2xl text-center">
+        <div id="boxes-turn-banner" class="text-base font-bold text-amber-400">აირჩიეთ ყუთი!</div>
+      </div>
+
+      <div id="boxes-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 py-2 max-h-[450px] overflow-y-auto"></div>
+
+      <div class="text-center pt-2">
+        <button onclick="resetGame()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition-all">
+          <i class="fa-solid fa-rotate-right mr-1"></i>მთავარ მენიუში დაბრუნება
+        </button>
+      </div>
     </div>
 
   </div>
 
-  <!-- Firebase Script -->
+  <!-- Firebase Script & App Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     
     const firebaseConfig = {
       apiKey: "AIzaSyCcRzuTSNoomOKf4MC7sFRqwO8CAc2zfsw",
@@ -293,40 +342,25 @@
 
     const ROUND_WORDS = {
       1: [
-        { word: "მზე", category: "ბუნება" },
-        { word: "ვაშლი", category: "ხილი" },
-        { word: "დათვი", category: "ცხოველი" },
-        { word: "მგელი", category: "ცხოველი" },
-        { word: "წიგნი", category: "განათლება" },
-        { word: "მანქანა", category: "ტრანსპორტი" },
-        { word: "გული", category: "ორგანო" },
-        { word: "კატა", category: "ცხოველი" },
-        { word: "ძაღლი", category: "ცხოველი" },
-        { word: "პური", category: "საჭმელი" }
+        { word: "მზე", category: "ბუნება" }, { word: "ვაშლი", category: "ხილი" },
+        { word: "დათვი", category: "ცხოველი" }, { word: "მგელი", category: "ცხოველი" },
+        { word: "წიგნი", category: "განათლება" }, { word: "მანქანა", category: "ტრანსპორტი" },
+        { word: "გული", category: "ორგანო" }, { word: "კატა", category: "ცხოველი" },
+        { word: "ძაღლი", category: "ცხოველი" }, { word: "პური", category: "საჭმელი" }
       ],
       2: [
-        { word: "ხაჭაპური", category: "საჭმელი" },
-        { word: "ხინკალი", category: "საჭმელი" },
-        { word: "კომპიუტერი", category: "ტექნიკა" },
-        { word: "თვითმფრინავი", category: "ტრანსპორტი" },
-        { word: "ვარსკვლავი", category: "კოსმოსი" },
-        { word: "ქუთაისი", category: "ქალაქი" },
-        { word: "თბილისი", category: "ქალაქი" },
-        { word: "ფეხბურთი", category: "სპორტი" },
-        { word: "ტელეფონი", category: "ტექნიკა" },
-        { word: "საზამთრო", category: "ხილი" }
+        { word: "ხაჭაპური", category: "საჭმელი" }, { word: "ხინკალი", category: "საჭმელი" },
+        { word: "კომპიუტერი", category: "ტექნიკა" }, { word: "თვითმფრინავი", category: "ტრანსპორტი" },
+        { word: "ვარსკვლავი", category: "კოსმოსი" }, { word: "ქუთაისი", category: "ქალაქი" },
+        { word: "თბილისი", category: "ქალაქი" }, { word: "ფეხბურთი", category: "სპორტი" },
+        { word: "ტელეფონი", category: "ტექნიკა" }, { word: "საზამთრო", category: "ხილი" }
       ],
       3: [
-        { word: "მყინვარწვერი", category: "ბუნება" },
-        { word: "ქარბორბალა", category: "კატაკლიზმა" },
-        { word: "მიწისძვრა", category: "კატაკლიზმა" },
-        { word: "პროგრამისტი", category: "პროფესია" },
-        { word: "ალგორითმი", category: "ტექნოლოგია" },
-        { word: "ინტერნეტი", category: "ტექნოლოგია" },
-        { word: "უნივერსიტეტი", category: "განათლება" },
-        { word: "კალათბურთი", category: "სპორტი" },
-        { word: "გალაქტიკა", category: "კოსმოსი" },
-        { word: "თირკმელი", category: "ორგანო" }
+        { word: "მყინვარწვერი", category: "ბუნება" }, { word: "ქარბორბალა", category: "კატაკლიზმა" },
+        { word: "მიწისძვრა", category: "კატაკლიზმა" }, { word: "პროგრამისტი", category: "პროფესია" },
+        { word: "ალგორითმი", category: "ტექნოლოგია" }, { word: "ინტერნეტი", category: "ტექნოლოგია" },
+        { word: "უნივერსიტეტი", category: "განათლება" }, { word: "კალათბურთი", category: "სპორტი" },
+        { word: "გალაქტიკა", category: "კოსმოსი" }, { word: "თირკმელი", category: "ორგანო" }
       ]
     };
 
@@ -337,6 +371,9 @@
     let roomUnsubscribe = null;
     let gameState = null;
     let clientTimerInterval = null;
+    
+    let isAiMode = false;
+    let aiDifficulty = 'medium';
 
     window.showToast = function(msg) {
       const toast = document.getElementById('toast');
@@ -406,10 +443,93 @@
       return btn;
     }
 
+    // --- ყუთების ახალი სქემა (2, 6, 8, 10, 4) ---
+    function generateBoxesForRound(roundNum) {
+      const counts = { 1: 2, 2: 6, 3: 8, 4: 10, 5: 4 };
+      const totalBoxes = counts[roundNum] || 2;
+      let boxes = [];
+      const possibleAmounts = [10, 50, 100, 250, 500, 1,-200, -300];
+      
+      for (let i = 0; i < totalBoxes; i++) {
+        const randomAmount = possibleAmounts[Math.floor(Math.random() * possibleAmounts.length)];
+        boxes.push({
+          id: i,
+          amount: randomAmount,
+          isOpen: false,
+          openedBy: null
+        });
+      }
+      return boxes;
+    }
+
+    window.startAiGame = function() {
+      const nameInput = document.getElementById('player-name-input').value.trim();
+      playerName = nameInput || 'მოთამაშე';
+      aiDifficulty = document.getElementById('ai-difficulty').value;
+      const gameMode = document.getElementById('game-mode-select').value;
+
+      isAiMode = true;
+      playerRole = 'player1';
+
+      let initialData = {
+        code: 'AI-ROOM',
+        gameMode: gameMode,
+        player1Name: playerName,
+        player2Name: `🤖 AI (${aiDifficulty.toUpperCase()})`,
+        status: 'playing',
+        currentTurn: 'player1',
+        p1Score: 0,
+        p2Score: 0,
+        round: 1,
+        turnDeadline: Date.now() + 25000
+      };
+
+      if (gameMode === 'words') {
+        const shuffled = [...ROUND_WORDS[1]].sort(() => 0.5 - Math.random());
+        const cards = shuffled.slice(0, 8).map((item, index) => ({
+          id: index,
+          word: item.word,
+          category: item.category,
+          masked: maskWord(item.word),
+          guessedMask: maskWord(item.word),
+          isGuessed: false,
+          guessedBy: null
+        }));
+        initialData.cards = cards;
+        initialData.activeCardId = null;
+      } else if (gameMode === 'bura') {
+        const deck = generateBuraDeck();
+        initialData.deck = deck;
+        initialData.p1Hand = deck.splice(0, 5);
+        initialData.p2Hand = deck.splice(0, 5);
+        initialData.trumpCard = deck[deck.length - 1];
+        initialData.tableCards = [];
+      } else if (gameMode === 'boxes') {
+        initialData.status = 'jheirani';
+        initialData.boxes = generateBoxesForRound(1);
+        initialData.p1Money = 0;
+        initialData.p2Money = 0;
+        initialData.showOpponentMoney = false;
+        initialData.jheirani = { p1Choice: null, p2Choice: null, winner: null };
+      }
+
+      gameState = initialData;
+      if (gameMode === 'bura') {
+        switchScreen('bura-screen');
+      } else if (gameMode === 'boxes') {
+        switchScreen('jheirani-screen');
+      } else {
+        switchScreen('game-screen');
+      }
+      updateUI(gameState);
+      showToast("🤖 AI რეჟიმი ჩაირთო წარმატებით!");
+    };
+
     window.createRoom = async function() {
       const nameInput = document.getElementById('player-name-input').value.trim();
       if (!nameInput) return showToast("გთხოვთ შეიყვანოთ თქვენი სახელი!");
       playerName = nameInput;
+      isAiMode = false;
 
       const gameMode = document.getElementById('game-mode-select').value;
       await initAuth();
@@ -450,7 +570,7 @@
           cards: cards,
           jheirani: { p1Choice: null, p2Choice: null, winner: null }
         };
-      } else {
+      } else if (gameMode === 'bura') {
         const deck = generateBuraDeck();
         const p1Hand = deck.splice(0, 5);
         const p2Hand = deck.splice(0, 5);
@@ -464,6 +584,18 @@
           trumpCard: trumpCard,
           tableCards: [],
           currentTurn: 'player1'
+        };
+      } else if (gameMode === 'boxes') {
+        initialRoomData = {
+          ...initialRoomData,
+          status: 'jheirani',
+          round: 1,
+          boxes: generateBoxesForRound(1),
+          p1Money: 0,
+          p2Money: 0,
+          showOpponentMoney: false,
+          currentTurn: 'player1',
+          jheirani: { p1Choice: null, p2Choice: null, winner: null }
         };
       }
 
@@ -481,6 +613,7 @@
       const nameInput = document.getElementById('player-name-input').value.trim();
       if (!nameInput) return showToast("გთხოვთ შეიყვანოთ თქვენი სახელი!");
       playerName = nameInput;
+      isAiMode = false;
 
       const codeInput = document.getElementById('room-code-input').value.trim();
       if (codeInput.length !== 4) return showToast("შეიყვანეთ ვალიდური კოდი");
@@ -500,7 +633,7 @@
           const updateObj = {
             player2Id: currentUser.uid,
             player2Name: playerName,
-            status: data.gameMode === 'words' ? 'jheirani' : 'playing'
+            status: data.gameMode === 'bura' ? 'playing' : 'jheirani'
           };
           if (data.gameMode === 'words') {
             updateObj.turnDeadline = Date.now() + getRoundTimeLimit(1);
@@ -537,6 +670,16 @@
         return;
       }
 
+      if (state.gameMode === 'boxes') {
+        if (state.status === 'jheirani') {
+          switchScreen('jheirani-screen');
+          return;
+        }
+        switchScreen('boxes-screen');
+        updateBoxesUI(state);
+        return;
+      }
+
       if (state.status === 'jheirani') {
         switchScreen('jheirani-screen');
         return;
@@ -546,7 +689,7 @@
       document.getElementById('p1-score').innerText = `${state.p1Score} ქულა`;
       document.getElementById('p2-score').innerText = `${state.p2Score} ქულა`;
       document.getElementById('p1-label').innerText = state.player1Name || "მოთამაშე 1";
-      document.getElementById('p2-label').innerText = state.player2Name || "მოთამაშე 2";
+      document.getElementById('p2-label').innerText = state.player2Name || "მოწინააღმდეგე";
       document.getElementById('round-indicator').innerText = `რაუნდი ${state.round} / 3`;
 
       const isMyTurn = (state.currentTurn === playerRole);
@@ -559,7 +702,7 @@
         return;
       }
 
-      turnBanner.innerText = isMyTurn ? "შენი სვლაა!" : "მოწინააღმდეგის სვლაა...";
+      turnBanner.innerText = isMyTurn ? "შენი სვლაა!" : "მოწინააღმდეგის (AI) სვლაა...";
       turnBanner.className = isMyTurn ? "text-sm md:text-base font-bold text-emerald-400 animate-pulse" : "text-sm md:text-base font-bold text-slate-400";
 
       manageClientTimer(state);
@@ -606,6 +749,172 @@
         `;
         grid.appendChild(btn);
       });
+
+      if (isAiMode && state.currentTurn === 'player2' && state.status === 'playing') {
+        setTimeout(runAiWordTurn, 1200);
+      }
+    }
+
+    function updateBoxesUI(state) {
+      const counts = { 1: 2, 2: 6, 3: 8, 4: 10, 5: 4 };
+      document.getElementById('boxes-round-title').innerText = `რაუნდი ${state.round} / 5 (ყუთები: ${counts[state.round] || 2})`;
+      
+      const myMoney = playerRole === 'player1' ? (state.p1Money || 0) : (state.p2Money || 0);
+      const oppMoney = playerRole === 'player1' ? (state.p2Money || 0) : (state.p1Money || 0);
+
+      document.getElementById('my-box-balance').innerText = `${myMoney} ₾`;
+      
+      const oppContainer = document.getElementById('opponent-box-balance-container');
+      if (state.showOpponentMoney || state.status === 'finished') {
+        oppContainer.classList.remove('hidden');
+        document.getElementById('opponent-box-balance').innerText = `${oppMoney} ₾`;
+      } else {
+        oppContainer.classList.add('hidden');
+      }
+
+      const isMyTurn = (state.currentTurn === playerRole);
+      const turnBanner = document.getElementById('boxes-turn-banner');
+
+      if (state.status === 'finished') {
+        const winnerText = state.p1Money > state.p2Money ? `${state.player1Name}მ მოიგო!` : (state.p2Money > state.p1Money ? `${state.player2Name}მ მოიგო!` : "ფრეა!");
+        turnBanner.innerText = `🏆 თამაში დასრულდა! ${winnerText}`;
+        turnBanner.className = "text-base font-bold text-emerald-400";
+      } else {
+        turnBanner.innerText = isMyTurn ? "შენი სვლაა — აირჩიე ყუთი!" : "მოწინააღმდეგის სვლაა...";
+        turnBanner.className = isMyTurn ? "text-base font-bold text-emerald-400 animate-pulse" : "text-base font-bold text-slate-400";
+      }
+
+      const grid = document.getElementById('boxes-grid');
+      grid.innerHTML = '';
+
+      if (state.boxes) {
+        state.boxes.forEach(box => {
+          const btn = document.createElement('button');
+          btn.disabled = !isMyTurn || box.isOpen || state.status === 'finished';
+          
+          let bgClass = "bg-slate-800 border-slate-700 hover:border-emerald-500 hover:bg-slate-700";
+          let content = `<i class="fa-solid fa-box-open text-3xl text-emerald-400 mb-1"></i><span class="text-xs font-bold text-slate-300">ყუთი #${box.id + 1}</span>`;
+
+          if (box.isOpen) {
+            bgClass = "bg-slate-900/50 border-slate-800 text-slate-500 opacity-70";
+            content = `<i class="fa-solid fa-box text-2xl text-slate-600 mb-1"></i><span class="text-xs font-mono font-bold text-amber-400">${box.amount} ₾</span>`;
+          }
+
+          btn.className = `p-4 rounded-2xl border flex flex-col items-center justify-center transition-all active:scale-95 min-h-[100px] ${bgClass}`;
+          btn.onclick = () => selectBox(box.id);
+          btn.innerHTML = content;
+          grid.appendChild(btn);
+        });
+      }
+
+      if (isAiMode && state.currentTurn === 'player2' && state.status === 'playing') {
+        setTimeout(runAiBoxesTurn, 1500);
+      }
+    }
+
+    window.selectBox = async function(boxId) {
+      if (!gameState || gameState.currentTurn !== playerRole || gameState.status === 'finished') return;
+      
+      const boxes = [...gameState.boxes];
+      const targetBox = boxes[boxId];
+      if (targetBox.isOpen) return;
+
+      targetBox.isOpen = true;
+      targetBox.openedBy = playerRole;
+      const earnedAmount = targetBox.amount;
+
+      let p1m = gameState.p1Money || 0;
+      let p2m = gameState.p2Money || 0;
+
+      if (playerRole === 'player1') p1m += earnedAmount;
+      else p2m += earnedAmount;
+
+      showToast(` გახსენი ყუთი #${boxId + 1} და მოიგე ${earnedAmount} ₾!`);
+
+      const allOpened = boxes.every(b => b.isOpen);
+      let nextRound = gameState.round;
+      let newStatus = gameState.status;
+      let nextBoxes = boxes;
+      let showOppMoney = false;
+
+      if (allOpened) {
+        if (gameState.round < 5) {
+          nextRound = gameState.round + 1;
+          showToast(` რაუნდი ${gameState.round} დასრულდა! რაუნდის შედეგები გამოჩნდა. იწყება რაუნდი ${nextRound}`);
+          nextBoxes = generateBoxesForRound(nextRound);
+          showOppMoney = true;
+        } else {
+          newStatus = 'finished';
+          showOppMoney = true;
+          showToast(" თამაში დასრულდა! იხილეთ გამარჯვებული.");
+        }
+      }
+
+      const nextTurn = isAiMode ? 'player2' : (playerRole === 'player1' ? 'player2' : 'player1');
+
+      gameState.boxes = nextBoxes;
+      gameState.p1Money = p1m;
+      gameState.p2Money = p2m;
+      gameState.round = nextRound;
+      gameState.status = newStatus;
+      gameState.currentTurn = showOppMoney ? playerRole : nextTurn;
+      gameState.showOpponentMoney = showOppMoney;
+
+      if (!isAiMode) {
+        await updateDoc(getRoomRef(roomCode), gameState);
+      } else {
+        updateUI(gameState);
+        if (showOppMoney && newStatus !== 'finished') {
+          setTimeout(() => {
+            gameState.showOpponentMoney = false;
+            gameState.currentTurn = 'player1';
+            updateUI(gameState);
+          }, 4000);
+        }
+      }
+    };
+
+    function runAiBoxesTurn() {
+      if (!gameState || gameState.currentTurn !== 'player2' || gameState.status === 'finished') return;
+
+      const unopenedBoxes = gameState.boxes.filter(b => !b.isOpen);
+      if (unopenedBoxes.length === 0) return;
+
+      const randomBox = unopenedBoxes[Math.floor(Math.random() * unopenedBoxes.length)];
+      randomBox.isOpen = true;
+      randomBox.openedBy = 'player2';
+
+      gameState.p2Money = (gameState.p2Money || 0) + randomBox.amount;
+      showToast(`🤖 AI-მ გახსნა ყუთი და მოიგო ${randomBox.amount} ₾!`);
+
+      const allOpened = gameState.boxes.every(b => b.isOpen);
+      let showOppMoney = false;
+
+      if (allOpened) {
+        if (gameState.round < 5) {
+          gameState.round += 1;
+          showToast(` რაუნდი ${gameState.round - 1} დასრულდა! იწყება რაუნდი ${gameState.round}`);
+          gameState.boxes = generateBoxesForRound(gameState.round);
+          showOppMoney = true;
+        } else {
+          gameState.status = 'finished';
+          showOppMoney = true;
+          showToast(" თამაში დასრულდა!");
+        }
+      }
+
+      gameState.currentTurn = showOppMoney ? 'player2' : 'player1';
+      gameState.showOpponentMoney = showOppMoney;
+
+      updateUI(gameState);
+
+      if (showOppMoney && gameState.status !== 'finished') {
+        setTimeout(() => {
+          gameState.showOpponentMoney = false;
+          gameState.currentTurn = 'player1';
+          updateUI(gameState);
+        }, 4000);
+      }
     }
 
     function manageClientTimer(state) {
@@ -639,15 +948,23 @@
       const nextTurn = (state.currentTurn === 'player1') ? 'player2' : 'player1';
       const timeLimit = getRoundTimeLimit(state.round);
 
-      try {
-        await updateDoc(getRoomRef(roomCode), {
-          currentTurn: nextTurn,
-          activeCardId: null,
-          turnDeadline: Date.now() + timeLimit
-        });
-        showToast("⏰ დრო ამოიწურა! სვლა ავტომატურად გადავიდა.");
-      } catch (err) {
-        console.error("Timeout handle error:", err);
+      if (isAiMode) {
+        gameState.currentTurn = nextTurn;
+        gameState.activeCardId = null;
+        gameState.turnDeadline = Date.now() + timeLimit;
+        updateUI(gameState);
+        showToast("⏱ დრო ამოიწურა! სვლა გადავიდა.");
+      } else {
+        try {
+          await updateDoc(getRoomRef(roomCode), {
+            currentTurn: nextTurn,
+            activeCardId: null,
+            turnDeadline: Date.now() + timeLimit
+          });
+          showToast("⏱ დრო ამოიწურა! სვლა გადავიდა.");
+        } catch (err) {
+          console.error("Timeout handle error:", err);
+        }
       }
     }
 
@@ -656,7 +973,7 @@
       const myHand = playerRole === 'player1' ? state.p1Hand : state.p2Hand;
       const opponentHandCount = playerRole === 'player1' ? (state.p2Hand ? state.p2Hand.length : 5) : (state.p1Hand ? state.p1Hand.length : 5);
 
-      document.getElementById('bura-opponent-name').innerText = opponentName || "მოწინააღმდეგე (მოლოდინში...)";
+      document.getElementById('bura-opponent-name').innerText = opponentName || "მოწინააღმდეგე";
       document.getElementById('deck-remaining').innerText = state.deck ? state.deck.length : 0;
       
       const isTrumpRed = state.trumpCard && (state.trumpCard.suit === '♥' || state.trumpCard.suit === '♦');
@@ -664,8 +981,8 @@
         ? `<span class="${isTrumpRed ? 'text-rose-400' : 'text-white'}">${state.trumpCard.name} ${state.trumpCard.suit}</span>` 
         : '--';
 
-      const isMyTurn = state.currentTurn === playerRole;
-      document.getElementById('bura-status').innerText = isMyTurn ? "თქვენი სვლაა!" : "მოწინააღმდეგის სვლაა...";
+      const isMyTurn = (state.currentTurn === playerRole);
+      document.getElementById('bura-status').innerText = isMyTurn ? "თქვენი სვლაა!" : "მოწინააღმდეგის (AI) სვლაა...";
       document.getElementById('bura-status').className = isMyTurn ? "text-lg font-bold text-emerald-400 animate-pulse" : "text-lg font-bold text-slate-400";
 
       const oppHandVisual = document.getElementById('bura-opponent-hand-visual');
@@ -703,6 +1020,121 @@
       } else {
         tableContainer.innerHTML = '<span class="text-slate-500 text-sm">მაგიდა ცარიელია</span>';
       }
+
+      if (isAiMode && state.currentTurn === 'player2' && state.status !== 'finished') {
+        setTimeout(runAiBuraTurn, 1500);
+      }
+    }
+
+    function runAiWordTurn() {
+      if (!gameState || gameState.status !== 'playing' || gameState.currentTurn !== 'player2') return;
+
+      const availableCards = gameState.cards.filter(c => !c.isGuessed);
+      if (availableCards.length === 0) return;
+
+      const randomCard = availableCards[Math.floor(Math.random() * availableCards.length)];
+      gameState.activeCardId = randomCard.id;
+
+      let willGuessCorrectly = false;
+      if (aiDifficulty === 'easy') willGuessCorrectly = Math.random() < 0.3;
+      else if (aiDifficulty === 'medium') willGuessCorrectly = Math.random() < 0.6;
+      else willGuessCorrectly = Math.random() < 0.9;
+
+      setTimeout(() => {
+        const updatedCards = [...gameState.cards];
+        let p2s = gameState.p2Score;
+        let nextTurn = 'player2';
+
+        if (willGuessCorrectly) {
+          updatedCards[randomCard.id].isGuessed = true;
+          updatedCards[randomCard.id].guessedBy = 'player2';
+          updatedCards[randomCard.id].guessedMask = randomCard.word;
+          p2s += 10;
+          showToast("🤖 AI-მ სწორად გამოიცნო სიტყვა!");
+          nextTurn = 'player2';
+        } else {
+          showToast("🤖 AI-მ ვერ გამოიცნო სიტყვა. სვლა გადმოგეცა!");
+          nextTurn = 'player1';
+        }
+
+        const allGuessed = updatedCards.every(c => c.isGuessed);
+        let nextRound = gameState.round;
+        let newStatus = gameState.status;
+        let nextCards = updatedCards;
+
+        if (allGuessed) {
+          if (gameState.round < 3) {
+            nextRound = gameState.round + 1;
+            showToast(`🏆 რაუნდი ${gameState.round} დასრულდა! იწყება რაუნდი ${nextRound}`);
+            const pool = ROUND_WORDS[nextRound];
+            const shuffled = [...pool].sort(() => 0.5 - Math.random());
+            nextCards = shuffled.slice(0, 8).map((item, index) => {
+              const m = maskWord(item.word);
+              return { id: index, word: item.word, category: item.category, masked: m, guessedMask: m, isGuessed: false, guessedBy: null };
+            });
+          } else {
+            newStatus = 'finished';
+            showToast("🏁 თამაში დასრულდა!");
+          }
+        }
+
+        gameState.cards = nextCards;
+        gameState.p2Score = p2s;
+        gameState.currentTurn = nextTurn;
+        gameState.activeCardId = null;
+        gameState.round = nextRound;
+        gameState.status = newStatus;
+        gameState.turnDeadline = Date.now() + getRoundTimeLimit(nextRound);
+
+        if (!isAiMode) {
+          updateDoc(getRoomRef(roomCode), gameState);
+        } else {
+          updateUI(gameState);
+        }
+      }, 1500);
+    }
+
+    function runAiBuraTurn() {
+      if (!gameState || gameState.currentTurn !== 'player2') return;
+
+      const p2Hand = [...gameState.p2Hand];
+      if (p2Hand.length === 0) return;
+
+      let cardIndex = 0;
+      if (aiDifficulty === 'hard') {
+        let bestIdx = 0;
+        let maxPts = -1;
+        p2Hand.forEach((c, idx) => {
+          if (c.pts > maxPts) {
+            maxPts = c.pts;
+            bestIdx = idx;
+          }
+        });
+        cardIndex = bestIdx;
+      } else {
+        cardIndex = Math.floor(Math.random() * p2Hand.length);
+      }
+
+      const playedCard = p2Hand.splice(cardIndex, 1)[0];
+      const tableCards = gameState.tableCards ? [...gameState.tableCards] : [];
+      tableCards.push({ player: 'player2', card: playedCard });
+
+      gameState.p2Hand = p2Hand;
+      gameState.tableCards = tableCards;
+      gameState.currentTurn = 'player1';
+
+      if (tableCards.length === 2) {
+        setTimeout(() => {
+          gameState.tableCards = [];
+          if (gameState.deck && gameState.deck.length > 0) {
+            if (gameState.p1Hand.length < 5 && gameState.deck.length > 0) gameState.p1Hand.push(gameState.deck.pop());
+            if (gameState.p2Hand.length < 5 && gameState.deck.length > 0) gameState.p2Hand.push(gameState.deck.pop());
+          }
+          updateUI(gameState);
+        }, 1800);
+      }
+
+      updateUI(gameState);
     }
 
     window.playBuraCard = async function(cardIndex) {
@@ -713,25 +1145,58 @@
       const tableCards = gameState.tableCards ? [...gameState.tableCards] : [];
 
       tableCards.push({ player: playerRole, card: playedCard });
-      const nextTurn = playerRole === 'player1' ? 'player2' : 'player1';
+      const nextTurn = 'player2';
 
-      let updateData = {
-        [myHandKey]: myHand,
-        tableCards: tableCards,
-        currentTurn: nextTurn
-      };
+      gameState[myHandKey] = myHand;
+      gameState.tableCards = tableCards;
+      gameState.currentTurn = nextTurn;
 
       if (tableCards.length === 2) {
         setTimeout(async () => {
-          await updateDoc(getRoomRef(roomCode), { tableCards: [] });
+          gameState.tableCards = [];
+          if (gameState.deck && gameState.deck.length > 0) {
+            if (gameState.p1Hand.length < 5 && gameState.deck.length > 0) gameState.p1Hand.push(gameState.deck.pop());
+            if (gameState.p2Hand.length < 5 && gameState.deck.length > 0) gameState.p2Hand.push(gameState.deck.pop());
+          }
+          updateUI(gameState);
         }, 1800);
       }
 
-      await updateDoc(getRoomRef(roomCode), updateData);
+      if (!isAiMode) {
+        await updateDoc(getRoomRef(roomCode), {
+          [myHandKey]: myHand,
+          tableCards: tableCards,
+          currentTurn: nextTurn
+        });
+      } else {
+        updateUI(gameState);
+      }
     };
 
     window.playJheirani = async function(choice) {
       if (!gameState || gameState.status !== 'jheirani') return;
+      
+      if (isAiMode) {
+        const choices = ['rock', 'paper', 'scissors'];
+        const aiChoice = choices[Math.floor(Math.random() * choices.length)];
+        let winnerRole = 'player1';
+
+        if (choice === aiChoice) winnerRole = 'player1';
+        else if ((choice === 'rock' && aiChoice === 'scissors') || (choice === 'scissors' && aiChoice === 'paper') || (choice === 'paper' && aiChoice === 'rock')) {
+          winnerRole = 'player1';
+        } else {
+          winnerRole = 'player2';
+        }
+
+        gameState.status = 'playing';
+        gameState.currentTurn = winnerRole;
+        gameState.turnDeadline = Date.now() + getRoundTimeLimit(1);
+        gameState.jheirani = { p1Choice: choice, p2Choice: aiChoice, winner: winnerRole };
+        updateUI(gameState);
+        showToast(`ჯეირანი: AI-მ აირჩია ${aiChoice}. დაიწყო ${winnerRole === 'player1' ? 'თქვენი' : 'AI-ს'} სვლით!`);
+        return;
+      }
+
       const updatePayload = {};
       if (playerRole === 'player1') updatePayload["jheirani.p1Choice"] = choice;
       if (playerRole === 'player2') updatePayload["jheirani.p2Choice"] = choice;
@@ -772,7 +1237,13 @@
     window.selectCard = async function(cardId) {
       if (!gameState || gameState.currentTurn !== playerRole) return;
       if (gameState.cards[cardId].isGuessed) return;
-      await updateDoc(getRoomRef(roomCode), { activeCardId: cardId });
+      
+      gameState.activeCardId = cardId;
+      if (!isAiMode) {
+        await updateDoc(getRoomRef(roomCode), { activeCardId: cardId });
+      } else {
+        updateUI(gameState);
+      }
     };
 
     window.submitGuess = async function() {
@@ -801,7 +1272,7 @@
         updatedCards[gameState.activeCardId].guessedMask = activeCard.word;
         if (playerRole === 'player1') p1s += 10; else p2s += 10;
         showToast("სწორია! +10 ქულა 🎉 - აირჩიეთ შემდეგი ბარათი!");
-        nextTurn = playerRole; // სწორი პასუხისას სვლა რჩება მას
+        nextTurn = playerRole; 
       } else {
         let maskArr = (activeCard.guessedMask || activeCard.masked).split("");
         for (let i = 0; i < targetWord.length; i++) {
@@ -809,7 +1280,7 @@
         }
         updatedCards[gameState.activeCardId].guessedMask = maskArr.join("");
         showToast("არასწორია! სვლა გადადის ❌");
-        nextTurn = (playerRole === 'player1') ? 'player2' : 'player1'; // არასწორზე მყისიერად გადადის მოწინააღმდეგეზე
+        nextTurn = isAiMode ? 'player2' : ((playerRole === 'player1') ? 'player2' : 'player1');
       }
 
       const allGuessed = updatedCards.every(c => c.isGuessed);
@@ -835,18 +1306,20 @@
 
       const timeLimit = getRoundTimeLimit(nextRound);
 
-      // განახლება ბაზაში: ტაიმერის აცდენის თავიდან ასაცილებლად ვიყენებთ Date.now() + timeLimit, 
-      // თუმცა მთავარია კომპიუტერსა და ტელეფონზე ავტომატური დრო იყოს ჩართული.
-      await updateDoc(getRoomRef(roomCode), {
-        cards: nextCards,
-        p1Score: p1s,
-        p2Score: p2s,
-        currentTurn: nextTurn,
-        activeCardId: null,
-        round: nextRound,
-        status: newStatus,
-        turnDeadline: Date.now() + timeLimit
-      });
+      gameState.cards = nextCards;
+      gameState.p1Score = p1s;
+      gameState.p2Score = p2s;
+      gameState.currentTurn = nextTurn;
+      gameState.activeCardId = null;
+      gameState.round = nextRound;
+      gameState.status = newStatus;
+      gameState.turnDeadline = Date.now() + timeLimit;
+
+      if (!isAiMode) {
+        await updateDoc(getRoomRef(roomCode), gameState);
+      } else {
+        updateUI(gameState);
+      }
     };
 
     window.copyRoomCode = function() {
@@ -856,7 +1329,6 @@
     };
 
     window.resetGame = async function() {
-      if (!roomCode) return;
       location.reload();
     };
 
@@ -866,6 +1338,7 @@
       document.getElementById('jheirani-screen').classList.add('hidden');
       document.getElementById('game-screen').classList.add('hidden');
       document.getElementById('bura-screen').classList.add('hidden');
+      document.getElementById('boxes-screen').classList.add('hidden');
       document.getElementById(screenId).classList.remove('hidden');
     }
   </script>
