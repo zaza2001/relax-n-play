@@ -98,8 +98,8 @@
       </div>
     </div>
 
-    <!-- Auth Screen -->
-    <div id="auth-screen" class="w-full max-w-md glass-panel p-6 md:p-8 rounded-3xl shadow-2xl text-center">
+    <!-- Auth Screen (თავიდან დამალულია hidden-ით, რომ არ ციმციმოს) -->
+    <div id="auth-screen" class="hidden w-full max-w-md glass-panel p-6 md:p-8 rounded-3xl shadow-2xl text-center">
       <div class="mb-6">
         <div class="w-16 h-16 bg-purple-600/30 text-purple-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl border border-purple-500/30">
           <i class="fa-solid fa-user-lock"></i>
@@ -128,7 +128,7 @@
       </div>
     </div>
 
-    <!-- Lobby / Room Joining & Friends Screen -->
+    <!-- Lobby / Room Joining & Friends Screen (თავიდან დამალულია hidden-ით) -->
     <div id="lobby-screen" class="hidden w-full max-w-md glass-panel p-6 md:p-8 rounded-3xl shadow-2xl text-center">
       <div class="flex justify-between items-center bg-slate-800/60 p-3 rounded-2xl border border-slate-700 mb-4 text-xs">
         <div class="flex items-center gap-2">
@@ -466,7 +466,6 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // თავიდანვე ვთიშავთ სესიას, რომ გვერდის ჩატვირთვისას არ მოხდეს ავტომატური შესვლა
     signOut(auth).catch(() => {});
 
     let currentUser = null;
@@ -632,7 +631,6 @@
           const img = new Image();
           img.src = e.target.result;
           img.onload = async function() {
-            // ვკუმშავთ სურათს კანვასის გამოყენებით მაქსიმუმ 150x150 პიქსელამდე
             const canvas = document.createElement('canvas');
             const MAX_WIDTH = 150;
             const MAX_HEIGHT = 150;
@@ -734,6 +732,10 @@
 
     // --- პირდაპირი მოწვევა კოდის გარეშე ---
     window.sendGameInvite = async function(friendUid, friendName) {
+      if (!currentUser) {
+        return showToast("გთხოვთ დაიცადოთ, მიმდინარეობს სერვერთან კავშირი...");
+      }
+
       const gameMode = document.getElementById('game-mode-select').value;
       roomCode = generateCode();
       playerRole = 'player1';
@@ -807,7 +809,8 @@
         listenToRoom(roomCode);
         showToast(`მოწვევა გაეგზავნა მოთამაშეს: ${friendName}`);
       } catch (err) {
-        showToast("მოწვევის გაგზავნა ვერ მოხერხდა");
+        console.error("Send invite error:", err);
+        showToast("მოწვევის გაგზავნა ვერ მოხერხდა: " + err.message);
       }
     };
 
@@ -1019,6 +1022,10 @@
     };
 
     window.createRoom = async function() {
+      if (!currentUser) {
+        return showToast("გთხოვთ დაიცადოთ, მიმდინარეობს სერვერთან კავშირი...");
+      }
+
       const gameMode = document.getElementById('game-mode-select').value;
       roomCode = generateCode();
       playerRole = 'player1';
@@ -1100,21 +1107,33 @@
         switchScreen('waiting-screen');
         listenToRoom(roomCode);
       } catch (err) {
-        showToast("ოთახის შექმნა ვერ მოხერხდა");
+        console.error("Create room error:", err);
+        showToast("ოთახის შექმნა ვერ მოხერხდა: " + err.message);
       }
     };
 
     window.joinRoom = async function() {
+      if (!currentUser) {
+        return showToast("გთხოვთ დაიცადოთ, მიმდინარეობს სერვერთან კავშირი...");
+      }
+
       const codeInput = document.getElementById('room-code-input').value.trim();
-      if (codeInput.length !== 4) return showToast("შეიყვანეთ ვალიდური კოდი");
+      if (codeInput.length !== 4) return showToast("შეიყვანეთ ვალიდური 4-ნიშნა კოდი!");
 
       roomCode = codeInput;
       const ref = getRoomRef(roomCode);
 
       try {
         const snap = await getDoc(ref);
-        if (!snap.exists()) return showToast("ოთახი ვერ მოიძებნა");
+        if (!snap.exists()) {
+          return showToast("ოთახი ამ კოდით ვერ მოიძებნა ბაზაში!");
+        }
+        
         const data = snap.data();
+
+        if (data.player2Id && data.player2Id !== currentUser.uid) {
+          return showToast("ეს ოთახი უკვე სავსეა!");
+        }
 
         playerRole = (data.player1Id === currentUser.uid) ? 'player1' : 'player2';
 
@@ -1132,8 +1151,10 @@
         }
 
         listenToRoom(roomCode);
+        showToast("წარმატებით შეხვედით ოთახში! 🎉");
       } catch (err) {
-        showToast("ოთახში შესვლა ვერ მოხერხდა");
+        console.error("Join room error:", err);
+        showToast("შეცდომა: " + err.message);
       }
     };
 
@@ -1197,7 +1218,6 @@
       document.getElementById('p2-label').innerText = state.player2Name || "მოწინააღმდეგე";
       document.getElementById('round-indicator').innerText = `რაუნდი ${state.round} / 3`;
 
-      // Game Screen Avatars
       const p1Img = document.getElementById('game-p1-img');
       const p1Icon = document.getElementById('game-p1-icon');
       if (state.player1Avatar) {
