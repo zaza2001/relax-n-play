@@ -465,7 +465,6 @@
         playerName = user.email ? user.email.split('@')[0] : 'სტუმარი';
         document.getElementById('user-display-email').innerText = user.email || 'სტუმარი (Anonymous)';
         
-        // გადავცემთ მეილს, რომ ავტომატურად ჩაიწეროს ბაზაში თუ აკლია
         await loadUserData(user.uid, user.email);
         listenToIncomingInvites(user.uid);
         
@@ -485,7 +484,7 @@
     };
 
     window.handleAuthSubmit = async function() {
-      const email = document.getElementById('auth-email'].value.trim();
+      const email = document.getElementById('auth-email').value.trim(); // <-- გასწორებულია (დაისვა ფრჩხილები)
       const password = document.getElementById('auth-password').value.trim();
       if (!email || !password) return showToast("შეიყვანეთ მეილი და პაროლი!");
 
@@ -521,7 +520,6 @@
       const snap = await getDoc(userRef);
       if (snap.exists()) {
         userStats = snap.data();
-        // თუ ძველ მომხმარებელს მეილი არ უწერია ბაზაში, ავტომატურად ვუწერთ
         if (!userStats.email && email) {
           userStats.email = email.toLowerCase();
           await updateDoc(userRef, { email: email.toLowerCase() });
