@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>მეგობრების თამაშები - Multiplayer & AI</title>
+  <title>Multiplayer & AI</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
@@ -72,7 +72,7 @@
     <!-- Header -->
     <header class="text-center mb-6 w-full">
       <h1 class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 mb-2">
-        <i class="fa-solid font-bold fa-dice mr-2"></i>მეგობრების თამაშები
+        <i class="fa-solid font-bold fa-dice mr-2"></i>Play For Fun
       </h1>
       <p class="text-xs md:text-sm text-slate-400">აირჩიე თამაში და ითამაშე მეგობრებთან ერთად</p>
     </header>
@@ -416,30 +416,51 @@
 
     <!-- Tic-Tac-Toe Game Screen -->
     <div id="tictactoe-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-4">
-      <div class="glass-panel p-4 rounded-2xl flex justify-between items-center">
-        <div>
-          <div class="text-xs text-slate-400">თამაში: <span class="text-purple-400 font-bold">იქსიკი და ნოლიკი</span></div>
-          <div id="ttt-status" class="text-base font-bold text-amber-400 mt-1">მიმდინარეობს...</div>
+      <!-- Players Info Header -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 border-l-4 border-indigo-500 shadow-lg">
+          <div class="w-10 h-10 rounded-full overflow-hidden bg-indigo-900 border border-indigo-500 flex items-center justify-center shrink-0">
+            <img id="ttt-p1-img" src="" class="w-full h-full object-cover hidden">
+            <i id="ttt-p1-icon" class="fa-solid fa-user text-indigo-300 text-xs"></i>
+          </div>
+          <div class="truncate text-left">
+            <div id="ttt-p1-name" class="text-xs font-bold text-slate-200 truncate">მოთამაშე 1</div>
+            <div class="text-[10px] text-indigo-400 font-bold">ნიშანი: X</div>
+          </div>
         </div>
-        <div class="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold">
-          შენი ნიშანი: <span id="ttt-my-symbol" class="text-indigo-400 font-bold ml-1">X</span>
+
+        <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 border-l-4 border-pink-500 shadow-lg">
+          <div class="w-10 h-10 rounded-full overflow-hidden bg-pink-900 border border-pink-500 flex items-center justify-center shrink-0">
+            <img id="ttt-p2-img" src="" class="w-full h-full object-cover hidden">
+            <i id="ttt-p2-icon" class="fa-solid fa-robot text-pink-300 text-xs"></i>
+          </div>
+          <div class="truncate text-left">
+            <div id="ttt-p2-name" class="text-xs font-bold text-slate-200 truncate">მოწინააღმდეგე</div>
+            <div class="text-[10px] text-pink-400 font-bold">ნიშანი: O</div>
+          </div>
         </div>
       </div>
 
-      <div class="glass-panel p-6 rounded-3xl grid grid-cols-3 gap-3 aspect-square max-w-[360px] mx-auto w-full">
-        <button onclick="makeTttMove(0)" id="ttt-cell-0" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px]"></button>
-        <button onclick="makeTttMove(1)" id="ttt-cell-1" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px]"></button>
-        <button onclick="makeTttMove(2)" id="ttt-cell-2" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px]"></button>
-        <button onclick="makeTttMove(3)" id="ttt-cell-3" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px]"></button>
-        <button onclick="makeTttMove(4)" id="ttt-cell-4" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px]"></button>
-        <button onclick="makeTttMove(5)" id="ttt-cell-5" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px]"></button>
-        <button onclick="makeTttMove(6)" id="ttt-cell-6" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px]"></button>
-        <button onclick="makeTttMove(7)" id="ttt-cell-7" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px]"></button>
-        <button onclick="makeTttMove(8)" id="ttt-cell-8" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px]"></button>
+      <!-- Status Banner -->
+      <div class="glass-panel p-3.5 rounded-2xl text-center border border-slate-700/80 shadow-inner">
+        <div id="ttt-status" class="text-sm font-bold text-amber-400">მიმდინარეობს...</div>
+      </div>
+
+      <!-- Tic-Tac-Toe Board Grid -->
+      <div class="glass-panel p-5 rounded-3xl grid grid-cols-3 gap-3 aspect-square max-w-[360px] mx-auto w-full shadow-2xl border border-slate-700/60">
+        <button onclick="makeTttMove(0)" id="ttt-cell-0" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
+        <button onclick="makeTttMove(1)" id="ttt-cell-1" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
+        <button onclick="makeTttMove(2)" id="ttt-cell-2" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
+        <button onclick="makeTttMove(3)" id="ttt-cell-3" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
+        <button onclick="makeTttMove(4)" id="ttt-cell-4" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
+        <button onclick="makeTttMove(5)" id="ttt-cell-5" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
+        <button onclick="makeTttMove(6)" id="ttt-cell-6" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
+        <button onclick="makeTttMove(7)" id="ttt-cell-7" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
+        <button onclick="makeTttMove(8)" id="ttt-cell-8" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
       </div>
 
       <div class="text-center pt-2">
-        <button onclick="returnToLobby()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">მთავარ მენიუში დაბრუნება</button>
+        <button onclick="returnToLobby()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all shadow-md">მთავარ მენიუში დაბრუნება</button>
       </div>
     </div>
 
@@ -1312,41 +1333,73 @@
       for (let line of lines) {
         const [a, b, c] = line;
         if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-          return board[a];
+          return { winner: board[a], line: line };
         }
       }
-      if (board.every(cell => cell !== "")) return "tie";
-      return null;
+      if (board.every(cell => cell !== "")) return { winner: "tie", line: null };
+      return { winner: null, line: null };
     }
 
     function updateTicTacToeUI(state) {
-      const mySymbol = playerRole === 'player1' ? 'X' : 'O';
-      document.getElementById('ttt-my-symbol').innerText = mySymbol;
+      document.getElementById('ttt-p1-name').innerText = state.player1Name || "მოთამაშე 1";
+      document.getElementById('ttt-p2-name').innerText = state.player2Name || "მოწინააღმდეგე";
+
+      const p1Img = document.getElementById('ttt-p1-img');
+      const p1Icon = document.getElementById('ttt-p1-icon');
+      if (state.player1Avatar) {
+        p1Img.src = state.player1Avatar;
+        p1Img.classList.remove('hidden');
+        p1Icon.classList.add('hidden');
+      } else {
+        p1Img.classList.add('hidden');
+        p1Icon.classList.remove('hidden');
+      }
+
+      const p2Img = document.getElementById('ttt-p2-img');
+      const p2Icon = document.getElementById('ttt-p2-icon');
+      if (state.player2Avatar) {
+        p2Img.src = state.player2Avatar;
+        p2Img.classList.remove('hidden');
+        p2Icon.classList.add('hidden');
+      } else {
+        p2Img.classList.add('hidden');
+        p2Icon.classList.remove('hidden');
+      }
 
       const isMyTurn = (state.currentTurn === playerRole);
       const statusEl = document.getElementById('ttt-status');
+      const winResult = checkTicTacToeWinner(state.board);
+      const winningLine = winResult.line || [];
 
       if (state.status === 'finished') {
         if (state.winner === 'tie') {
           statusEl.innerText = "🤝 ფრე!";
         } else if (state.winner === playerRole) {
           statusEl.innerText = "🎉 შენ მოიგე!";
-          recordGameResult(true);
         } else {
           statusEl.innerText = "😢 მოწინააღმდეგემ მოიგო!";
-          recordGameResult(false);
         }
-        statusEl.className = "text-base font-bold text-emerald-400";
+        statusEl.className = "text-sm font-bold text-emerald-400";
       } else {
         statusEl.innerText = isMyTurn ? "შენი სვლაა!" : "მოწინააღმდეგის სვლაა...";
-        statusEl.className = isMyTurn ? "text-base font-bold text-emerald-400 animate-pulse" : "text-base font-bold text-slate-400";
+        statusEl.className = isMyTurn ? "text-sm font-bold text-emerald-400 animate-pulse" : "text-sm font-bold text-slate-400";
       }
 
       for (let i = 0; i < 9; i++) {
         const cellBtn = document.getElementById(`ttt-cell-${i}`);
         const val = state.board ? state.board[i] : "";
         cellBtn.innerText = val;
-        cellBtn.className = `bg-slate-800/90 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] ${val === 'X' ? 'text-indigo-400' : 'text-pink-400'}`;
+
+        let isWinningCell = winningLine.includes(i);
+        let baseClasses = "bg-slate-800/90 border rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm";
+
+        if (isWinningCell) {
+          baseClasses += " bg-emerald-600/40 border-emerald-400 ring-4 ring-emerald-500/50 text-emerald-200 animate-bounce shadow-emerald-500/30 shadow-lg";
+        } else {
+          baseClasses += ` border-slate-700 hover:bg-slate-700 ${val === 'X' ? 'text-indigo-400' : 'text-pink-400'}`;
+        }
+
+        cellBtn.className = baseClasses;
         cellBtn.disabled = !isMyTurn || val !== "" || state.status === 'finished';
       }
 
@@ -1363,13 +1416,13 @@
       const mySymbol = playerRole === 'player1' ? 'X' : 'O';
       board[index] = mySymbol;
 
-      let winner = checkTicTacToeWinner(board);
+      let winResult = checkTicTacToeWinner(board);
       let newStatus = gameState.status;
       let winningPlayer = gameState.winner || null;
 
-      if (winner) {
+      if (winResult.winner) {
         newStatus = 'finished';
-        winningPlayer = (winner === 'tie') ? 'tie' : (winner === mySymbol ? playerRole : (playerRole === 'player1' ? 'player2' : 'player1'));
+        winningPlayer = (winResult.winner === 'tie') ? 'tie' : (winResult.winner === mySymbol ? playerRole : (playerRole === 'player1' ? 'player2' : 'player1'));
       }
 
       const nextTurn = isAiMode ? 'player2' : (playerRole === 'player1' ? 'player2' : 'player1');
@@ -1398,7 +1451,7 @@
         for (let idx of emptyIndices) {
           let testBoard = [...board];
           testBoard[idx] = 'O';
-          if (checkTicTacToeWinner(testBoard) === 'O') {
+          if (checkTicTacToeWinner(testBoard).winner === 'O') {
             chosenIndex = idx;
             break;
           }
@@ -1406,13 +1459,13 @@
       }
 
       board[chosenIndex] = 'O';
-      let winner = checkTicTacToeWinner(board);
+      let winResult = checkTicTacToeWinner(board);
       let newStatus = gameState.status;
       let winningPlayer = gameState.winner || null;
 
-      if (winner) {
+      if (winResult.winner) {
         newStatus = 'finished';
-        winningPlayer = (winner === 'tie') ? 'tie' : 'player2';
+        winningPlayer = (winResult.winner === 'tie') ? 'tie' : 'player2';
       }
 
       gameState.board = board;
@@ -1449,9 +1502,6 @@
         const winnerText = p1Won ? `${state.player1Name}მ მოიგო!` : (p2Won ? `${state.player2Name}მ მოიგო!` : "ფრეა!");
         turnBanner.innerText = `🏆 თამაში დასრულდა! ${winnerText}`;
         turnBanner.className = "text-base font-bold text-emerald-400";
-        
-        const iWon = (playerRole === 'player1' && p1Won) || (playerRole === 'player2' && p2Won);
-        recordGameResult(iWon);
       } else {
         turnBanner.innerText = isMyTurn ? "შენი სვლაა — აირჩიე ყუთი!" : "მოწინააღმდეგის სვლაა...";
         turnBanner.className = isMyTurn ? "text-base font-bold text-emerald-400 animate-pulse" : "text-base font-bold text-slate-400";
@@ -1991,10 +2041,6 @@
         } else {
           newStatus = 'finished';
           showToast("🏁 თამაში დასრულდა!");
-          const p1Won = p1s > p2s;
-          const p2Won = p2s > p1s;
-          const iWon = (playerRole === 'player1' && p1Won) || (playerRole === 'player2' && p2Won);
-          recordGameResult(iWon);
         }
       }
 
