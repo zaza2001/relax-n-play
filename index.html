@@ -297,7 +297,7 @@
 
       <div class="text-center pt-2">
         <button onclick="resetGame()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition-all">
-          <i class="fa-solid fa-rotate-right mr-1"></i>მთავარ მენიუში დაბრუნება
+          <i class="fa-solid fa-rotate-right mr-1"></i>თავიდან დაწყება
         </button>
       </div>
     </div>
@@ -465,7 +465,8 @@
         playerName = user.email ? user.email.split('@')[0] : 'სტუმარი';
         document.getElementById('user-display-email').innerText = user.email || 'სტუმარი (Anonymous)';
         
-        await loadUserData(user.uid);
+        // გადავცემთ მეილს, რომ ავტომატურად ჩაიწეროს ბაზაში თუ აკლია
+        await loadUserData(user.uid, user.email);
         listenToIncomingInvites(user.uid);
         
         switchScreen('lobby-screen');
@@ -484,7 +485,7 @@
     };
 
     window.handleAuthSubmit = async function() {
-      const email = document.getElementById('auth-email').value.trim();
+      const email = document.getElementById('auth-email'].value.trim();
       const password = document.getElementById('auth-password').value.trim();
       if (!email || !password) return showToast("შეიყვანეთ მეილი და პაროლი!");
 
@@ -492,7 +493,7 @@
         if (isRegisterMode) {
           const res = await createUserWithEmailAndPassword(auth, email, password);
           await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', res.user.uid), { 
-            email: email,
+            email: email.toLowerCase(),
             wins: 0, 
             losses: 0,
             friends: [] 
@@ -515,13 +516,18 @@
       await signOut(auth);
     };
 
-    async function loadUserData(uid) {
+    async function loadUserData(uid, email) {
       const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', uid);
       const snap = await getDoc(userRef);
       if (snap.exists()) {
         userStats = snap.data();
+        // თუ ძველ მომხმარებელს მეილი არ უწერია ბაზაში, ავტომატურად ვუწერთ
+        if (!userStats.email && email) {
+          userStats.email = email.toLowerCase();
+          await updateDoc(userRef, { email: email.toLowerCase() });
+        }
       } else {
-        userStats = { email: currentUser.email || 'Anonymous', wins: 0, losses: 0, friends: [] };
+        userStats = { email: email ? email.toLowerCase() : 'anonymous', wins: 0, losses: 0, friends: [] };
         await setDoc(userRef, userStats);
       }
       document.getElementById('user-wins').innerText = userStats.wins || 0;
@@ -532,7 +538,9 @@
     // --- მეგობრების სისტემა ---
     window.addFriend = async function() {
       const friendEmail = document.getElementById('friend-email-input').value.trim().toLowerCase();
-      if (!friendEmail || friendEmail === currentUser.email) return showToast("შეიყვანეთ სწორი მეილი!");
+      if (!friendEmail || (currentUser.email && friendEmail === currentUser.email.toLowerCase())) {
+        return showToast("შეიყვანეთ სწორი მეილი!");
+      }
 
       try {
         const usersRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
@@ -553,7 +561,6 @@
         const myFriends = userStats.friends || [];
         if (myFriends.some(f => f.uid === friendUid)) return showToast("უკვე გყავს მეგობრებში!");
 
-        // ვამატებთ ერთმანეთს ან ორმხრივად მეგობრებში
         const friendObj = { uid: friendUid, email: friendData.email };
         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), {
           friends: arrayUnion(friendObj)
@@ -561,7 +568,7 @@
 
         document.getElementById('friend-email-input').value = "";
         showToast("მეგობარი წარმატებით დაემატა! 🎉");
-        await loadUserData(currentUser.uid);
+        await loadUserData(currentUser.uid, currentUser.email);
       } catch (err) {
         showToast("მეგობრის დამატება ვერ მოხერხდა");
       }
@@ -598,7 +605,6 @@
       roomCode = generateCode();
       playerRole = 'player1';
 
-      // ვქმნით ოთახს ავტომატურად
       let initialRoomData = {
         code: roomCode,
         gameMode: gameMode,
@@ -654,7 +660,6 @@
       try {
         await setDoc(getRoomRef(roomCode), initialRoomData);
 
-        // ვუგზავნით მოწვევის სიგნალს მეგობარს Firestore-ში მისივე ოთახში/დოკუმენტში
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'invites', friendUid), {
           roomCode: roomCode,
           fromEmail: currentUser.email,
@@ -678,7 +683,6 @@
       invitesUnsubscribe = onSnapshot(inviteRef, (docSnap) => {
         if (!docSnap.exists()) return;
         const inviteData = docSnap.data();
-        // თუ მოწვევა ახალია (ბოლო 30 წამში გამოგზავნილი)
         if (Date.now() - inviteData.timestamp < 30000) {
           pendingInviteRoomCode = inviteData.roomCode;
           document.getElementById('invite-text').innerText = `${inviteData.fromEmail} გიწვევს თამაშში (${inviteData.gameMode})!`;
