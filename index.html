@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multiplayer & AI</title>
+  <title>მეგობრების თამაშები - Multiplayer & AI</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
@@ -72,7 +72,7 @@
     <!-- Header -->
     <header class="text-center mb-6 w-full">
       <h1 class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 mb-2">
-        <i class="fa-solid font-bold fa-dice mr-2"></i>Jast Fun(test name)
+        <i class="fa-solid font-bold fa-dice mr-2"></i>მეგობრების თამაშები
       </h1>
       <p class="text-xs md:text-sm text-slate-400">აირჩიე თამაში და ითამაშე რეალურ დროში ან AI-სთან</p>
     </header>
@@ -83,25 +83,66 @@
       <button onclick="hideToast()" class="text-slate-400 hover:text-white ml-2"><i class="fa-solid fa-xmark"></i></button>
     </div>
 
+    <!-- Auth Screen (Login / Register) -->
+    <div id="auth-screen" class="w-full max-w-md glass-panel p-6 md:p-8 rounded-3xl shadow-2xl text-center">
+      <div class="mb-6">
+        <div class="w-16 h-16 bg-purple-600/30 text-purple-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl border border-purple-500/30">
+          <i class="fa-solid fa-user-lock"></i>
+        </div>
+        <h2 id="auth-title" class="text-2xl font-bold mb-1">სისტემაში შესვლა</h2>
+        <p class="text-sm text-slate-400">შეიყვანეთ მეილი და პაროლი პროგრესის შესანახად</p>
+      </div>
+
+      <div class="space-y-4 mb-6">
+        <input type="email" id="auth-email" placeholder="ელ-ფოსტა (Email)" class="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-2xl text-center text-sm font-semibold focus:outline-none focus:border-indigo-500">
+        <input type="password" id="auth-password" placeholder="პაროლი" class="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-2xl text-center text-sm font-semibold focus:outline-none focus:border-indigo-500">
+      </div>
+
+      <div class="space-y-3">
+        <button onclick="handleAuthSubmit()" id="auth-submit-btn" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-bold rounded-2xl shadow-lg transition-all text-base active:scale-95">
+          შესვლა
+        </button>
+        <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl text-xs font-semibold transition-all">
+          არ გაქვს ანგარიში? დარეგისტრირდი
+        </button>
+        <div class="pt-2">
+          <button onclick="continueAnonymously()" class="text-xs text-slate-400 hover:text-white underline transition-colors">
+            გაგრძელება სტუმრის რეჟიმში (Anonymous)
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Lobby / Room Joining Screen -->
-    <div id="lobby-screen" class="w-full max-w-md glass-panel p-6 md:p-8 rounded-3xl shadow-2xl text-center">
+    <div id="lobby-screen" class="hidden w-full max-w-md glass-panel p-6 md:p-8 rounded-3xl shadow-2xl text-center">
+      <div class="flex justify-between items-center bg-slate-800/60 p-3 rounded-2xl border border-slate-700 mb-4 text-xs">
+        <div>
+          <span class="text-slate-400">პროფილი: </span>
+          <span id="user-display-email" class="font-bold text-indigo-300">სტუმარი</span>
+        </div>
+        <div class="flex gap-2">
+          <span class="text-emerald-400 font-bold">მოგება: <span id="user-wins">0</span></span>
+          <span class="text-rose-400 font-bold">წაგება: <span id="user-losses">0</span></span>
+        </div>
+        <button onclick="logoutUser()" class="text-slate-400 hover:text-rose-400" title="გასვლა"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </div>
+
       <div class="mb-6">
         <div class="w-16 h-16 bg-indigo-600/30 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl border border-indigo-500/30">
           <i class="fa-solid fa-gamepad"></i>
         </div>
         <h2 class="text-2xl font-bold mb-1">თამაშის მენიუ</h2>
-        <p class="text-sm text-slate-400">შეიყვანეთ სახელი და აირჩიეთ თამაში</p>
+        <p class="text-sm text-slate-400">აირჩიეთ თამაში</p>
       </div>
 
       <div class="space-y-4 mb-6">
-        <input type="text" id="player-name-input" maxlength="15" placeholder="თქვენი სახელი (მაგ: ზაზა)" class="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-2xl text-center text-lg font-semibold focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
-        
         <div class="text-left">
           <label class="text-xs text-slate-400 font-semibold ml-2">აირჩიეთ თამაში:</label>
           <select id="game-mode-select" class="w-full mt-1 px-4 py-3 bg-slate-800 border border-slate-700 rounded-2xl text-white font-medium focus:outline-none focus:border-indigo-500">
             <option value="words">🔤 სიტყვების გამოცნობა</option>
             <option value="bura">🃏 ბურა (5 კარტი)</option>
             <option value="boxes">💰 თანხის ყუთები (Cash Boxes)</option>
+            <option value="tictactoe">❌ იქსიკი და ნოლიკი (Tic-Tac-Toe)</option>
           </select>
         </div>
       </div>
@@ -315,13 +356,44 @@
       </div>
     </div>
 
+    <!-- Tic-Tac-Toe Game Screen -->
+    <div id="tictactoe-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-4">
+      <div class="glass-panel p-4 rounded-2xl flex justify-between items-center">
+        <div>
+          <div class="text-xs text-slate-400">თამაში: <span class="text-purple-400 font-bold">იქსიკი და ნოლიკი</span></div>
+          <div id="ttt-status" class="text-base font-bold text-amber-400 mt-1">მიმდინარეობს...</div>
+        </div>
+        <div class="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs font-semibold">
+          შენი ნიშანი: <span id="ttt-my-symbol" class="text-indigo-400 font-bold ml-1">X</span>
+        </div>
+      </div>
+
+      <div class="glass-panel p-6 rounded-3xl grid grid-cols-3 gap-3 aspect-square max-w-[360px] mx-auto w-full">
+        <button onclick="makeTttMove(0)" id="ttt-cell-0" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95"></button>
+        <button onclick="makeTttMove(1)" id="ttt-cell-1" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95"></button>
+        <button onclick="makeTttMove(2)" id="ttt-cell-2" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95"></button>
+        <button onclick="makeTttMove(3)" id="ttt-cell-3" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95"></button>
+        <button onclick="makeTttMove(4)" id="ttt-cell-4" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95"></button>
+        <button onclick="makeTttMove(5)" id="ttt-cell-5" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95"></button>
+        <button onclick="makeTttMove(6)" id="ttt-cell-6" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95"></button>
+        <button onclick="makeTttMove(7)" id="ttt-cell-7" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95"></button>
+        <button onclick="makeTttMove(8)" id="ttt-cell-8" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95"></button>
+      </div>
+
+      <div class="text-center pt-2">
+        <button onclick="resetGame()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition-all">
+          <i class="fa-solid fa-rotate-right mr-1"></i>მთავარ მენიუში დაბრუნება
+        </button>
+      </div>
+    </div>
+
   </div>
 
   <!-- Firebase Script & App Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     
     const firebaseConfig = {
       apiKey: "AIzaSyCcRzuTSNoomOKf4MC7sFRqwO8CAc2zfsw",
@@ -338,7 +410,107 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    signInAnonymously(auth);
+    let currentUser = null;
+    let userStats = { wins: 0, losses: 0 };
+    let roomCode = null;
+    let playerRole = null;
+    let playerName = "";
+    let roomUnsubscribe = null;
+    let gameState = null;
+    let clientTimerInterval = null;
+    let isRegisterMode = false;
+    
+    let isAiMode = false;
+    let aiDifficulty = 'medium';
+
+    window.showToast = function(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-message').innerText = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => { hideToast(); }, 4000);
+    };
+
+    window.hideToast = function() {
+      document.getElementById('toast').classList.add('hidden');
+    };
+
+    // --- ავტორიზაციის მართვა ---
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        playerName = user.email ? user.email.split('@')[0] : 'სტუმარი';
+        document.getElementById('user-display-email').innerText = user.email || 'სტუმარი (Anonymous)';
+        
+        // მომხმარებლის სტატისტიკის წამოღება ბაზიდან
+        await loadUserStats(user.uid);
+        
+        switchScreen('lobby-screen');
+      } else {
+        currentUser = null;
+        switchScreen('auth-screen');
+      }
+    });
+
+    window.toggleAuthMode = function() {
+      isRegisterMode = !isRegisterMode;
+      document.getElementById('auth-title').innerText = isRegisterMode ? "რეგისტრაცია" : "სისტემაში შესვლა";
+      document.getElementById('auth-submit-btn').innerText = isRegisterMode ? "რეგისტრაცია" : "შესვლა";
+      document.getElementById('auth-toggle-btn').innerText = isRegisterMode ? "უკვე გაქვს ანგარიში? შესვლა" : "არ გაქვს ანგარიში? დარეგისტრირდი";
+    };
+
+    window.handleAuthSubmit = async function() {
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value.trim();
+      if (!email || !password) return showToast("შეიყვანეთ მეილი და პაროლი!");
+
+      try {
+        if (isRegisterMode) {
+          const res = await createUserWithEmailAndPassword(auth, email, password);
+          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', res.user.uid), { wins: 0, losses: 0 });
+          showToast("რეგისტრაცია წარმატებულია! 🎉");
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+          showToast("წარმატებით შეხვედით სისტემაში! 👋");
+        }
+      } catch (err) {
+        showToast("შეცდომა: " + err.message);
+      }
+    };
+
+    window.continueAnonymously = async function() {
+      await signInAnonymously(auth);
+    };
+
+    window.logoutUser = async function() {
+      await signOut(auth);
+    };
+
+    async function loadUserStats(uid) {
+      const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', uid);
+      const snap = await getDoc(userRef);
+      if (snap.exists()) {
+        userStats = snap.data();
+      } else {
+        userStats = { wins: 0, losses: 0 };
+        await setDoc(userRef, userStats);
+      }
+      document.getElementById('user-wins').innerText = userStats.wins;
+      document.getElementById('user-losses').innerText = userStats.losses;
+    }
+
+    async function recordGameResult(won) {
+      if (!currentUser) return;
+      const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid);
+      try {
+        await updateDoc(userRef, {
+          wins: increment(won ? 1 : 0),
+          losses: increment(won ? 0 : 1)
+        });
+        await loadUserStats(currentUser.uid);
+      } catch (e) {
+        console.error("Stats update error:", e);
+      }
+    }
 
     const ROUND_WORDS = {
       1: [
@@ -363,35 +535,6 @@
         { word: "გალაქტიკა", category: "კოსმოსი" }, { word: "თირკმელი", category: "ორგანო" }
       ]
     };
-
-    let currentUser = null;
-    let roomCode = null;
-    let playerRole = null;
-    let playerName = "";
-    let roomUnsubscribe = null;
-    let gameState = null;
-    let clientTimerInterval = null;
-    
-    let isAiMode = false;
-    let aiDifficulty = 'medium';
-
-    window.showToast = function(msg) {
-      const toast = document.getElementById('toast');
-      document.getElementById('toast-message').innerText = msg;
-      toast.classList.remove('hidden');
-      setTimeout(() => { hideToast(); }, 4000);
-    };
-
-    window.hideToast = function() {
-      document.getElementById('toast').classList.add('hidden');
-    };
-
-    async function initAuth() {
-      if (currentUser) return currentUser;
-      const res = await signInAnonymously(auth);
-      currentUser = res.user;
-      return currentUser;
-    }
 
     function generateCode() {
       return Math.floor(1000 + Math.random() * 9000).toString();
@@ -443,12 +586,11 @@
       return btn;
     }
 
-    // --- ყუთების სქემა (2, 6, 8, 10, 4) ---
     function generateBoxesForRound(roundNum) {
       const counts = { 1: 2, 2: 6, 3: 8, 4: 10, 5: 4 };
       const totalBoxes = counts[roundNum] || 2;
       let boxes = [];
-      const possibleAmounts = [1, 10, 20, 50, -30, -40, 100, 400, 500, -500];
+      const possibleAmounts = [100, 500, 1000, 2500, 5000, 10000, 25000, 50000];
       
       for (let i = 0; i < totalBoxes; i++) {
         const randomAmount = possibleAmounts[Math.floor(Math.random() * possibleAmounts.length)];
@@ -463,8 +605,6 @@
     }
 
     window.startAiGame = function() {
-      const nameInput = document.getElementById('player-name-input').value.trim();
-      playerName = nameInput || 'მოთამაშე';
       aiDifficulty = document.getElementById('ai-difficulty').value;
       const gameMode = document.getElementById('game-mode-select').value;
 
@@ -511,12 +651,16 @@
         initialData.p2Money = 0;
         initialData.showOpponentMoney = false;
         initialData.jheirani = { p1Choice: null, p2Choice: null, winner: null };
+      } else if (gameMode === 'tictactoe') {
+        initialData.status = 'jheirani';
+        initialData.board = Array(9).fill("");
+        initialData.jheirani = { p1Choice: null, p2Choice: null, winner: null };
       }
 
       gameState = initialData;
       if (gameMode === 'bura') {
         switchScreen('bura-screen');
-      } else if (gameMode === 'boxes') {
+      } else if (gameMode === 'boxes' || gameMode === 'tictactoe') {
         switchScreen('jheirani-screen');
       } else {
         switchScreen('game-screen');
@@ -526,13 +670,7 @@
     };
 
     window.createRoom = async function() {
-      const nameInput = document.getElementById('player-name-input').value.trim();
-      if (!nameInput) return showToast("გთხოვთ შეიყვანოთ თქვენი სახელი!");
-      playerName = nameInput;
-      isAiMode = false;
-
       const gameMode = document.getElementById('game-mode-select').value;
-      await initAuth();
       roomCode = generateCode();
       playerRole = 'player1';
 
@@ -543,7 +681,7 @@
         player1Name: playerName,
         player2Id: null,
         player2Name: null,
-        status: 'waiting', // ყოველთვის waiting რომ მეორე მოთამაშემ შემოვიდეს
+        status: 'waiting',
         createdAt: new Date().toISOString()
       };
 
@@ -596,6 +734,13 @@
           currentTurn: 'player1',
           jheirani: { p1Choice: null, p2Choice: null, winner: null }
         };
+      } else if (gameMode === 'tictactoe') {
+        initialRoomData = {
+          ...initialRoomData,
+          board: Array(9).fill(""),
+          currentTurn: 'player1',
+          jheirani: { p1Choice: null, p2Choice: null, winner: null }
+        };
       }
 
       try {
@@ -609,15 +754,9 @@
     };
 
     window.joinRoom = async function() {
-      const nameInput = document.getElementById('player-name-input').value.trim();
-      if (!nameInput) return showToast("გთხოვთ შეიყვანოთ თქვენი სახელი!");
-      playerName = nameInput;
-      isAiMode = false;
-
       const codeInput = document.getElementById('room-code-input').value.trim();
       if (codeInput.length !== 4) return showToast("შეიყვანეთ ვალიდური კოდი");
 
-      await initAuth();
       roomCode = codeInput;
       const ref = getRoomRef(roomCode);
 
@@ -632,7 +771,7 @@
           const updateObj = {
             player2Id: currentUser.uid,
             player2Name: playerName,
-            status: 'jheirani' // როცა მეორე შემოვა, ყველა თამაშისთვის იწყება ჯეირანი
+            status: 'jheirani'
           };
           if (data.gameMode === 'words') {
             updateObj.turnDeadline = Date.now() + getRoundTimeLimit(1);
@@ -676,6 +815,16 @@
         }
         switchScreen('boxes-screen');
         updateBoxesUI(state);
+        return;
+      }
+
+      if (state.gameMode === 'tictactoe') {
+        if (state.status === 'jheirani') {
+          switchScreen('jheirani-screen');
+          return;
+        }
+        switchScreen('tictactoe-screen');
+        updateTicTacToeUI(state);
         return;
       }
 
@@ -754,6 +903,126 @@
       }
     }
 
+    function checkTicTacToeWinner(board) {
+      const lines = [
+        [0,1,2], [3,4,5], [6,7,8],
+        [0,3,6], [1,4,7], [2,5,8],
+        [0,4,8], [2,4,6]
+      ];
+      for (let line of lines) {
+        const [a, b, c] = line;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          return board[a];
+        }
+      }
+      if (board.every(cell => cell !== "")) return "tie";
+      return null;
+    }
+
+    function updateTicTacToeUI(state) {
+      const mySymbol = playerRole === 'player1' ? 'X' : 'O';
+      document.getElementById('ttt-my-symbol').innerText = mySymbol;
+
+      const isMyTurn = (state.currentTurn === playerRole);
+      const statusEl = document.getElementById('ttt-status');
+
+      if (state.status === 'finished') {
+        if (state.winner === 'tie') {
+          statusEl.innerText = "🤝 ფრე!";
+        } else if (state.winner === playerRole) {
+          statusEl.innerText = "🎉 შენ მოიგე!";
+          recordGameResult(true);
+        } else {
+          statusEl.innerText = "😢 მოწინააღმდეგემ მოიგო!";
+          recordGameResult(false);
+        }
+        statusEl.className = "text-base font-bold text-emerald-400";
+      } else {
+        statusEl.innerText = isMyTurn ? "შენი სვლაა!" : "მოწინააღმდეგის სვლაა...";
+        statusEl.className = isMyTurn ? "text-base font-bold text-emerald-400 animate-pulse" : "text-base font-bold text-slate-400";
+      }
+
+      for (let i = 0; i < 9; i++) {
+        const cellBtn = document.getElementById(`ttt-cell-${i}`);
+        const val = state.board ? state.board[i] : "";
+        cellBtn.innerText = val;
+        cellBtn.className = `bg-slate-800/90 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] ${val === 'X' ? 'text-indigo-400' : 'text-pink-400'}`;
+        cellBtn.disabled = !isMyTurn || val !== "" || state.status === 'finished';
+      }
+
+      if (isAiMode && state.currentTurn === 'player2' && state.status === 'playing') {
+        setTimeout(runAiTicTacToeTurn, 1000);
+      }
+    }
+
+    window.makeTttMove = async function(index) {
+      if (!gameState || gameState.currentTurn !== playerRole || gameState.status === 'finished') return;
+      if (gameState.board[index] !== "") return;
+
+      const board = [...gameState.board];
+      const mySymbol = playerRole === 'player1' ? 'X' : 'O';
+      board[index] = mySymbol;
+
+      let winner = checkTicTacToeWinner(board);
+      let newStatus = gameState.status;
+      let winningPlayer = gameState.winner || null;
+
+      if (winner) {
+        newStatus = 'finished';
+        winningPlayer = (winner === 'tie') ? 'tie' : (winner === mySymbol ? playerRole : (playerRole === 'player1' ? 'player2' : 'player1'));
+      }
+
+      const nextTurn = isAiMode ? 'player2' : (playerRole === 'player1' ? 'player2' : 'player1');
+
+      gameState.board = board;
+      gameState.currentTurn = newStatus === 'finished' ? playerRole : nextTurn;
+      gameState.status = newStatus;
+      gameState.winner = winningPlayer;
+
+      if (!isAiMode) {
+        await updateDoc(getRoomRef(roomCode), gameState);
+      } else {
+        updateUI(gameState);
+      }
+    };
+
+    function runAiTicTacToeTurn() {
+      if (!gameState || gameState.currentTurn !== 'player2' || gameState.status === 'finished') return;
+
+      const board = [...gameState.board];
+      const emptyIndices = board.map((val, idx) => val === "" ? idx : null).filter(val => val !== null);
+      if (emptyIndices.length === 0) return;
+
+      let chosenIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+      if (aiDifficulty === 'hard' || aiDifficulty === 'medium') {
+        for (let idx of emptyIndices) {
+          let testBoard = [...board];
+          testBoard[idx] = 'O';
+          if (checkTicTacToeWinner(testBoard) === 'O') {
+            chosenIndex = idx;
+            break;
+          }
+        }
+      }
+
+      board[chosenIndex] = 'O';
+      let winner = checkTicTacToeWinner(board);
+      let newStatus = gameState.status;
+      let winningPlayer = gameState.winner || null;
+
+      if (winner) {
+        newStatus = 'finished';
+        winningPlayer = (winner === 'tie') ? 'tie' : 'player2';
+      }
+
+      gameState.board = board;
+      gameState.currentTurn = newStatus === 'finished' ? 'player2' : 'player1';
+      gameState.status = newStatus;
+      gameState.winner = winningPlayer;
+
+      updateUI(gameState);
+    }
+
     function updateBoxesUI(state) {
       const counts = { 1: 2, 2: 6, 3: 8, 4: 10, 5: 4 };
       document.getElementById('boxes-round-title').innerText = `რაუნდი ${state.round} / 5 (ყუთები: ${counts[state.round] || 2})`;
@@ -775,9 +1044,14 @@
       const turnBanner = document.getElementById('boxes-turn-banner');
 
       if (state.status === 'finished') {
-        const winnerText = state.p1Money > state.p2Money ? `${state.player1Name}მ მოიგო!` : (state.p2Money > state.p1Money ? `${state.player2Name}მ მოიგო!` : "ფრეა!");
+        const p1Won = state.p1Money > state.p2Money;
+        const p2Won = state.p2Money > state.p1Money;
+        const winnerText = p1Won ? `${state.player1Name}მ მოიგო!` : (p2Won ? `${state.player2Name}მ მოიგო!` : "ფრეა!");
         turnBanner.innerText = `🏆 თამაში დასრულდა! ${winnerText}`;
         turnBanner.className = "text-base font-bold text-emerald-400";
+        
+        const iWon = (playerRole === 'player1' && p1Won) || (playerRole === 'player2' && p2Won);
+        recordGameResult(iWon);
       } else {
         turnBanner.innerText = isMyTurn ? "შენი სვლაა — აირჩიე ყუთი!" : "მოწინააღმდეგის სვლაა...";
         turnBanner.className = isMyTurn ? "text-base font-bold text-emerald-400 animate-pulse" : "text-base font-bold text-slate-400";
@@ -1317,6 +1591,10 @@
         } else {
           newStatus = 'finished';
           showToast("🏁 თამაში დასრულდა!");
+          const p1Won = p1s > p2s;
+          const p2Won = p2s > p1s;
+          const iWon = (playerRole === 'player1' && p1Won) || (playerRole === 'player2' && p2Won);
+          recordGameResult(iWon);
         }
       }
 
@@ -1349,12 +1627,14 @@
     };
 
     function switchScreen(screenId) {
+      document.getElementById('auth-screen').classList.add('hidden');
       document.getElementById('lobby-screen').classList.add('hidden');
       document.getElementById('waiting-screen').classList.add('hidden');
       document.getElementById('jheirani-screen').classList.add('hidden');
       document.getElementById('game-screen').classList.add('hidden');
       document.getElementById('bura-screen').classList.add('hidden');
       document.getElementById('boxes-screen').classList.add('hidden');
+      document.getElementById('tictactoe-screen').classList.add('hidden');
       document.getElementById(screenId).classList.remove('hidden');
     }
   </script>
