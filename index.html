@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multiplayer & AI</title>
+  <title>მეგობრების თამაშები - Multiplayer & AI</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
@@ -13,55 +13,32 @@
   <style>
     body {
       font-family: 'Fira GO', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      background: linear-gradient(135deg, #090d16 0%, #171033 50%, #0f172a 100%);
       min-height: 100vh;
       color: #f8fafc;
     }
     .glass-panel {
-      background: rgba(30, 41, 59, 0.75);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
     }
-    .card-tile {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    .neon-glow {
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
     }
-    .card-tile:hover:not(:disabled) {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+    .path-tile {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .playing-card {
-      width: 64px;
-      height: 96px;
-      background: #ffffff;
-      color: #0f172a;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 4px 6px;
-      font-weight: bold;
-      user-select: none;
-      transition: all 0.2s ease;
+    .path-tile:hover:not(:disabled) {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 0 15px rgba(129, 140, 248, 0.6);
     }
-    .playing-card:hover:not(:disabled) {
-      transform: translateY(-6px);
-      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.5);
+    @keyframes pulse-mine {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.15); opacity: 0.85; }
     }
-    .playing-card.red {
-      color: #dc2626;
-    }
-    .card-back {
-      background: linear-gradient(135deg, #3730a3 0%, #1e1b4b 100%);
-      border: 2px solid #6366f1;
-      border-radius: 8px;
-      width: 64px;
-      height: 96px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #818cf8;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    .mine-exploded {
+      animation: pulse-mine 0.4s ease-in-out infinite;
     }
   </style>
 </head>
@@ -71,14 +48,14 @@
     
     <!-- Header -->
     <header class="text-center mb-6 w-full">
-      <h1 class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 mb-2">
-        <i class="fa-solid font-bold fa-dice mr-2"></i>Play For Fun
+      <h1 class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 mb-2 drop-shadow-lg">
+        <i class="fa-solid font-bold fa-dice mr-2"></i>მეგობრების თამაშები
       </h1>
       <p class="text-xs md:text-sm text-slate-400">აირჩიე თამაში და ითამაშე მეგობრებთან ერთად</p>
     </header>
 
-    <!-- Notification Toast / Invite Modal Popup -->
-    <div id="toast" class="hidden fixed top-4 right-4 left-4 md:left-auto md:w-96 glass-panel border-l-4 border-indigo-500 p-4 rounded-xl shadow-2xl z-50 text-sm flex items-center justify-between transition-all duration-300">
+    <!-- Notification Toast -->
+    <div id="toast" class="hidden fixed top-4 right-4 left-4 md:left-auto md:w-96 glass-panel border-l-4 border-indigo-500 p-4 rounded-2xl shadow-2xl z-50 text-sm flex items-center justify-between transition-all duration-300">
       <div id="toast-message" class="text-slate-200"></div>
       <button onclick="hideToast()" class="text-slate-400 hover:text-white ml-2"><i class="fa-solid fa-xmark"></i></button>
     </div>
@@ -128,7 +105,7 @@
       </div>
     </div>
 
-    <!-- Lobby / Room Joining & Friends Screen -->
+    <!-- Lobby Screen -->
     <div id="lobby-screen" class="hidden w-full max-w-md glass-panel p-6 md:p-8 rounded-3xl shadow-2xl text-center">
       <div class="flex justify-between items-center bg-slate-800/60 p-3 rounded-2xl border border-slate-700 mb-4 text-xs">
         <div class="flex items-center gap-2">
@@ -178,7 +155,7 @@
           <label class="text-xs text-slate-400 font-semibold ml-2">აირჩიეთ თამაში:</label>
           <select id="game-mode-select" class="w-full mt-1 px-4 py-3 bg-slate-800 border border-slate-700 rounded-2xl text-white font-medium focus:outline-none focus:border-indigo-500 text-sm">
             <option value="words">🔤 სიტყვების გამოცნობა</option>
-            <option value="bura">🃏 ბურა (5 კარტი)</option>
+            <option value="safepath">💣 დანაღმული გზა (Safe Path)</option>
             <option value="boxes">💰 თანხის ყუთები (Cash Boxes)</option>
             <option value="tictactoe">❌ იქსიკი და ნოლიკი (Tic-Tac-Toe)</option>
           </select>
@@ -336,51 +313,45 @@
       </div>
     </div>
 
-    <!-- Bura Game Screen -->
-    <div id="bura-screen" class="hidden w-full flex flex-col space-y-4">
-      <div class="glass-panel p-4 rounded-2xl flex justify-between items-center">
-        <div>
-          <div class="text-xs text-slate-400">თამაში: <span class="text-indigo-400 font-bold">ბურა (5 კარტი)</span></div>
-          <div id="bura-status" class="text-lg font-bold text-amber-400 mt-1">მიმდინარეობს...</div>
-        </div>
-        <div class="flex items-center space-x-3">
-          <div class="px-3 py-1 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-300">
-            დასტაშია: <span id="deck-remaining" class="font-bold text-indigo-400">0</span>
+    <!-- Safe Path Game Screen (Upgraded Neon Arcade Style & Mine Reveal) -->
+    <div id="safepath-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-4">
+      <!-- Players Info Header -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 border-l-4 border-indigo-500 shadow-xl neon-glow">
+          <div class="w-10 h-10 rounded-full overflow-hidden bg-indigo-900 border-2 border-indigo-400 flex items-center justify-center shrink-0 shadow">
+            <img id="sp-p1-img" src="" class="w-full h-full object-cover hidden">
+            <i id="sp-p1-icon" class="fa-solid fa-person-running text-indigo-200 text-lg"></i>
           </div>
-          <div class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm font-semibold flex items-center space-x-1">
-            <span>კოზირი:</span>
-            <span id="trump-suit" class="text-xl ml-1">--</span>
+          <div class="truncate text-left">
+            <div id="sp-p1-name" class="text-xs font-bold text-slate-100 truncate">მოთამაშე 1</div>
+            <div class="text-[10px] text-indigo-300 font-bold">დონე: <span id="sp-p1-pos">0</span> / 5</div>
           </div>
         </div>
-      </div>
 
-      <div class="glass-panel p-3 rounded-2xl flex justify-between items-center">
-        <span id="bura-opponent-name" class="font-bold text-slate-300">მოწინააღმდეგე</span>
-        <div id="bura-opponent-hand-visual" class="flex space-x-1"></div>
-      </div>
-
-      <div class="glass-panel p-6 rounded-3xl min-h-[180px] flex items-center justify-around border-dashed border-2 border-slate-700">
-        <div class="flex flex-col items-center">
-          <div class="card-back shadow-md">
-            <i class="fa-solid fa-clone text-2xl"></i>
+        <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 border-l-4 border-pink-500 shadow-xl">
+          <div class="w-10 h-10 rounded-full overflow-hidden bg-pink-900 border-2 border-pink-400 flex items-center justify-center shrink-0 shadow">
+            <img id="sp-p2-img" src="" class="w-full h-full object-cover hidden">
+            <i id="sp-p2-icon" class="fa-solid fa-robot text-pink-200 text-lg"></i>
           </div>
-          <span class="text-[10px] text-slate-400 mt-1">დასტა</span>
-        </div>
-
-        <div id="bura-table-cards" class="flex items-center space-x-4 min-h-[96px]">
-          <span class="text-slate-500 text-sm">მაგიდა ცარიელია</span>
+          <div class="truncate text-left">
+            <div id="sp-p2-name" class="text-xs font-bold text-slate-100 truncate">მოწინააღმდეგე</div>
+            <div class="text-[10px] text-pink-300 font-bold">დონე: <span id="sp-p2-pos">0</span> / 5</div>
+          </div>
         </div>
       </div>
 
-      <div class="glass-panel p-4 rounded-3xl space-y-2">
-        <div class="text-xs font-bold text-indigo-400 uppercase">თქვენი კარტები:</div>
-        <div id="bura-my-hand" class="flex justify-center gap-3 overflow-x-auto py-2"></div>
+      <!-- Status Banner -->
+      <div class="glass-panel p-3.5 rounded-2xl text-center border border-indigo-500/30 shadow-inner bg-slate-900/90">
+        <div id="sp-status" class="text-sm font-bold text-amber-300 tracking-wide">მიმდინარეობს...</div>
       </div>
-      
+
+      <!-- Safe Path Board Grid -->
+      <div id="safepath-board" class="glass-panel p-5 rounded-3xl flex flex-col space-y-3 max-w-[360px] mx-auto w-full shadow-2xl border border-indigo-500/30">
+        <!-- Rendered via JS -->
+      </div>
+
       <div class="text-center pt-2">
-        <button onclick="returnToLobby()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition-all">
-          <i class="fa-solid fa-rotate-right mr-1"></i>მთავარ მენიუში დაბრუნება
-        </button>
+        <button onclick="returnToLobby()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all shadow-md border border-slate-700">მთავარ მენიუში დაბრუნება</button>
       </div>
     </div>
 
@@ -416,7 +387,6 @@
 
     <!-- Tic-Tac-Toe Game Screen -->
     <div id="tictactoe-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-4">
-      <!-- Players Info Header -->
       <div class="grid grid-cols-2 gap-3">
         <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 border-l-4 border-indigo-500 shadow-lg">
           <div class="w-10 h-10 rounded-full overflow-hidden bg-indigo-900 border border-indigo-500 flex items-center justify-center shrink-0">
@@ -441,12 +411,10 @@
         </div>
       </div>
 
-      <!-- Status Banner -->
       <div class="glass-panel p-3.5 rounded-2xl text-center border border-slate-700/80 shadow-inner">
         <div id="ttt-status" class="text-sm font-bold text-amber-400">მიმდინარეობს...</div>
       </div>
 
-      <!-- Tic-Tac-Toe Board Grid -->
       <div class="glass-panel p-5 rounded-3xl grid grid-cols-3 gap-3 aspect-square max-w-[360px] mx-auto w-full shadow-2xl border border-slate-700/60">
         <button onclick="makeTttMove(0)" id="ttt-cell-0" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
         <button onclick="makeTttMove(1)" id="ttt-cell-1" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
@@ -516,7 +484,6 @@
       document.getElementById('toast').classList.add('hidden');
     };
 
-    // --- ავტორიზაცია და რეალურ დროში ინვაიტების მოსმენა ---
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
@@ -687,7 +654,6 @@
       }
     };
 
-    // --- მეგობრების სისტემა ---
     window.addFriend = async function() {
       const friendEmail = document.getElementById('friend-email-input').value.trim().toLowerCase();
       if (!friendEmail || (currentUser.email && friendEmail === currentUser.email.toLowerCase())) {
@@ -751,7 +717,6 @@
       });
     }
 
-    // --- პირდაპირი მოწვევა კოდის გარეშე ---
     window.sendGameInvite = async function(friendUid, friendName) {
       if (!currentUser) {
         return showToast("გთხოვთ დაიცადოთ, მიმდინარეობს სერვერთან კავშირი...");
@@ -793,13 +758,11 @@
         initialRoomData.turnDeadline = Date.now() + 15000;
         initialRoomData.cards = cards;
         initialRoomData.jheirani = { p1Choice: null, p2Choice: null, winner: null };
-      } else if (gameMode === 'bura') {
-        const deck = generateBuraDeck();
-        initialRoomData.deck = deck;
-        initialRoomData.p1Hand = deck.splice(0, 5);
-        initialRoomData.p2Hand = deck.splice(0, 5);
-        initialRoomData.trumpCard = deck[deck.length - 1];
-        initialRoomData.tableCards = [];
+      } else if (gameMode === 'safepath') {
+        initialRoomData.p1Pos = 0;
+        initialRoomData.p2Pos = 0;
+        initialRoomData.mineMap = generateSafePathMines();
+        initialRoomData.revealedMines = {}; // { "row-col": true }
         initialRoomData.currentTurn = 'player1';
       } else if (gameMode === 'boxes') {
         initialRoomData.round = 1;
@@ -817,7 +780,6 @@
 
       try {
         await setDoc(getRoomRef(roomCode), initialRoomData);
-
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'invites', friendUid), {
           roomCode: roomCode,
           fromName: playerName,
@@ -830,7 +792,6 @@
         listenToRoom(roomCode);
         showToast(`მოწვევა გაეგზავნა მოთამაშეს: ${friendName}`);
       } catch (err) {
-        console.error("Send invite error:", err);
         showToast("მოწვევის გაგზავნა ვერ მოხერხდა: " + err.message);
       }
     };
@@ -860,14 +821,13 @@
       try {
         const snap = await getDoc(ref);
         if (!snap.exists()) return showToast("ოთახი უკვე აღარ არსებობს");
-        const data = snap.data();
-
+        
         playerRole = 'player2';
         await updateDoc(ref, {
           player2Id: currentUser.uid,
           player2Name: playerName,
           player2Avatar: currentUserAvatar || "",
-          status: 'jheirani'
+          status: 'playing'
         });
 
         listenToRoom(roomCode);
@@ -882,7 +842,6 @@
       showToast("მოწვევა უარყოფილია");
     };
 
-    // --- თამაშის სტანდარტული დამხმარე ფუნქციები ---
     const ROUND_WORDS = {
       1: [
         { word: "მზე", category: "ბუნება" }, { word: "ვაშლი", category: "ხილი" },
@@ -928,33 +887,12 @@
       return 15000;
     }
 
-    function generateBuraDeck() {
-      const suits = ['♠', '♣', '♥', '♦'];
-      const values = [
-        { name: '6', pts: 0 }, { name: '7', pts: 0 }, { name: '8', pts: 0 },
-        { name: '9', pts: 0 }, { name: '10', pts: 10 }, { name: 'J', pts: 2 },
-        { name: 'Q', pts: 3 }, { name: 'K', pts: 4 }, { name: 'A', pts: 11 }
-      ];
-      let deck = [];
-      suits.forEach(suit => {
-        values.forEach(v => {
-          deck.push({ suit, name: v.name, pts: v.pts, id: `${v.name}${suit}` });
-        });
-      });
-      return deck.sort(() => 0.5 - Math.random());
-    }
-
-    function createCardElement(card, onClickFn = null) {
-      const isRed = card.suit === '♥' || card.suit === '♦';
-      const btn = document.createElement('button');
-      btn.className = `playing-card ${isRed ? 'red' : ''}`;
-      btn.innerHTML = `
-        <div class="text-left text-xs leading-none font-extrabold">${card.name}<br>${card.suit}</div>
-        <div class="text-center text-xl font-black">${card.suit}</div>
-        <div class="text-right text-xs leading-none font-extrabold rotate-180">${card.name}<br>${card.suit}</div>
-      `;
-      if (onClickFn) btn.onclick = onClickFn;
-      return btn;
+    function generateSafePathMines() {
+      let map = [];
+      for(let i = 0; i < 5; i++) {
+        map.push(Math.floor(Math.random() * 3));
+      }
+      return map;
     }
 
     function generateBoxesForRound(roundNum) {
@@ -1010,13 +948,11 @@
         }));
         initialData.cards = cards;
         initialData.activeCardId = null;
-      } else if (gameMode === 'bura') {
-        const deck = generateBuraDeck();
-        initialData.deck = deck;
-        initialData.p1Hand = deck.splice(0, 5);
-        initialData.p2Hand = deck.splice(0, 5);
-        initialData.trumpCard = deck[deck.length - 1];
-        initialData.tableCards = [];
+      } else if (gameMode === 'safepath') {
+        initialData.p1Pos = 0;
+        initialData.p2Pos = 0;
+        initialData.mineMap = generateSafePathMines();
+        initialData.revealedMines = {};
       } else if (gameMode === 'boxes') {
         initialData.status = 'jheirani';
         initialData.boxes = generateBoxesForRound(1);
@@ -1031,8 +967,8 @@
       }
 
       gameState = initialData;
-      if (gameMode === 'bura') {
-        switchScreen('bura-screen');
+      if (gameMode === 'safepath') {
+        switchScreen('safepath-screen');
       } else if (gameMode === 'boxes' || gameMode === 'tictactoe') {
         switchScreen('jheirani-screen');
       } else {
@@ -1087,19 +1023,13 @@
           cards: cards,
           jheirani: { p1Choice: null, p2Choice: null, winner: null }
         };
-      } else if (gameMode === 'bura') {
-        const deck = generateBuraDeck();
-        const p1Hand = deck.splice(0, 5);
-        const p2Hand = deck.splice(0, 5);
-        const trumpCard = deck[deck.length - 1];
-
+      } else if (gameMode === 'safepath') {
         initialRoomData = {
           ...initialRoomData,
-          deck: deck,
-          p1Hand: p1Hand,
-          p2Hand: p2Hand,
-          trumpCard: trumpCard,
-          tableCards: [],
+          p1Pos: 0,
+          p2Pos: 0,
+          mineMap: generateSafePathMines(),
+          revealedMines: {},
           currentTurn: 'player1'
         };
       } else if (gameMode === 'boxes') {
@@ -1128,7 +1058,6 @@
         switchScreen('waiting-screen');
         listenToRoom(roomCode);
       } catch (err) {
-        console.error("Create room error:", err);
         showToast("ოთახის შექმნა ვერ მოხერხდა: " + err.message);
       }
     };
@@ -1151,7 +1080,6 @@
         }
         
         const data = snap.data();
-
         if (data.player2Id && data.player2Id !== currentUser.uid) {
           return showToast("ეს ოთახი უკვე სავსეა!");
         }
@@ -1159,22 +1087,17 @@
         playerRole = (data.player1Id === currentUser.uid) ? 'player1' : 'player2';
 
         if (playerRole === 'player2') {
-          const updateObj = {
+          await updateDoc(ref, {
             player2Id: currentUser.uid,
             player2Name: playerName,
             player2Avatar: currentUserAvatar || "",
-            status: 'jheirani'
-          };
-          if (data.gameMode === 'words') {
-            updateObj.turnDeadline = Date.now() + getRoundTimeLimit(1);
-          }
-          await updateDoc(ref, updateObj);
+            status: 'playing'
+          });
         }
 
         listenToRoom(roomCode);
         showToast("წარმატებით შეხვედით ოთახში! 🎉");
       } catch (err) {
-        console.error("Join room error:", err);
         showToast("შეცდომა: " + err.message);
       }
     };
@@ -1201,9 +1124,9 @@
         return;
       }
 
-      if (state.gameMode === 'bura') {
-        switchScreen('bura-screen');
-        updateBuraUI(state);
+      if (state.gameMode === 'safepath') {
+        switchScreen('safepath-screen');
+        updateSafePathUI(state);
         return;
       }
 
@@ -1324,6 +1247,209 @@
       }
     }
 
+    // --- Safe Path Upgraded Logic & Mine Reveal ---
+    function updateSafePathUI(state) {
+      document.getElementById('sp-p1-name').innerText = state.player1Name || "მოთამაშე 1";
+      document.getElementById('sp-p2-name').innerText = state.player2Name || "მოწინააღმდეგე";
+      document.getElementById('sp-p1-pos').innerText = state.p1Pos || 0;
+      document.getElementById('sp-p2-pos').innerText = state.p2Pos || 0;
+
+      const p1Img = document.getElementById('sp-p1-img');
+      const p1Icon = document.getElementById('sp-p1-icon');
+      if (state.player1Avatar) {
+        p1Img.src = state.player1Avatar;
+        p1Img.classList.remove('hidden');
+        p1Icon.classList.add('hidden');
+      } else {
+        p1Img.classList.add('hidden');
+        p1Icon.classList.remove('hidden');
+      }
+
+      const p2Img = document.getElementById('sp-p2-img');
+      const p2Icon = document.getElementById('sp-p2-icon');
+      if (state.player2Avatar) {
+        p2Img.src = state.player2Avatar;
+        p2Img.classList.remove('hidden');
+        p2Icon.classList.add('hidden');
+      } else {
+        p2Img.classList.add('hidden');
+        p2Icon.classList.remove('hidden');
+      }
+
+      const isMyTurn = (state.currentTurn === playerRole);
+      const statusEl = document.getElementById('sp-status');
+
+      if (state.status === 'finished') {
+        if (state.winner === playerRole) {
+          statusEl.innerText = "🎉 შენ პირველმა მიაღწიე ფინიშს და მოიგე!";
+        } else {
+          statusEl.innerText = "😢 მოწინააღმდეგემ პირველმა მიაღწია ფინიშს!";
+        }
+        statusEl.className = "text-sm font-bold text-emerald-400 animate-pulse";
+      } else {
+        statusEl.innerText = isMyTurn ? "✨ შენი სვლაა — აირჩიე უსაფრთხო ბილიკი!" : "⏳ მოწინააღმდეგის სვლაა...";
+        statusEl.className = isMyTurn ? "text-sm font-bold text-emerald-400 animate-pulse" : "text-sm font-bold text-slate-400";
+      }
+
+      const boardEl = document.getElementById('safepath-board');
+      boardEl.innerHTML = '';
+
+      // Finish line header banner
+      const finishDiv = document.createElement('div');
+      finishDiv.className = "p-2.5 bg-gradient-to-r from-amber-600/30 via-yellow-500/20 to-amber-600/30 border border-amber-500/50 rounded-2xl text-center text-xs font-bold text-amber-300 mb-2 shadow-lg flex items-center justify-center gap-2";
+      finishDiv.innerHTML = '<i class="fa-solid fa-flag-checkered text-amber-400"></i> ფინიშის ხაზი (დონე 5)';
+      boardEl.appendChild(finishDiv);
+
+      const revealedMines = state.revealedMines || {};
+
+      // Render rows 4 down to 0
+      for (let r = 4; r >= 0; r--) {
+        const rowWrapper = document.createElement('div');
+        rowWrapper.className = "flex items-center justify-between gap-2 bg-slate-900/70 p-2.5 rounded-2xl border border-slate-700/80 shadow";
+
+        const rowLabel = document.createElement('span');
+        rowLabel.className = "text-[11px] text-slate-400 font-bold w-12 text-left";
+        rowLabel.innerText = `დონე ${r + 1}`;
+        rowWrapper.appendChild(rowLabel);
+
+        const cellsContainer = document.createElement('div');
+        cellsContainer.className = "flex gap-2.5 flex-grow justify-center";
+
+        const myCurrentPos = playerRole === 'player1' ? state.p1Pos : state.p2Pos;
+        const canClick = isMyTurn && state.status !== 'finished' && (r === myCurrentPos);
+
+        for (let c = 0; c < 3; c++) {
+          const cellBtn = document.createElement('button');
+          cellBtn.disabled = !canClick;
+
+          const key = `${r}-${c}`;
+          const isRevealedMine = revealedMines[key];
+
+          let btnClass = "w-12 h-11 rounded-xl border font-bold text-sm flex items-center justify-center transition-all ";
+          
+          if (isRevealedMine) {
+            btnClass += "bg-rose-950/80 border-rose-500 text-rose-400 mine-exploded shadow-lg shadow-rose-900/50";
+            cellBtn.innerHTML = `<i class="fa-solid fa-bomb text-lg text-rose-500 animate-bounce"></i>`;
+          } else if (canClick) {
+            btnClass += "path-tile bg-gradient-to-br from-slate-800 to-indigo-950/80 border-indigo-500/80 hover:border-indigo-400 text-indigo-200 cursor-pointer shadow-md";
+            cellBtn.innerHTML = `<i class="fa-solid fa-shoe-prints text-xs text-indigo-400 opacity-80"></i>`;
+          } else {
+            btnClass += "bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed";
+            cellBtn.innerHTML = `<i class="fa-solid fa-lock text-[10px] text-slate-600"></i>`;
+          }
+
+          cellBtn.className = btnClass;
+          cellBtn.onclick = () => makeSafePathMove(r, c);
+
+          cellsContainer.appendChild(cellBtn);
+        }
+
+        rowWrapper.appendChild(cellsContainer);
+
+        // Player indicators on this row
+        const indicators = document.createElement('div');
+        indicators.className = "flex gap-1 w-12 justify-end";
+        if (state.p1Pos === r) {
+          indicators.innerHTML += `<span class="w-5 h-5 rounded-full bg-indigo-600 border border-indigo-300 text-[10px] font-extrabold flex items-center justify-center text-white shadow-md" title="P1">P1</span>`;
+        }
+        if (state.p2Pos === r) {
+          indicators.innerHTML += `<span class="w-5 h-5 rounded-full bg-pink-600 border border-pink-300 text-[10px] font-extrabold flex items-center justify-center text-white shadow-md" title="P2">P2</span>`;
+        }
+        rowWrapper.appendChild(indicators);
+
+        boardEl.appendChild(rowWrapper);
+      }
+
+      // Start line footer banner
+      const startDiv = document.createElement('div');
+      startDiv.className = "p-2.5 bg-slate-800/90 border border-slate-700/80 rounded-2xl text-center text-xs font-bold text-slate-300 mt-1 shadow";
+      startDiv.innerHTML = '<i class="fa-solid fa-play text-emerald-400 mr-1"></i> სტარტი (დონე 0)';
+      boardEl.appendChild(startDiv);
+
+      if (isAiMode && state.currentTurn === 'player2' && state.status === 'playing') {
+        setTimeout(runAiSafePathTurn, 1200);
+      }
+    }
+
+    window.makeSafePathMove = async function(row, col) {
+      if (!gameState || gameState.currentTurn !== playerRole || gameState.status === 'finished') return;
+
+      const myPosKey = playerRole === 'player1' ? 'p1Pos' : 'p2Pos';
+      let currentPos = gameState[myPosKey];
+
+      if (row !== currentPos) return;
+
+      const mineMap = gameState.mineMap;
+      const isMine = (mineMap[row] === col);
+
+      const nextTurn = isAiMode ? 'player2' : (playerRole === 'player1' ? 'player2' : 'player1');
+      const revealedMines = gameState.revealedMines || {};
+
+      if (isMine) {
+        revealedMines[`${row}-${col}`] = true;
+        gameState.revealedMines = revealedMines;
+        showToast("💥 ბუმ! ნაღმზე აბიჯე და საწყისზე დაბრუნდი!");
+        gameState[myPosKey] = 0;
+      } else {
+        const newPos = currentPos + 1;
+        gameState[myPosKey] = newPos;
+        if (newPos >= 5) {
+          gameState.status = 'finished';
+          gameState.winner = playerRole;
+          showToast("🏆 გილოცავ! მიაღწიე ფინიშს და მოიგე!");
+        } else {
+          showToast("✨სწორი ნაბიჯია! წინ მიიწევ!");
+        }
+      }
+
+      gameState.currentTurn = gameState.status === 'finished' ? playerRole : nextTurn;
+
+      if (!isAiMode) {
+        await updateDoc(getRoomRef(roomCode), gameState);
+      } else {
+        updateUI(gameState);
+      }
+    };
+
+    function runAiSafePathTurn() {
+      if (!gameState || gameState.currentTurn !== 'player2' || gameState.status === 'finished') return;
+
+      const currentPos = gameState.p2Pos;
+      const mineMap = gameState.mineMap;
+      const revealedMines = gameState.revealedMines || {};
+
+      let chosenCol = Math.floor(Math.random() * 3);
+      if (aiDifficulty === 'hard' || aiDifficulty === 'medium') {
+        let safeCols = [0, 1, 2].filter(c => c !== mineMap[currentPos]);
+        if (safeCols.length > 0 && Math.random() < (aiDifficulty === 'hard' ? 0.85 : 0.55)) {
+          chosenCol = safeCols[Math.floor(Math.random() * safeCols.length)];
+        }
+      }
+
+      const isMine = (mineMap[currentPos] === chosenCol);
+
+      if (isMine) {
+        revealedMines[`${currentPos}-${chosenCol}`] = true;
+        gameState.revealedMines = revealedMines;
+        showToast("🤖 AI-მ აიფეთქა ნაღმზე და საწყისზე დაბრუნდა!");
+        gameState.p2Pos = 0;
+      } else {
+        const newPos = currentPos + 1;
+        gameState.p2Pos = newPos;
+        if (newPos >= 5) {
+          gameState.status = 'finished';
+          gameState.winner = 'player2';
+          showToast("😢 AI-მ პირველმა მიაღწიე ფინიშს!");
+        } else {
+          showToast("🤖 AI-მ წარმატებით გადადგა ნაბიჯი!");
+        }
+      }
+
+      gameState.currentTurn = gameState.status === 'finished' ? 'player2' : 'player1';
+      updateUI(gameState);
+    }
+
+    // --- Tic-Tac-Toe & Boxes & Words helpers ---
     function checkTicTacToeWinner(board) {
       const lines = [
         [0,1,2], [3,4,5], [6,7,8],
@@ -1563,13 +1689,11 @@
       if (allOpened) {
         if (gameState.round < 5) {
           nextRound = gameState.round + 1;
-          showToast(` რაუნდი ${gameState.round} დასრულდა! რაუნდის შედეგები გამოჩნდა. იწყება რაუნდი ${nextRound}`);
           nextBoxes = generateBoxesForRound(nextRound);
           showOppMoney = true;
         } else {
           newStatus = 'finished';
           showOppMoney = true;
-          showToast(" თამაში დასრულდა! იხილეთ გამარჯვებული.");
         }
       }
 
@@ -1633,13 +1757,11 @@
       if (allOpened) {
         if (gameState.round < 5) {
           gameState.round += 1;
-          showToast(` რაუნდი ${gameState.round - 1} დასრულდა! იწყება რაუნდი ${gameState.round}`);
           gameState.boxes = generateBoxesForRound(gameState.round);
           showOppMoney = true;
         } else {
           gameState.status = 'finished';
           showOppMoney = true;
-          showToast(" თამაში დასრულდა!");
         }
       }
 
@@ -1702,67 +1824,7 @@
             turnDeadline: Date.now() + timeLimit
           });
           showToast("⏱ დრო ამოიწურა! სვლა გადავიდა.");
-        } catch (err) {
-          console.error("Timeout handle error:", err);
-        }
-      }
-    }
-
-    function updateBuraUI(state) {
-      const opponentName = playerRole === 'player1' ? state.player2Name : state.player1Name;
-      const myHand = playerRole === 'player1' ? state.p1Hand : state.p2Hand;
-      const opponentHandCount = playerRole === 'player1' ? (state.p2Hand ? state.p2Hand.length : 5) : (state.p1Hand ? state.p1Hand.length : 5);
-
-      document.getElementById('bura-opponent-name').innerText = opponentName || "მოწინააღმდეგე";
-      document.getElementById('deck-remaining').innerText = state.deck ? state.deck.length : 0;
-      
-      const isTrumpRed = state.trumpCard && (state.trumpCard.suit === '♥' || state.trumpCard.suit === '♦');
-      document.getElementById('trump-suit').innerHTML = state.trumpCard 
-        ? `<span class="${isTrumpRed ? 'text-rose-400' : 'text-white'}">${state.trumpCard.name} ${state.trumpCard.suit}</span>` 
-        : '--';
-
-      const isMyTurn = (state.currentTurn === playerRole);
-      document.getElementById('bura-status').innerText = isMyTurn ? "თქვენი სვლაა!" : "მოწინააღმდეგის სვლაა...";
-      document.getElementById('bura-status').className = isMyTurn ? "text-lg font-bold text-emerald-400 animate-pulse" : "text-lg font-bold text-slate-400";
-
-      const oppHandVisual = document.getElementById('bura-opponent-hand-visual');
-      oppHandVisual.innerHTML = '';
-      for (let i = 0; i < opponentHandCount; i++) {
-        const back = document.createElement('div');
-        back.className = 'w-6 h-9 bg-indigo-900 border border-indigo-500 rounded-sm shadow-sm';
-        oppHandVisual.appendChild(back);
-      }
-
-      const handContainer = document.getElementById('bura-my-hand');
-      handContainer.innerHTML = '';
-      if (myHand) {
-        myHand.forEach((card, index) => {
-          const cardEl = createCardElement(card, () => playBuraCard(index));
-          if (!isMyTurn) cardEl.disabled = true;
-          handContainer.appendChild(cardEl);
-        });
-      }
-
-      const tableContainer = document.getElementById('bura-table-cards');
-      if (state.tableCards && state.tableCards.length > 0) {
-        tableContainer.innerHTML = '';
-        state.tableCards.forEach(tc => {
-          const wrapper = document.createElement('div');
-          wrapper.className = "flex flex-col items-center space-y-1";
-          const cardEl = createCardElement(tc.card);
-          const label = document.createElement('span');
-          label.className = "text-[10px] text-slate-400 font-bold";
-          label.innerText = tc.player === playerRole ? 'თქვენი' : 'მოწინააღმდეგის';
-          wrapper.appendChild(cardEl);
-          wrapper.appendChild(label);
-          tableContainer.appendChild(wrapper);
-        });
-      } else {
-        tableContainer.innerHTML = '<span class="text-slate-500 text-sm">მაგიდა ცარიელია</span>';
-      }
-
-      if (isAiMode && state.currentTurn === 'player2' && state.status !== 'finished') {
-        setTimeout(runAiBuraTurn, 1500);
+        } catch (err) {}
       }
     }
 
@@ -1805,7 +1867,6 @@
         if (allGuessed) {
           if (gameState.round < 3) {
             nextRound = gameState.round + 1;
-            showToast(`🏆 რაუნდი ${gameState.round} დასრულდა! იწყება რაუნდი ${nextRound}`);
             const pool = ROUND_WORDS[nextRound];
             const shuffled = [...pool].sort(() => 0.5 - Math.random());
             nextCards = shuffled.slice(0, 8).map((item, index) => {
@@ -1814,7 +1875,6 @@
             });
           } else {
             newStatus = 'finished';
-            showToast("🏁 თამაში დასრულდა!");
           }
         }
 
@@ -1833,85 +1893,6 @@
         }
       }, 1500);
     }
-
-    function runAiBuraTurn() {
-      if (!gameState || gameState.currentTurn !== 'player2') return;
-
-      const p2Hand = [...gameState.p2Hand];
-      if (p2Hand.length === 0) return;
-
-      let cardIndex = 0;
-      if (aiDifficulty === 'hard') {
-        let bestIdx = 0;
-        let maxPts = -1;
-        p2Hand.forEach((c, idx) => {
-          if (c.pts > maxPts) {
-            maxPts = c.pts;
-            bestIdx = idx;
-          }
-        });
-        cardIndex = bestIdx;
-      } else {
-        cardIndex = Math.floor(Math.random() * p2Hand.length);
-      }
-
-      const playedCard = p2Hand.splice(cardIndex, 1)[0];
-      const tableCards = gameState.tableCards ? [...gameState.tableCards] : [];
-      tableCards.push({ player: 'player2', card: playedCard });
-
-      gameState.p2Hand = p2Hand;
-      gameState.tableCards = tableCards;
-      gameState.currentTurn = 'player1';
-
-      if (tableCards.length === 2) {
-        setTimeout(() => {
-          gameState.tableCards = [];
-          if (gameState.deck && gameState.deck.length > 0) {
-            if (gameState.p1Hand.length < 5 && gameState.deck.length > 0) gameState.p1Hand.push(gameState.deck.pop());
-            if (gameState.p2Hand.length < 5 && gameState.deck.length > 0) gameState.p2Hand.push(gameState.deck.pop());
-          }
-          updateUI(gameState);
-        }, 1800);
-      }
-
-      updateUI(gameState);
-    }
-
-    window.playBuraCard = async function(cardIndex) {
-      if (!gameState || gameState.currentTurn !== playerRole) return;
-      const myHandKey = playerRole === 'player1' ? 'p1Hand' : 'p2Hand';
-      const myHand = [...gameState[myHandKey]];
-      const playedCard = myHand.splice(cardIndex, 1)[0];
-      const tableCards = gameState.tableCards ? [...gameState.tableCards] : [];
-
-      tableCards.push({ player: playerRole, card: playedCard });
-      const nextTurn = 'player2';
-
-      gameState[myHandKey] = myHand;
-      gameState.tableCards = tableCards;
-      gameState.currentTurn = nextTurn;
-
-      if (tableCards.length === 2) {
-        setTimeout(async () => {
-          gameState.tableCards = [];
-          if (gameState.deck && gameState.deck.length > 0) {
-            if (gameState.p1Hand.length < 5 && gameState.deck.length > 0) gameState.p1Hand.push(gameState.deck.pop());
-            if (gameState.p2Hand.length < 5 && gameState.deck.length > 0) gameState.p2Hand.push(gameState.deck.pop());
-          }
-          updateUI(gameState);
-        }, 1800);
-      }
-
-      if (!isAiMode) {
-        await updateDoc(getRoomRef(roomCode), {
-          [myHandKey]: myHand,
-          tableCards: tableCards,
-          currentTurn: nextTurn
-        });
-      } else {
-        updateUI(gameState);
-      }
-    };
 
     window.playJheirani = async function(choice) {
       if (!gameState || gameState.status !== 'jheirani') return;
@@ -1951,7 +1932,6 @@
 
         if (j.p1Choice && j.p2Choice && d.status === 'jheirani') {
           let winnerRole = 'player1';
-
           if (j.p1Choice === j.p2Choice) {
             winnerRole = 'player1';
           } else if (
@@ -2011,7 +1991,7 @@
         updatedCards[gameState.activeCardId].guessedBy = playerRole;
         updatedCards[gameState.activeCardId].guessedMask = activeCard.word;
         if (playerRole === 'player1') p1s += 10; else p2s += 10;
-        showToast("სწორია! +10 ქულა 🎉 - აირჩიეთ შემდეგი ბარათი!");
+        showToast("სწორია! +10 ქულა 🎉");
         nextTurn = playerRole; 
       } else {
         let maskArr = (activeCard.guessedMask || activeCard.masked).split("");
@@ -2031,7 +2011,6 @@
       if (allGuessed) {
         if (gameState.round < 3) {
           nextRound = gameState.round + 1;
-          showToast(`🏆 რაუნდი ${gameState.round} დასრულდა! იწყება რაუნდი ${nextRound}`);
           const pool = ROUND_WORDS[nextRound];
           const shuffled = [...pool].sort(() => 0.5 - Math.random());
           nextCards = shuffled.slice(0, 8).map((item, index) => {
@@ -2040,7 +2019,6 @@
           });
         } else {
           newStatus = 'finished';
-          showToast("🏁 თამაში დასრულდა!");
         }
       }
 
@@ -2087,7 +2065,7 @@
       document.getElementById('waiting-screen').classList.add('hidden');
       document.getElementById('jheirani-screen').classList.add('hidden');
       document.getElementById('game-screen').classList.add('hidden');
-      document.getElementById('bura-screen').classList.add('hidden');
+      document.getElementById('safepath-screen').classList.add('hidden');
       document.getElementById('boxes-screen').classList.add('hidden');
       document.getElementById('tictactoe-screen').classList.add('hidden');
       document.getElementById('invite-modal').classList.add('hidden');
