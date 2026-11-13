@@ -105,7 +105,7 @@
           <i class="fa-solid fa-user-lock"></i>
         </div>
         <h2 id="auth-title" class="text-2xl font-bold mb-1">სისტემაში შესვლა</h2>
-        <p class="text-sm text-slate-400">შეიყვანეთ მეილი და პაროლი პროგრესის შესანახად</p>
+        <p class="text-sm text-slate-400">აირჩიეთ ავტორიზაციის მეთოდი ან შედით როგორც სტუმარი</p>
       </div>
 
       <div class="space-y-4 mb-6">
@@ -131,9 +131,15 @@
     <!-- Lobby / Room Joining & Friends Screen -->
     <div id="lobby-screen" class="hidden w-full max-w-md glass-panel p-6 md:p-8 rounded-3xl shadow-2xl text-center">
       <div class="flex justify-between items-center bg-slate-800/60 p-3 rounded-2xl border border-slate-700 mb-4 text-xs">
-        <div>
-          <span class="text-slate-400">პროფილი: </span>
-          <span id="user-display-email" class="font-bold text-indigo-300">სტუმარი</span>
+        <div class="flex items-center gap-2">
+          <div id="user-avatar-container" class="w-9 h-9 rounded-full overflow-hidden bg-indigo-900 border border-indigo-500 flex items-center justify-center shrink-0">
+            <img id="user-display-avatar" src="" class="w-full h-full object-cover hidden">
+            <i id="user-display-default-icon" class="fa-solid fa-user text-indigo-300 text-xs"></i>
+          </div>
+          <div class="text-left truncate max-w-[110px]">
+            <span class="text-slate-400 text-[10px] block">პროფილი:</span>
+            <span id="user-display-name" class="font-bold text-indigo-300 truncate block">სტუმარი</span>
+          </div>
         </div>
         <div class="flex gap-2">
           <span class="text-emerald-400 font-bold">მოგება: <span id="user-wins">0</span></span>
@@ -142,11 +148,29 @@
         <button onclick="logoutUser()" class="text-slate-400 hover:text-rose-400" title="გასვლა"><i class="fa-solid fa-right-from-bracket"></i></button>
       </div>
 
+      <!-- Profile Customization Section -->
+      <div class="bg-slate-900/60 p-4 rounded-2xl border border-slate-700/80 mb-4 text-left space-y-3">
+        <div class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center justify-between">
+          <span>⚙️ პროფილის რედაქტირება</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="relative w-12 h-12 rounded-full overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
+            <img id="profile-avatar-preview" src="" class="w-full h-full object-cover hidden">
+            <i id="profile-avatar-icon" class="fa-solid fa-user text-slate-400"></i>
+          </div>
+          <input type="file" id="avatar-file-input" accept="image/*" class="text-[11px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-[11px] file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
+        </div>
+        <div>
+          <input type="text" id="nickname-input" placeholder="თქვენი ნიქნეიმი..." class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500">
+        </div>
+        <button onclick="saveProfileSettings()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 font-bold rounded-xl text-xs transition-all active:scale-95">ცვლილებების შენახვა</button>
+      </div>
+
       <div class="mb-4">
-        <div class="w-14 h-14 bg-indigo-600/30 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl border border-indigo-500/30">
+        <div class="w-12 h-12 bg-indigo-600/30 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-2 text-lg border border-indigo-500/30">
           <i class="fa-solid fa-gamepad"></i>
         </div>
-        <h2 class="text-xl font-bold mb-1">თამაშის მენიუ</h2>
+        <h2 class="text-lg font-bold mb-1">თამაშის მენიუ</h2>
       </div>
 
       <div class="space-y-3 mb-4 text-left">
@@ -254,19 +278,29 @@
     <div id="game-screen" class="hidden w-full flex flex-col space-y-4">
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div class="glass-panel p-3 md:p-4 rounded-2xl flex items-center justify-between border-l-4 border-indigo-500">
-          <div>
-            <div class="text-xs text-slate-400 font-semibold" id="p1-label">მოთამაშე 1</div>
-            <div id="p1-score" class="text-xl md:text-2xl font-bold text-indigo-400">0 ქულა</div>
+          <div class="flex items-center gap-3">
+            <div id="game-p1-avatar-box" class="w-10 h-10 rounded-full overflow-hidden bg-indigo-900 border border-indigo-500 flex items-center justify-center shrink-0">
+              <img id="game-p1-img" src="" class="w-full h-full object-cover hidden">
+              <i id="game-p1-icon" class="fa-solid fa-user text-indigo-300 text-xs"></i>
+            </div>
+            <div>
+              <div class="text-xs text-slate-400 font-semibold" id="p1-label">მოთამაშე 1</div>
+              <div id="p1-score" class="text-lg md:text-xl font-bold text-indigo-400">0 ქულა</div>
+            </div>
           </div>
-          <i class="fa-solid fa-user text-indigo-400/40 text-2xl"></i>
         </div>
 
         <div class="glass-panel p-3 md:p-4 rounded-2xl flex items-center justify-between border-l-4 border-pink-500">
-          <div>
-            <div class="text-xs text-slate-400 font-semibold" id="p2-label">მოწინააღმდეგე</div>
-            <div id="p2-score" class="text-xl md:text-2xl font-bold text-pink-400">0 ქულა</div>
+          <div class="flex items-center gap-3">
+            <div id="game-p2-avatar-box" class="w-10 h-10 rounded-full overflow-hidden bg-pink-900 border border-pink-500 flex items-center justify-center shrink-0">
+              <img id="game-p2-img" src="" class="w-full h-full object-cover hidden">
+              <i id="game-p2-icon" class="fa-solid fa-robot text-pink-300 text-xs"></i>
+            </div>
+            <div>
+              <div class="text-xs text-slate-400 font-semibold" id="p2-label">მოწინააღმდეგე</div>
+              <div id="p2-score" class="text-lg md:text-xl font-bold text-pink-400">0 ქულა</div>
+            </div>
           </div>
-          <i class="fa-solid fa-robot text-pink-400/40 text-2xl"></i>
         </div>
 
         <div class="glass-panel p-3 md:p-4 rounded-2xl flex flex-col justify-center border-l-4 border-amber-500 text-center sm:text-left">
@@ -432,11 +466,15 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    // თავიდანვე ვთიშავთ სესიას, რომ გვერდის ჩატვირთვისას არ მოხდეს ავტომატური შესვლა
+    signOut(auth).catch(() => {});
+
     let currentUser = null;
-    let userStats = { wins: 0, losses: 0, friends: [] };
+    let userStats = { wins: 0, losses: 0, friends: [], nickname: "", avatar: "" };
     let roomCode = null;
     let playerRole = null;
     let playerName = "";
+    let currentUserAvatar = "";
     let roomUnsubscribe = null;
     let invitesUnsubscribe = null;
     let gameState = null;
@@ -462,12 +500,8 @@
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
-        playerName = user.email ? user.email.split('@')[0] : 'სტუმარი';
-        document.getElementById('user-display-email').innerText = user.email || 'სტუმარი (Anonymous)';
-        
         await loadUserData(user.uid, user.email);
         listenToIncomingInvites(user.uid);
-        
         switchScreen('lobby-screen');
       } else {
         currentUser = null;
@@ -484,15 +518,18 @@
     };
 
     window.handleAuthSubmit = async function() {
-      const email = document.getElementById('auth-email').value.trim(); // <-- გასწორებულია (დაისვა ფრჩხილები)
+      const email = document.getElementById('auth-email').value.trim();
       const password = document.getElementById('auth-password').value.trim();
       if (!email || !password) return showToast("შეიყვანეთ მეილი და პაროლი!");
 
       try {
         if (isRegisterMode) {
           const res = await createUserWithEmailAndPassword(auth, email, password);
+          const defaultNick = email.split('@')[0];
           await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', res.user.uid), { 
             email: email.toLowerCase(),
+            nickname: defaultNick,
+            avatar: "",
             wins: 0, 
             losses: 0,
             friends: [] 
@@ -524,14 +561,80 @@
           userStats.email = email.toLowerCase();
           await updateDoc(userRef, { email: email.toLowerCase() });
         }
+        playerName = userStats.nickname || (email ? email.split('@')[0] : 'სტუმარი');
+        currentUserAvatar = userStats.avatar || "";
       } else {
-        userStats = { email: email ? email.toLowerCase() : 'anonymous', wins: 0, losses: 0, friends: [] };
+        playerName = email ? email.split('@')[0] : 'სტუმარი';
+        currentUserAvatar = "";
+        userStats = { email: email ? email.toLowerCase() : 'anonymous', nickname: playerName, avatar: "", wins: 0, losses: 0, friends: [] };
         await setDoc(userRef, userStats);
       }
+      
+      document.getElementById('user-display-name').innerText = playerName;
       document.getElementById('user-wins').innerText = userStats.wins || 0;
       document.getElementById('user-losses').innerText = userStats.losses || 0;
+      document.getElementById('nickname-input').value = playerName;
+
+      updateAvatarUI(currentUserAvatar);
       renderFriendsList();
     }
+
+    function updateAvatarUI(base64Img) {
+      const previewImg = document.getElementById('profile-avatar-preview');
+      const previewIcon = document.getElementById('profile-avatar-icon');
+      const topImg = document.getElementById('user-display-avatar');
+      const topIcon = document.getElementById('user-display-default-icon');
+
+      if (base64Img) {
+        previewImg.src = base64Img;
+        previewImg.classList.remove('hidden');
+        previewIcon.classList.add('hidden');
+
+        topImg.src = base64Img;
+        topImg.classList.remove('hidden');
+        topIcon.classList.add('hidden');
+      } else {
+        previewImg.classList.add('hidden');
+        previewIcon.classList.remove('hidden');
+
+        topImg.classList.add('hidden');
+        topIcon.classList.remove('hidden');
+      }
+    }
+
+    window.saveProfileSettings = async function() {
+      if (!currentUser) return;
+      const nicknameInput = document.getElementById('nickname-input').value.trim();
+      const fileInput = document.getElementById('avatar-file-input');
+
+      let updateData = {};
+      if (nicknameInput) {
+        updateData.nickname = nicknameInput;
+        playerName = nicknameInput;
+        document.getElementById('user-display-name').innerText = nicknameInput;
+      }
+
+      const saveToFirestore = async (avatarData) => {
+        if (avatarData !== undefined) updateData.avatar = avatarData;
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), updateData);
+        showToast("პროფილი წარმატებით განახლდა! ✨");
+        loadUserData(currentUser.uid, currentUser.email);
+      };
+
+      if (fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+          const base64Image = e.target.result;
+          currentUserAvatar = base64Image;
+          updateAvatarUI(base64Image);
+          await saveToFirestore(base64Image);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        await saveToFirestore(undefined);
+      }
+    };
 
     // --- მეგობრების სისტემა ---
     window.addFriend = async function() {
@@ -559,7 +662,7 @@
         const myFriends = userStats.friends || [];
         if (myFriends.some(f => f.uid === friendUid)) return showToast("უკვე გყავს მეგობრებში!");
 
-        const friendObj = { uid: friendUid, email: friendData.email };
+        const friendObj = { uid: friendUid, email: friendData.email, nickname: friendData.nickname || friendData.email.split('@')[0] };
         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), {
           friends: arrayUnion(friendObj)
         });
@@ -588,8 +691,8 @@
         const item = document.createElement('div');
         item.className = "flex items-center justify-between bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/60 text-xs";
         item.innerHTML = `
-          <span class="font-medium text-slate-200 truncate max-w-[140px]">${f.email}</span>
-          <button onclick="sendGameInvite('${f.uid}', '${f.email}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-lg text-[10px] transition-all active:scale-95 flex items-center gap-1">
+          <span class="font-medium text-slate-200 truncate max-w-[140px]">${f.nickname || f.email}</span>
+          <button onclick="sendGameInvite('${f.uid}', '${f.nickname || f.email}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-lg text-[10px] transition-all active:scale-95 flex items-center gap-1">
             <i class="fa-solid fa-paper-plane"></i> მოწვევა
           </button>
         `;
@@ -598,7 +701,7 @@
     }
 
     // --- პირდაპირი მოწვევა კოდის გარეშე ---
-    window.sendGameInvite = async function(friendUid, friendEmail) {
+    window.sendGameInvite = async function(friendUid, friendName) {
       const gameMode = document.getElementById('game-mode-select').value;
       roomCode = generateCode();
       playerRole = 'player1';
@@ -608,8 +711,10 @@
         gameMode: gameMode,
         player1Id: currentUser.uid,
         player1Name: playerName,
+        player1Avatar: currentUserAvatar || "",
         player2Id: null,
         player2Name: null,
+        player2Avatar: "",
         status: 'waiting',
         createdAt: new Date().toISOString()
       };
@@ -660,7 +765,7 @@
 
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'invites', friendUid), {
           roomCode: roomCode,
-          fromEmail: currentUser.email,
+          fromName: playerName,
           gameMode: gameMode,
           timestamp: Date.now()
         });
@@ -668,7 +773,7 @@
         document.getElementById('display-room-code').innerText = roomCode;
         switchScreen('waiting-screen');
         listenToRoom(roomCode);
-        showToast(`მოწვევა გაეგზავნა მოთამაშეს: ${friendEmail}`);
+        showToast(`მოწვევა გაეგზავნა მოთამაშეს: ${friendName}`);
       } catch (err) {
         showToast("მოწვევის გაგზავნა ვერ მოხერხდა");
       }
@@ -683,7 +788,7 @@
         const inviteData = docSnap.data();
         if (Date.now() - inviteData.timestamp < 30000) {
           pendingInviteRoomCode = inviteData.roomCode;
-          document.getElementById('invite-text').innerText = `${inviteData.fromEmail} გიწვევს თამაშში (${inviteData.gameMode})!`;
+          document.getElementById('invite-text').innerText = `${inviteData.fromName} გიწვევს თამაშში (${inviteData.gameMode})!`;
           document.getElementById('invite-modal').classList.remove('hidden');
         }
       });
@@ -705,6 +810,7 @@
         await updateDoc(ref, {
           player2Id: currentUser.uid,
           player2Name: playerName,
+          player2Avatar: currentUserAvatar || "",
           status: 'jheirani'
         });
 
@@ -824,7 +930,9 @@
         code: 'AI-ROOM',
         gameMode: gameMode,
         player1Name: playerName,
+        player1Avatar: currentUserAvatar || "",
         player2Name: `🤖 AI (${aiDifficulty.toUpperCase()})`,
+        player2Avatar: "",
         status: 'playing',
         currentTurn: 'player1',
         p1Score: 0,
@@ -888,8 +996,10 @@
         gameMode: gameMode,
         player1Id: currentUser.uid,
         player1Name: playerName,
+        player1Avatar: currentUserAvatar || "",
         player2Id: null,
         player2Name: null,
+        player2Avatar: "",
         status: 'waiting',
         createdAt: new Date().toISOString()
       };
@@ -980,6 +1090,7 @@
           const updateObj = {
             player2Id: currentUser.uid,
             player2Name: playerName,
+            player2Avatar: currentUserAvatar || "",
             status: 'jheirani'
           };
           if (data.gameMode === 'words') {
@@ -999,8 +1110,13 @@
       roomUnsubscribe = onSnapshot(getRoomRef(code), (snapshot) => {
         if (!snapshot.exists()) return;
         gameState = snapshot.data();
-        if (playerRole === 'player1') playerName = gameState.player1Name;
-        else if (gameState.player2Name) playerName = gameState.player2Name;
+        if (playerRole === 'player1') {
+          playerName = gameState.player1Name;
+          currentUserAvatar = gameState.player1Avatar || "";
+        } else if (gameState.player2Name) {
+          playerName = gameState.player2Name;
+          currentUserAvatar = gameState.player2Avatar || "";
+        }
         updateUI(gameState);
       });
     }
@@ -1048,6 +1164,29 @@
       document.getElementById('p1-label').innerText = state.player1Name || "მოთამაშე 1";
       document.getElementById('p2-label').innerText = state.player2Name || "მოწინააღმდეგე";
       document.getElementById('round-indicator').innerText = `რაუნდი ${state.round} / 3`;
+
+      // Game Screen Avatars
+      const p1Img = document.getElementById('game-p1-img');
+      const p1Icon = document.getElementById('game-p1-icon');
+      if (state.player1Avatar) {
+        p1Img.src = state.player1Avatar;
+        p1Img.classList.remove('hidden');
+        p1Icon.classList.add('hidden');
+      } else {
+        p1Img.classList.add('hidden');
+        p1Icon.classList.remove('hidden');
+      }
+
+      const p2Img = document.getElementById('game-p2-img');
+      const p2Icon = document.getElementById('game-p2-icon');
+      if (state.player2Avatar) {
+        p2Img.src = state.player2Avatar;
+        p2Img.classList.remove('hidden');
+        p2Icon.classList.add('hidden');
+      } else {
+        p2Img.classList.add('hidden');
+        p2Icon.classList.remove('hidden');
+      }
 
       const isMyTurn = (state.currentTurn === playerRole);
       const turnBanner = document.getElementById('turn-banner');
