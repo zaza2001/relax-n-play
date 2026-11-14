@@ -110,6 +110,14 @@
               <div class="text-[10px] text-slate-400">კლასიკური თამაში</div>
             </div>
           </button>
+
+          <button onclick="selectGameFromSidebar('aviator')" class="w-full p-3 bg-slate-800/80 hover:bg-sky-900/40 border border-slate-700/80 rounded-2xl flex items-center gap-3 transition-all text-left">
+            <div class="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-sm"><i class="fa-solid fa-jet-fighter"></i></div>
+            <div>
+              <div class="text-xs font-bold text-white">Aviator (ჯეტის აფრენა)</div>
+              <div class="text-[10px] text-slate-400">არკადული კრეში თამაში</div>
+            </div>
+          </button>
         </div>
       </div>
     </div>
@@ -129,6 +137,9 @@
         </button>
         <button onclick="switchGameModeModal('tictactoe')" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-left flex items-center gap-2">
           <i class="fa-solid fa-xmark text-pink-400"></i> იქსიკი და ნოლიკი
+        </button>
+        <button onclick="switchGameModeModal('aviator')" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-left flex items-center gap-2">
+          <i class="fa-solid fa-jet-fighter text-sky-400"></i> Aviator (ჯეტის აფრენა)
         </button>
       </div>
     </div>
@@ -277,6 +288,7 @@
               <option value="words">🔤 სიტყვები</option>
               <option value="boxes">💰 ყუთები</option>
               <option value="tictactoe">❌ ნოლიკი</option>
+              <option value="aviator">✈️ Aviator (ჯეტი)</option>
             </select>
           </div>
           <div>
@@ -335,11 +347,14 @@
       <div class="glass-card p-6 rounded-3xl max-w-xs w-full text-center space-y-4 border border-indigo-500/40 shadow-2xl">
         <h3 class="text-lg font-bold">პროფილის რედაქტირება</h3>
         <div class="flex flex-col items-center gap-3">
-          <div class="relative w-16 h-16 rounded-full overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center">
+          <div class="relative w-20 h-20 rounded-full overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center cursor-pointer shadow-lg" onclick="document.getElementById('avatar-file-input').click()">
             <img id="profile-avatar-preview" src="" class="w-full h-full object-cover hidden">
-            <i id="profile-avatar-icon" class="fa-solid fa-user text-slate-400 text-xl"></i>
+            <i id="profile-avatar-icon" class="fa-solid fa-camera text-slate-400 text-2xl"></i>
           </div>
-          <input type="file" id="avatar-file-input" accept="image/*" class="text-[11px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-[11px] file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
+          <label class="cursor-pointer px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-semibold text-white transition-all shadow">
+            ფოტოს არჩევა
+            <input type="file" id="avatar-file-input" accept="image/*" class="hidden" onchange="handleAvatarSelect(event)">
+          </label>
         </div>
         <div>
           <input type="text" id="nickname-input" placeholder="თქვენი ნიქნეიმი..." class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500 text-center">
@@ -422,7 +437,7 @@
       </div>
     </div>
 
-    <!-- 2. Word Game Screen with Timer -->
+    <!-- 2. Word Game Screen with Round-Specific Timers & Progression -->
     <div id="game-screen" class="hidden w-full flex flex-col space-y-4">
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div class="glass-card p-3 rounded-2xl flex items-center justify-between border-l-4 border-indigo-500">
@@ -439,7 +454,7 @@
         </div>
         <div class="glass-card p-3 rounded-2xl flex flex-col justify-center border-l-4 border-amber-500 text-center">
           <span class="text-xs text-slate-400 font-semibold" id="round-indicator">რაუნდი 1 / 3</span>
-          <span id="word-timer" class="text-sm font-mono font-bold text-amber-400 mt-0.5">⏱️ 30 წმ</span>
+          <span id="word-timer" class="text-sm font-mono font-bold text-amber-400 mt-0.5">⏱️ 15 წმ</span>
           <span id="turn-banner" class="text-xs font-bold text-indigo-300 mt-0.5">იტვირთება...</span>
         </div>
       </div>
@@ -505,6 +520,35 @@
       </div>
     </div>
 
+    <!-- 5. Aviator (Jet Crash) Screen -->
+    <div id="aviator-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-4">
+      <div class="glass-card p-4 rounded-2xl flex justify-between items-center border border-sky-500/30">
+        <div>
+          <div class="text-xs text-slate-400">თამაში: <span class="text-sky-400 font-bold">Aviator (ჯეტის აფრენა)</span></div>
+          <div class="text-sm font-bold text-slate-200 mt-1">ბალანსი: <span id="aviator-balance" class="text-amber-400">1000</span> ₾</div>
+        </div>
+        <div id="aviator-status" class="text-xs font-bold px-3 py-1.5 bg-sky-600/30 border border-sky-500/40 rounded-xl text-sky-300">მზადება აფრენისთვის</div>
+      </div>
+
+      <div class="glass-card p-6 rounded-3xl text-center relative overflow-hidden h-52 flex flex-col items-center justify-center border border-sky-500/30 shadow-2xl">
+        <div id="jet-multiplier" class="text-5xl font-mono font-black text-amber-300 tracking-wider">1.00x</div>
+        <div id="jet-visual" class="mt-4 text-3xl text-sky-400 transition-all duration-100">
+          <i class="fa-solid fa-jet-fighter animate-pulse"></i>
+        </div>
+      </div>
+
+      <div class="glass-card p-4 rounded-3xl space-y-3 shadow-xl border border-slate-700">
+        <div class="flex gap-2">
+          <input type="number" id="aviator-bet-input" value="100" min="10" class="w-1/2 px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-amber-300 font-bold text-center text-sm focus:outline-none focus:border-amber-500" placeholder="ფსონი">
+          <button id="aviator-action-btn" onclick="handleAviatorAction()" class="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg active:scale-95">ფსონის დადება</button>
+        </div>
+      </div>
+
+      <div class="text-center pt-2">
+        <button onclick="returnToLobby()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">მთავარ მენიუში დაბრუნება</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- Firebase Script & App Logic -->
@@ -544,8 +588,15 @@
     let aiDifficulty = 'medium';
     let isSoundMuted = false;
     let wordTimerInterval = null;
-    let timeLeft = 30;
+    let timeLeft = 15;
     let pendingGameData = null;
+
+    // Aviator variables
+    let aviatorState = 'idle'; // 'idle', 'flying', 'crashed'
+    let aviatorMultiplier = 1.00;
+    let aviatorCrashPoint = 1.00;
+    let aviatorBet = 0;
+    let aviatorInterval = null;
 
     // ROUND_WORDS Database
     const ROUND_WORDS = {
@@ -636,14 +687,78 @@
       document.getElementById('user-coins').innerText = userStats.coins || 1000;
       document.getElementById('user-display-id').innerText = uid.substring(0, 4).toUpperCase();
       if (userStats.isAdmin || (email && email.includes('admin'))) document.getElementById('admin-panel-fab').classList.remove('hidden');
+      updateAvatarUI(currentUserAvatar);
       switchScreen('lobby-screen');
     }
 
     async function updateUserCoinsLocallyAndRemote(delta) {
       userStats.coins = (userStats.coins || 1000) + delta;
       document.getElementById('user-coins').innerText = userStats.coins;
+      const aviatorBal = document.getElementById('aviator-balance');
+      if (aviatorBal) aviatorBal.innerText = userStats.coins;
       if (currentUser) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), { coins: userStats.coins });
     }
+
+    function updateAvatarUI(base64Img) {
+      const previewImg = document.getElementById('profile-avatar-preview');
+      const previewIcon = document.getElementById('profile-avatar-icon');
+      const topImg = document.getElementById('user-display-avatar');
+      const topIcon = document.getElementById('user-display-default-icon');
+
+      if (base64Img) {
+        previewImg.src = base64Img;
+        previewImg.classList.remove('hidden');
+        previewIcon.classList.add('hidden');
+
+        topImg.src = base64Img;
+        topImg.classList.remove('hidden');
+        topIcon.classList.add('hidden');
+      } else {
+        previewImg.classList.add('hidden');
+        previewIcon.classList.remove('hidden');
+
+        topImg.classList.add('hidden');
+        topIcon.classList.remove('hidden');
+      }
+    }
+
+    window.handleAvatarSelect = function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          canvas.width = 120; canvas.height = 120;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, 120, 120);
+          const compressed = canvas.toDataURL('image/jpeg', 0.7);
+          currentUserAvatar = compressed;
+          updateAvatarUI(compressed);
+          showToast("ფოტო აიტვირთა წარმატებით! ✨");
+        };
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.saveProfileSettings = async function() {
+      if (!currentUser) return;
+      const nicknameInput = document.getElementById('nickname-input').value.trim();
+      let updateData = {};
+      if (nicknameInput) {
+        updateData.nickname = nicknameInput;
+        playerName = nicknameInput;
+        document.getElementById('user-display-name').innerText = nicknameInput;
+      }
+      if (currentUserAvatar) {
+        updateData.avatar = currentUserAvatar;
+      }
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), updateData);
+      closeProfileEditModal();
+      showToast("პროფილი განახლდა! ✨");
+    };
 
     window.toggleSidebar = (open) => {
       const drawer = document.getElementById('sidebar-drawer');
@@ -676,6 +791,7 @@
       if (mode === 'words') return 'სიტყვები';
       if (mode === 'boxes') return 'ყუთები';
       if (mode === 'tictactoe') return 'ნოლიკი';
+      if (mode === 'aviator') return 'Aviator (ჯეტი)';
       return mode;
     }
 
@@ -722,6 +838,13 @@
       if (snap.exists()) { await updateDoc(ref, { coins: (snap.data().coins || 1000) + 5000 }); showToast("დაემატა!"); openAdminModal(); }
     };
 
+    window.copyRoomCode = function() {
+      if (roomCode) {
+        navigator.clipboard.writeText(roomCode);
+        showToast("ოთახის კოდი დაკოპირდა! 📋");
+      }
+    };
+
     function maskWord(word) {
       if (word.length <= 2) return word;
       return `${word[0]}${"*".repeat(word.length - 2)}${word[word.length - 1]}`;
@@ -734,7 +857,7 @@
 
       publicRoomsUnsubscribe = onSnapshot(q, (snapshot) => {
         const listEl = document.getElementById('public-tables-list');
-        if (snapshot.empty) { listEl.innerHTML = '<div class="text-xs text-slate-500 text-center py-2">აქტიური მაგიდები არ არის...</div>'; return; }
+        if (snapshot.empty) { listEl.innerHTML = '<div class="text-xs text-slate-500 text-center py-2">ამ თამაშში მოლოდინში არავინ არის...</div>'; return; }
         listEl.innerHTML = '';
         snapshot.forEach((docSnap) => {
           const rData = docSnap.data();
@@ -755,10 +878,18 @@
       listenToRoom(code);
     };
 
-    // --- Jeirani (Rock-Paper-Scissors) Game Start Decider ---
     window.startAiGame = function() {
       const wager = parseInt(document.getElementById('table-wager-select').value) || 100;
       const selectedGameMode = document.getElementById('game-mode-select').value;
+      
+      if (selectedGameMode === 'aviator') {
+        if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
+        switchScreen('aviator-screen');
+        document.getElementById('aviator-balance').innerText = userStats.coins;
+        resetAviatorGame();
+        return;
+      }
+
       if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
       updateUserCoinsLocallyAndRemote(-wager);
       isAiMode = true;
@@ -772,11 +903,77 @@
     window.createRoom = async function() {
       const wager = parseInt(document.getElementById('table-wager-select').value) || 100;
       const selectedGameMode = document.getElementById('game-mode-select').value;
+
+      if (selectedGameMode === 'aviator') {
+        startAiGame();
+        return;
+      }
+
       if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
       
       pendingGameData = { gameMode: selectedGameMode, wager: wager, isCreate: true };
       document.getElementById('jeirani-result').innerText = "";
       switchScreen('jeirani-screen');
+    };
+
+    // --- Aviator Game Logic ---
+    function resetAviatorGame() {
+      aviatorState = 'idle';
+      aviatorMultiplier = 1.00;
+      document.getElementById('jet-multiplier').innerText = "1.00x";
+      document.getElementById('aviator-status').innerText = "მზადება აფრენისთვის";
+      const btn = document.getElementById('aviator-action-btn');
+      btn.innerText = "ფსონის დადება";
+      btn.className = "w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg active:scale-95";
+    }
+
+    window.handleAviatorAction = async function() {
+      const betInput = parseInt(document.getElementById('aviator-bet-input').value) || 100;
+      const btn = document.getElementById('aviator-action-btn');
+
+      if (aviatorState === 'idle') {
+        if ((userStats.coins || 0) < betInput) return showToast("არ გაქვთ საკმარისი ქოინები!");
+        await updateUserCoinsLocallyAndRemote(-betInput);
+        aviatorBet = betInput;
+        aviatorState = 'flying';
+        aviatorMultiplier = 1.00;
+        
+        // Random crash point between 1.10x and 5.00x
+        aviatorCrashPoint = parseFloat((1.1 + Math.random() * 3.9).toFixed(2));
+        
+        btn.innerText = "გატანა (Cashout)";
+        btn.className = "w-1/2 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg active:scale-95";
+        document.getElementById('aviator-status').innerText = "ჯეტი მიფრინავს... ✈️";
+
+        if (aviatorInterval) clearInterval(aviatorInterval);
+        aviatorInterval = setInterval(() => {
+          aviatorMultiplier = parseFloat((aviatorMultiplier + 0.03).toFixed(2));
+          document.getElementById('jet-multiplier').innerText = aviatorMultiplier.toFixed(2) + "x";
+
+          if (aviatorMultiplier >= aviatorCrashPoint) {
+            clearInterval(aviatorInterval);
+            aviatorState = 'crashed';
+            document.getElementById('jet-multiplier').innerText = "CRASHED (" + aviatorCrashPoint.toFixed(2) + "x)";
+            document.getElementById('aviator-status').innerText = "ჯეტი გაფრინდა! 💥";
+            btn.innerText = "ახალი ფსონი";
+            btn.className = "w-1/2 py-2.5 bg-slate-700 text-slate-400 font-bold rounded-xl text-sm cursor-not-allowed";
+            showToast("💥 ჯეტი გაფრინდა! თქვენ წააგეთ ფსონი.");
+            setTimeout(() => { resetAviatorGame(); }, 3000);
+          }
+        }, 80);
+
+      } else if (aviatorState === 'flying') {
+        // Cashout
+        clearInterval(aviatorInterval);
+        aviatorState = 'crashed';
+        const winAmount = Math.floor(aviatorBet * aviatorMultiplier);
+        await updateUserCoinsLocallyAndRemote(winAmount);
+        document.getElementById('aviator-status').innerText = `მოიგეთ ${winAmount} ₾! 🎉`;
+        btn.innerText = "ახალი ფსონი";
+        btn.className = "w-1/2 py-2.5 bg-slate-700 text-slate-400 font-bold rounded-xl text-sm cursor-not-allowed";
+        showToast(`🎉 წარმატებული გატანა! მოიგეთ +${winAmount} ₾`);
+        setTimeout(() => { resetAviatorGame(); }, 3000);
+      }
     };
 
     window.playJeirani = function(myChoice) {
@@ -800,7 +997,7 @@
       setTimeout(async () => {
         if (pendingGameData.isCreate) {
           roomCode = Math.floor(1000 + Math.random() * 9000).toString();
-          playerRole = winner; // Jeirani decides role/first turn
+          playerRole = winner;
 
           let initialData = {
             code: roomCode, gameMode: pendingGameData.gameMode, wager: pendingGameData.wager,
@@ -826,7 +1023,6 @@
           switchScreen('waiting-screen');
           listenToRoom(roomCode);
         } else {
-          // AI Game setup
           const selectedGameMode = pendingGameData.gameMode;
           const wager = pendingGameData.wager;
           const firstTurn = winner === 'player1' ? 'player1' : 'player2';
@@ -884,7 +1080,7 @@
       playerRole = 'player2';
       await updateUserCoinsLocallyAndRemote(-data.wager);
       await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), { player2Id: currentUser.uid, player2Name: playerName, status: 'playing' });
-      listenToRoom(roomCode);
+      listenToRoom(code);
     };
 
     function listenToRoom(code) {
@@ -981,20 +1177,22 @@
       else updateUI(gameState);
     };
 
-    // --- 2. Word Game Logic with Timer ---
+    // --- 2. Word Game Logic with Timers per Round & Progression ---
     function updateWordGameUI(state) {
       document.getElementById('p1-score').innerText = `${state.p1Score || 0} ქულა`;
       document.getElementById('p2-score').innerText = `${state.p2Score || 0} ქულა`;
       document.getElementById('p1-label').innerText = state.player1Name || "მოთამაშე 1";
       document.getElementById('p2-label').innerText = state.player2Name || "მოწინააღმდეგე";
-      document.getElementById('round-indicator').innerText = `რაუნდი ${state.round} / 3`;
+      document.getElementById('round-indicator').innerText = `რაუნდი ${state.round || 1} / 3`;
 
       const isMyTurn = (state.currentTurn === playerRole);
       document.getElementById('turn-banner').innerText = isMyTurn ? "შენი სვლაა!" : "მოწინააღმდეგის სვლაა...";
 
-      // Timer Logic
       if (wordTimerInterval) clearInterval(wordTimerInterval);
-      timeLeft = 30;
+      if (state.round === 2) timeLeft = 20;
+      else if (state.round === 3) timeLeft = 30;
+      else timeLeft = 15;
+
       const timerEl = document.getElementById('word-timer');
       timerEl.innerText = `⏱️ ${timeLeft} წმ`;
 
@@ -1039,7 +1237,6 @@
       if (isAiMode && state.currentTurn === 'player2' && state.status !== 'finished') {
         setTimeout(() => {
           if (wordTimerInterval) clearInterval(wordTimerInterval);
-          // AI makes move
           const unguesses = state.cards.filter(c => !c.isGuessed);
           if (unguesses.length > 0) {
             const aiCard = unguesses[Math.floor(Math.random() * unguesses.length)];
@@ -1047,6 +1244,21 @@
             state.p2Score = (state.p2Score || 0) + 10;
             showToast("🤖 AI-მ გამოიცნო სიტყვა!");
           }
+
+          if (state.cards.every(c => c.isGuessed)) {
+            if (state.round < 3) {
+              state.round += 1;
+              showToast(`🎉 რაუნდი დასრულდა! გადავდივართ რაუნდზე ${state.round}`);
+              const nextWords = [...ROUND_WORDS[state.round]].sort(() => 0.5 - Math.random());
+              state.cards = nextWords.slice(0, 8).map((item, i) => ({ id: i, word: item.word, category: item.category, masked: maskWord(item.word), guessedMask: maskWord(item.word), isGuessed: false }));
+              state.activeCardId = null;
+            } else {
+              state.status = 'finished';
+              state.winner = (state.p1Score > state.p2Score) ? 'player1' : 'player2';
+              handleGameFinish(state.winner);
+            }
+          }
+
           state.currentTurn = 'player1';
           updateWordGameUI(state);
         }, 1500);
@@ -1078,11 +1290,18 @@
       }
       gameState.activeCardId = null;
       
-      // Check if all cards guessed
       if (gameState.cards.every(c => c.isGuessed)) {
-        gameState.status = 'finished';
-        gameState.winner = (gameState.p1Score > gameState.p2Score) ? 'player1' : 'player2';
-        handleGameFinish(gameState.winner);
+        if (gameState.round < 3) {
+          gameState.round += 1;
+          showToast(`🎉 რაუნდი დასრულდა! გადავდივართ რაუნდზე ${gameState.round}`);
+          const nextWords = [...ROUND_WORDS[gameState.round]].sort(() => 0.5 - Math.random());
+          gameState.cards = nextWords.slice(0, 8).map((item, i) => ({ id: i, word: item.word, category: item.category, masked: maskWord(item.word), guessedMask: maskWord(item.word), isGuessed: false }));
+          gameState.activeCardId = null;
+        } else {
+          gameState.status = 'finished';
+          gameState.winner = (gameState.p1Score > gameState.p2Score) ? 'player1' : 'player2';
+          handleGameFinish(gameState.winner);
+        }
       }
 
       if (!isAiMode) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
@@ -1176,12 +1395,13 @@
     window.returnToLobby = function() {
       if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
       if (wordTimerInterval) clearInterval(wordTimerInterval);
+      if (aviatorInterval) clearInterval(aviatorInterval);
       roomCode = null; playerRole = null; gameState = null; isAiMode = false;
       switchScreen('lobby-screen');
     };
 
     function switchScreen(screenId) {
-      ['auth-screen', 'lobby-screen', 'waiting-screen', 'jeirani-screen', 'safepath-screen', 'game-screen', 'boxes-screen', 'tictactoe-screen'].forEach(id => {
+      ['auth-screen', 'lobby-screen', 'waiting-screen', 'jeirani-screen', 'safepath-screen', 'game-screen', 'boxes-screen', 'tictactoe-screen', 'aviator-screen'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
       });
       document.getElementById(screenId).classList.remove('hidden');
