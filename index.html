@@ -197,7 +197,7 @@
         </div>
       </div>
       <div class="pt-4 border-t border-slate-800/80 text-center">
-        <span class="text-[10px] text-slate-500 font-mono">Arcade Hub v2.9.2</span>
+        <span class="text-[10px] text-slate-500 font-mono">Arcade Hub v2.9.3</span>
       </div>
     </div>
 
@@ -1016,18 +1016,27 @@
 
       if (!targetDocSnap) return showToast("მომხმარებელი ვერ მოიძებნა!");
       const targetUid = targetDocSnap.id;
+      const targetData = targetDocSnap.data();
 
       if (targetUid === currentUser.uid) return showToast("საკუთარ თავს ვერ დაიმატებ მეგობრად!");
 
       let currentFriends = userStats.friends || [];
       if (currentFriends.includes(targetUid)) return showToast("ეს მომხმარებელი უკვე შენი მეგობარია!");
 
+      // Mutual Friendship Update (Both users get each other in friends)
       currentFriends.push(targetUid);
       userStats.friends = currentFriends;
-
       await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), {
         friends: currentFriends
       });
+
+      let targetFriends = targetData.friends || [];
+      if (!targetFriends.includes(currentUser.uid)) {
+        targetFriends.push(currentUser.uid);
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', targetUid), {
+          friends: targetFriends
+        });
+      }
 
       document.getElementById('friend-search-input').value = "";
       showToast("მეგობარი წარმატებით დაემატა! 🎉");
@@ -1066,10 +1075,11 @@
       }
     }
 
-    // Open Friend Game & Wager Picker Modal
+    // Open Friend Game & Wager Picker Modal & Close Friends Modal
     window.openFriendGameInviteModal = function(friendUid, friendName) {
       targetFriendForInvite = { uid: friendUid, name: friendName || 'მეგობარი' };
       document.getElementById('invite-friend-title').innerText = `მოიწვიე ${targetFriendForInvite.name} თამაშში`;
+      closeFriendsModal(); // Automatically close friends modal so picker opens cleanly
       document.getElementById('friend-game-invite-modal').classList.remove('hidden');
     };
 
@@ -1078,7 +1088,7 @@
       targetFriendForInvite = null;
     };
 
-    // Confirm and Send Game Invite to Friend (Fixed null.name error)
+    // Confirm and Send Game Invite to Friend
     window.confirmAndSendInvite = async function() {
       if (!targetFriendForInvite) {
         showToast("მეგობარი არ არის მითითებული!");
