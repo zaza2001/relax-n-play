@@ -145,7 +145,7 @@
         </div>
       </div>
       <div class="pt-4 border-t border-slate-800/80 text-center">
-        <span class="text-[10px] text-slate-500 font-mono">Arcade Hub v2.6.0</span>
+        <span class="text-[10px] text-slate-500 font-mono">Arcade Hub v2.6.1</span>
       </div>
     </div>
 
@@ -698,8 +698,7 @@
     };
 
     window.continueAnonymously = async () => {
-      const res = await signInAnonymously(auth);
-      // Ensure anonymous user gets a friendCode if doesn't exist
+      await signInAnonymously(auth);
     };
     window.logoutUser = async () => signOut(auth);
 
@@ -1024,6 +1023,39 @@
       listenToRoom(roomCode);
     };
 
+    window.joinRoom = async function() {
+      const codeInput = document.getElementById('room-code-input').value.trim();
+      if (codeInput.length !== 4) return showToast("შეიყვანეთ 4-ნიშნა კოდი!");
+      roomCode = codeInput;
+      const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode);
+      const snap = await getDoc(roomRef);
+      if (!snap.exists()) return showToast("ოთახი ვერ მოიძებნა!");
+      const data = snap.data();
+      if ((userStats.coins || 0) < data.wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
+
+      playerRole = 'player2';
+      isAiMode = false;
+      await updateUserCoinsLocallyAndRemote(-data.wager);
+
+      // Fixed: passed roomCode instead of undefined 'code'
+      listenToRoom(roomCode);
+
+      await updateDoc(roomRef, { 
+        player2Id: currentUser.uid, 
+        player2Name: playerName, 
+        status: 'playing' 
+      });
+    };
+
+    function listenToRoom(code) {
+      if (roomUnsubscribe) roomUnsubscribe();
+      roomUnsubscribe = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code), (snapshot) => {
+        if (!snapshot.exists()) return;
+        gameState = snapshot.data();
+        updateUI(gameState);
+      });
+    }
+
     function resetAviatorGame() {
       aviatorState = 'idle';
       aviatorMultiplier = 1.00;
@@ -1143,38 +1175,6 @@
       if (roomCode && !isAiMode) { await updateUserCoinsLocallyAndRemote(gameState?.wager || 100); }
       returnToLobby();
     };
-
-    window.joinRoom = async function() {
-      const codeInput = document.getElementById('room-code-input').value.trim();
-      if (codeInput.length !== 4) return showToast("შეიყვანეთ 4-ნიშნა კოდი!");
-      roomCode = codeInput;
-      const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode);
-      const snap = await getDoc(roomRef);
-      if (!snap.exists()) return showToast("ოთახი ვერ მოიძებნა!");
-      const data = snap.data();
-      if ((userStats.coins || 0) < data.wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
-
-      playerRole = 'player2';
-      isAiMode = false;
-      await updateUserCoinsLocallyAndRemote(-data.wager);
-
-      listenToRoom(code);
-
-      await updateDoc(roomRef, { 
-        player2Id: currentUser.uid, 
-        player2Name: playerName, 
-        status: 'playing' 
-      });
-    };
-
-    function listenToRoom(code) {
-      if (roomUnsubscribe) roomUnsubscribe();
-      roomUnsubscribe = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code), (snapshot) => {
-        if (!snapshot.exists()) return;
-        gameState = snapshot.data();
-        updateUI(gameState);
-      });
-    }
 
     async function handleGameFinish(winnerRole) {
       if (gameState.rewardsDistributed) return;
