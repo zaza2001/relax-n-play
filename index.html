@@ -385,13 +385,13 @@
       <button onclick="cancelRoom()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">გაუქმება</button>
     </div>
 
-    <!-- Jeirani (Rock-Paper-Scissors) Screen to decide who starts -->
+    <!-- Jeirani (Rock-Paper-Scissors) Screen to decide who starts (AI Game Only) -->
     <div id="jeirani-screen" class="hidden w-full max-w-md glass-card p-6 rounded-3xl shadow-2xl text-center space-y-4">
       <div class="w-14 h-14 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-amber-500/30">
         <i class="fa-solid fa-hand-fist"></i>
       </div>
       <h2 class="text-xl font-bold text-amber-300">ჯეირანი (ვინ იწყებს?)</h2>
-      <p class="text-xs text-slate-400">აირჩიეთ ფიგურა, რომ დადგინდეს ვინ იწყებს პირველ სვლას:</p>
+      <p class="text-xs text-slate-400">აირჩიეთ ფიგურა, რომ დადგინდეს ვინ იწყებს პირველ სვლას AI-ს წინააღმდეგ:</p>
       <div class="flex justify-center gap-3 py-3">
         <button onclick="playJeirani('rock')" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl text-lg font-bold transition-all active:scale-95">✊ ქვა</button>
         <button onclick="playJeirani('paper')" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl text-lg font-bold transition-all active:scale-95">✋ ქაღალდი</button>
@@ -572,8 +572,6 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    signOut(auth).catch(() => {});
-
     let currentUser = null;
     let userStats = { wins: 0, losses: 0, coins: 1000, friends: [], nickname: "", avatar: "", isAdmin: false, isBanned: false };
     let roomCode = null;
@@ -632,6 +630,7 @@
 
     window.hideToast = function() { document.getElementById('toast').classList.add('hidden'); };
 
+    // Prevent auth screen flash on initial load by waiting for auth state resolution
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
@@ -861,9 +860,10 @@
         listEl.innerHTML = '';
         snapshot.forEach((docSnap) => {
           const rData = docSnap.data();
+          const roomWager = rData.wager || 100;
           listEl.innerHTML += `<div class="flex items-center justify-between bg-slate-800 p-2.5 rounded-xl border border-indigo-500/30 text-xs">
-            <span>${rData.player1Name} (ფსონი: ${rData.wager} ₾)</span>
-            <button onclick="joinPublicTable('${rData.code}', ${rData.wager})" class="px-3 py-1.5 bg-emerald-600 font-bold rounded-lg">შესვლა</button>
+            <span>${rData.player1Name} (ფსონი: ${roomWager} ₾)</span>
+            <button onclick="joinPublicTable('${rData.code}', ${roomWager})" class="px-3 py-1.5 bg-emerald-600 font-bold rounded-lg">შესვლა</button>
           </div>`;
         });
       });
@@ -878,6 +878,7 @@
       listenToRoom(code);
     };
 
+    // AI Game starts with Jeirani (Rock-Paper-Scissors) to decide first turn
     window.startAiGame = function() {
       const wager = parseInt(document.getElementById('table-wager-select').value) || 100;
       const selectedGameMode = document.getElementById('game-mode-select').value;
@@ -900,6 +901,7 @@
       switchScreen('jeirani-screen');
     };
 
+    // Multiplayer room creation goes DIRECTLY to waiting screen (No Jeirani needed)
     window.createRoom = async function() {
       const wager = parseInt(document.getElementById('table-wager-select').value) || 100;
       const selectedGameMode = document.getElementById('game-mode-select').value;
@@ -911,9 +913,34 @@
 
       if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
       
-      pendingGameData = { gameMode: selectedGameMode, wager: wager, isCreate: true };
-      document.getElementById('jeirani-result').innerText = "";
-      switchScreen('jeirani-screen');
+      roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+      playerRole = 'player1';
+      isAiMode = false;
+
+      let initialData = {
+        code: roomCode, gameMode: selectedGameMode, wager: wager,
+        player1Id: currentUser.uid, player1Name: playerName, status: 'waiting',
+        currentTurn: 'player1',
+        p1Pos: 0, p2Pos: 0, mineMap: [0, 1, 2, 0, 1], revealedMines: {}
+      };
+
+      if (selectedGameMode === 'words') {
+        const shuffled = [...ROUND_WORDS[1]].sort(() => 0.5 - Math.random());
+        initialData.cards = shuffled.slice(0, 8).map((item, i) => ({ id: i, word: item.word, category: item.category, masked: maskWord(item.word), guessedMask: maskWord(item.word), isGuessed: false }));
+        initialData.p1Score = 0; initialData.p2Score = 0; initialData.round = 1; initialData.activeCardId = null;
+      } else if (selectedGameMode === 'boxes') {
+        initialData.p1Money = 0; initialData.p2Money = 0; initialData.round = 1;
+        initialData.boxes = [ {id:0, amount:500, isOpen:false}, {id:1, amount:1000, isOpen:false}, {id:2, amount:5000, isOpen:false}, {id:3, amount:10000, isOpen:false} ];
+      } else if (selectedGameMode === 'tictactoe') {
+        initialData.board = Array(9).fill("");
+      }
+
+      await updateUserCoinsLocallyAndRemote(-wager);
+      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), initialData);
+      document.getElementById('display-room-code').innerText = roomCode;
+      document.getElementById('waiting-room-wager').innerText = wager;
+      switchScreen('waiting-screen');
+      listenToRoom(roomCode);
     };
 
     // --- Aviator Game Logic ---
@@ -974,6 +1001,7 @@
       }
     };
 
+    // Jeirani specifically for AI Game
     window.playJeirani = function(myChoice) {
       const choices = ['rock', 'paper', 'scissors'];
       const aiChoice = choices[Math.floor(Math.random() * choices.length)];
@@ -992,71 +1020,42 @@
 
       document.getElementById('jeirani-result').innerText = `შენ: ${names[myChoice]} | AI: ${names[aiChoice]} — ${winner === 'player1' ? '🎉 შენ იწყებ პირველი!' : '⏳ AI იწყებს პირველი!'}`;
 
-      setTimeout(async () => {
-        if (pendingGameData.isCreate) {
-          roomCode = Math.floor(1000 + Math.random() * 9000).toString();
-          playerRole = winner;
+      setTimeout(() => {
+        const selectedGameMode = pendingGameData.gameMode;
+        const wager = pendingGameData.wager;
+        const firstTurn = winner === 'player1' ? 'player1' : 'player2';
 
-          let initialData = {
-            code: roomCode, gameMode: pendingGameData.gameMode, wager: pendingGameData.wager,
-            player1Id: currentUser.uid, player1Name: playerName, status: 'waiting',
-            currentTurn: winner === 'player1' ? 'player1' : 'player2',
-            p1Pos: 0, p2Pos: 0, mineMap: [0, 1, 2, 0, 1], revealedMines: {}
+        if (selectedGameMode === 'words') {
+          const shuffled = [...ROUND_WORDS[1]].sort(() => 0.5 - Math.random());
+          gameState = {
+            gameMode: 'words', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
+            currentTurn: firstTurn, p1Score: 0, p2Score: 0, round: 1, activeCardId: null,
+            cards: shuffled.slice(0, 8).map((item, i) => ({ id: i, word: item.word, category: item.category, masked: maskWord(item.word), guessedMask: maskWord(item.word), isGuessed: false }))
           };
-
-          if (pendingGameData.gameMode === 'words') {
-            const shuffled = [...ROUND_WORDS[1]].sort(() => 0.5 - Math.random());
-            initialData.cards = shuffled.slice(0, 8).map((item, i) => ({ id: i, word: item.word, category: item.category, masked: maskWord(item.word), guessedMask: maskWord(item.word), isGuessed: false }));
-            initialData.p1Score = 0; initialData.p2Score = 0; initialData.round = 1; initialData.activeCardId = null;
-          } else if (pendingGameData.gameMode === 'boxes') {
-            initialData.p1Money = 0; initialData.p2Money = 0; initialData.round = 1;
-            initialData.boxes = [ {id:0, amount:500, isOpen:false}, {id:1, amount:1000, isOpen:false}, {id:2, amount:5000, isOpen:false}, {id:3, amount:10000, isOpen:false} ];
-          } else if (pendingGameData.gameMode === 'tictactoe') {
-            initialData.board = Array(9).fill("");
-          }
-
-          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), initialData);
-          document.getElementById('display-room-code').innerText = roomCode;
-          document.getElementById('waiting-room-wager').innerText = pendingGameData.wager;
-          switchScreen('waiting-screen');
-          listenToRoom(roomCode);
+          switchScreen('game-screen');
+          updateWordGameUI(gameState);
+        } else if (selectedGameMode === 'boxes') {
+          gameState = {
+            gameMode: 'boxes', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
+            currentTurn: firstTurn, p1Money: 0, p2Money: 0, round: 1,
+            boxes: [ {id:0, amount:500, isOpen:false}, {id:1, amount:1000, isOpen:false}, {id:2, amount:5000, isOpen:false}, {id:3, amount:10000, isOpen:false} ]
+          };
+          switchScreen('boxes-screen');
+          updateBoxesUI(gameState);
+        } else if (selectedGameMode === 'tictactoe') {
+          gameState = {
+            gameMode: 'tictactoe', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
+            currentTurn: firstTurn, board: Array(9).fill("")
+          };
+          switchScreen('tictactoe-screen');
+          updateTicTacToeUI(gameState);
         } else {
-          const selectedGameMode = pendingGameData.gameMode;
-          const wager = pendingGameData.wager;
-          const firstTurn = winner === 'player1' ? 'player1' : 'player2';
-
-          if (selectedGameMode === 'words') {
-            const shuffled = [...ROUND_WORDS[1]].sort(() => 0.5 - Math.random());
-            gameState = {
-              gameMode: 'words', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
-              currentTurn: firstTurn, p1Score: 0, p2Score: 0, round: 1, activeCardId: null,
-              cards: shuffled.slice(0, 8).map((item, i) => ({ id: i, word: item.word, category: item.category, masked: maskWord(item.word), guessedMask: maskWord(item.word), isGuessed: false }))
-            };
-            switchScreen('game-screen');
-            updateWordGameUI(gameState);
-          } else if (selectedGameMode === 'boxes') {
-            gameState = {
-              gameMode: 'boxes', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
-              currentTurn: firstTurn, p1Money: 0, p2Money: 0, round: 1,
-              boxes: [ {id:0, amount:500, isOpen:false}, {id:1, amount:1000, isOpen:false}, {id:2, amount:5000, isOpen:false}, {id:3, amount:10000, isOpen:false} ]
-            };
-            switchScreen('boxes-screen');
-            updateBoxesUI(gameState);
-          } else if (selectedGameMode === 'tictactoe') {
-            gameState = {
-              gameMode: 'tictactoe', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
-              currentTurn: firstTurn, board: Array(9).fill("")
-            };
-            switchScreen('tictactoe-screen');
-            updateTicTacToeUI(gameState);
-          } else {
-            gameState = {
-              gameMode: 'safepath', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
-              currentTurn: firstTurn, p1Pos: 0, p2Pos: 0, mineMap: [0, 1, 2, 0, 1], revealedMines: {}
-            };
-            switchScreen('safepath-screen');
-            updateSafePathUI(gameState);
-          }
+          gameState = {
+            gameMode: 'safepath', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
+            currentTurn: firstTurn, p1Pos: 0, p2Pos: 0, mineMap: [0, 1, 2, 0, 1], revealedMines: {}
+          };
+          switchScreen('safepath-screen');
+          updateSafePathUI(gameState);
         }
       }, 1500);
     };
@@ -1155,7 +1154,7 @@
       }
 
       if (isAiMode && state.currentTurn === 'player2' && state.status !== 'finished') {
-        setTimeout(() => {
+        setTimeout(async () => {
           const aiRow = state.p2Pos;
           const aiCol = Math.floor(Math.random() * 3);
           const isMine = (state.mineMap[aiRow] === aiCol);
@@ -1193,7 +1192,7 @@
         }
       }
       gameState.currentTurn = playerRole === 'player1' ? 'player2' : 'player1';
-      if (!isAiMode) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
+      if (!isAiMode && roomCode) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
       else updateSafePathUI(gameState);
     };
 
@@ -1224,7 +1223,7 @@
             clearInterval(wordTimerInterval);
             showToast("⏱️ დრო ამოიწურა! სვლა გადავიდა მოწინააღმდეგეზე.");
             gameState.currentTurn = playerRole === 'player1' ? 'player2' : 'player1';
-            if (!isAiMode) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
+            if (!isAiMode && roomCode) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
             else updateWordGameUI(gameState);
           }
         }, 1000);
@@ -1288,7 +1287,7 @@
     window.selectCard = async function(cardId) {
       if (!gameState || gameState.currentTurn !== playerRole || gameState.cards[cardId].isGuessed) return;
       gameState.activeCardId = cardId;
-      if (!isAiMode) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), { activeCardId: cardId });
+      if (!isAiMode && roomCode) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), { activeCardId: cardId });
       else updateWordGameUI(gameState);
     };
 
@@ -1324,7 +1323,7 @@
         }
       }
 
-      if (!isAiMode) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
+      if (!isAiMode && roomCode) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
       else updateWordGameUI(gameState);
     };
 
@@ -1390,7 +1389,7 @@
 
       gameState.currentTurn = playerRole === 'player1' ? 'player2' : 'player1';
 
-      if (!isAiMode) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
+      if (!isAiMode && roomCode) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
       else updateBoxesUI(gameState);
     };
 
@@ -1458,7 +1457,7 @@
       }
 
       gameState.currentTurn = playerRole === 'player1' ? 'player2' : 'player1';
-      if (!isAiMode) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
+      if (!isAiMode && roomCode) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
       else updateTicTacToeUI(gameState);
     };
 
