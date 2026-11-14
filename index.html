@@ -145,7 +145,7 @@
         </div>
       </div>
       <div class="pt-4 border-t border-slate-800/80 text-center">
-        <span class="text-[10px] text-slate-500 font-mono">Arcade Hub v2.7.2</span>
+        <span class="text-[10px] text-slate-500 font-mono">Arcade Hub v2.8.0</span>
       </div>
     </div>
 
@@ -260,63 +260,65 @@
       </div>
     </div>
 
-    <!-- Lobby Screen -->
-    <div id="lobby-screen" class="hidden w-full flex flex-col items-center space-y-4">
+    <!-- Lobby Screen (Redesigned & Clean) -->
+    <div id="lobby-screen" class="hidden w-full flex flex-col items-center space-y-3.5">
       
-      <!-- Top Bar (Clean & Symmetric Layout without Overlaps) -->
+      <!-- Top Bar (Clean & Symmetric Layout) -->
       <div class="w-full flex justify-between items-center px-1 gap-2">
-        <!-- Left group: Hamburger & Sound -->
         <div class="flex items-center gap-2">
-          <button onclick="toggleSidebar(true)" class="w-11 h-11 bg-slate-800/80 border border-slate-700/60 rounded-2xl flex items-center justify-center text-indigo-400 shadow-md hover:bg-slate-800 transition-all" title="მენიუ">
-            <i class="fa-solid fa-bars text-base"></i>
+          <button onclick="toggleSidebar(true)" class="w-10 h-10 bg-slate-800/80 border border-slate-700/60 rounded-2xl flex items-center justify-center text-indigo-400 shadow-md hover:bg-slate-800 transition-all" title="მენიუ">
+            <i class="fa-solid fa-bars text-sm"></i>
           </button>
-          <button onclick="toggleSound()" class="w-11 h-11 bg-slate-800/80 border border-slate-700/60 rounded-2xl flex items-center justify-center text-indigo-300 shadow-md hover:bg-slate-800 transition-all" title="ხმა">
+          <button onclick="toggleSound()" class="w-10 h-10 bg-slate-800/80 border border-slate-700/60 rounded-2xl flex items-center justify-center text-indigo-300 shadow-md hover:bg-slate-800 transition-all" title="ხმა">
             <i id="sound-icon" class="fa-solid fa-volume-high text-xs"></i>
           </button>
         </div>
 
-        <!-- Center: Game Switcher -->
-        <div onclick="toggleGameSwitcher(true)" class="glass-card px-3 py-2 rounded-2xl flex items-center gap-2 border border-slate-700/60 shadow-lg cursor-pointer hover:border-indigo-500/50 transition-all">
-          <div id="header-game-icon" class="w-6 h-6 bg-indigo-600 rounded-lg flex items-center justify-center text-xs text-white shadow"><i class="fa-solid fa-bomb"></i></div>
+        <div onclick="toggleGameSwitcher(true)" class="glass-card px-3.5 py-2 rounded-2xl flex items-center gap-2 border border-slate-700/60 shadow-lg cursor-pointer hover:border-indigo-500/50 transition-all">
+          <div id="header-game-icon" class="w-5 h-5 bg-indigo-600 rounded-lg flex items-center justify-center text-[10px] text-white shadow"><i class="fa-solid fa-bomb"></i></div>
           <div class="text-left">
             <span id="header-game-name" class="text-xs font-bold text-white block leading-tight">დანაღმული გზა</span>
-            <span class="text-[9px] text-slate-400">არკადული რეჟიმი</span>
           </div>
-          <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-1"></i>
+          <i class="fa-solid fa-chevron-down text-[9px] text-slate-400 ml-0.5"></i>
         </div>
 
-        <!-- Right group: Admin Panel & Logout -->
         <div class="flex items-center gap-2">
-          <button id="admin-panel-fab" onclick="openAdminModal()" class="hidden w-11 h-11 bg-rose-950/80 border border-rose-500/50 rounded-2xl flex items-center justify-center text-rose-400 shadow-md hover:bg-rose-900 transition-all" title="ადმინ პანელი">
+          <button id="admin-panel-fab" onclick="openAdminModal()" class="hidden w-10 h-10 bg-rose-950/80 border border-rose-500/50 rounded-2xl flex items-center justify-center text-rose-400 shadow-md hover:bg-rose-900 transition-all" title="ადმინ პანელი">
             <i class="fa-solid fa-shield-halved text-xs"></i>
           </button>
-          <button onclick="logoutUser()" class="w-11 h-11 bg-slate-800/80 border border-slate-700/60 rounded-2xl flex items-center justify-center text-slate-300 shadow-md hover:text-rose-400 hover:bg-slate-800 transition-all" title="გასვლა">
-            <i class="fa-solid fa-right-from-bracket text-sm"></i>
+          <button onclick="logoutUser()" class="w-10 h-10 bg-slate-800/80 border border-slate-700/60 rounded-2xl flex items-center justify-center text-slate-300 shadow-md hover:text-rose-400 hover:bg-slate-800 transition-all" title="გასვლა">
+            <i class="fa-solid fa-right-from-bracket text-xs"></i>
           </button>
         </div>
       </div>
 
-      <!-- Main Profile Center Card -->
-      <div class="w-full flex flex-col items-center pt-1">
-        <div class="text-[11px] font-mono text-slate-400 mb-2.5 tracking-widest bg-slate-900/60 px-3 py-1 rounded-full border border-slate-800">ID: <span id="user-display-id" class="text-indigo-300 font-bold">3351</span></div>
+      <!-- Unified Profile & Balance Glass Card -->
+      <div class="w-full glass-card p-5 rounded-3xl flex flex-col items-center space-y-3 relative overflow-hidden border border-indigo-500/20 shadow-2xl">
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-        <div class="relative mb-3">
-          <div class="w-24 h-24 rounded-full avatar-ring p-1 shadow-2xl flex items-center justify-center overflow-hidden bg-slate-900">
+        <div class="w-full flex items-center justify-between text-[11px] font-mono text-slate-400 px-1">
+          <span>პროფილი</span>
+          <span class="bg-slate-900/80 px-3 py-1 rounded-full border border-slate-800">ID: <span id="user-display-id" class="text-indigo-300 font-bold">3351</span></span>
+        </div>
+
+        <div class="relative">
+          <div class="w-20 h-20 rounded-full avatar-ring p-1 shadow-2xl flex items-center justify-center overflow-hidden bg-slate-900">
             <img id="user-display-avatar" src="" class="w-full h-full object-cover rounded-full hidden">
-            <i id="user-display-default-icon" class="fa-solid fa-user text-slate-500 text-3xl"></i>
+            <i id="user-display-default-icon" class="fa-solid fa-user text-slate-500 text-2xl"></i>
           </div>
-          <div class="absolute bottom-1 right-2 w-4 h-4 bg-emerald-500 border-2 border-slate-900 rounded-full shadow"></div>
+          <div class="absolute bottom-0 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-slate-900 rounded-full shadow"></div>
         </div>
 
-        <div class="flex items-center gap-2 bg-slate-900/80 border border-amber-500/30 px-5 py-2 rounded-2xl shadow-lg mb-2.5">
-          <i class="fa-solid fa-coins text-amber-400 text-base"></i>
-          <span id="user-coins" class="text-xl font-black text-amber-300 tracking-wide">1000</span>
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-bold text-slate-100">გამარჯობა, <span id="user-display-name" class="text-indigo-300">სტუმარი</span></span>
+          <button onclick="openProfileEditModal()" class="w-6 h-6 bg-slate-800/80 hover:bg-slate-700 border border-slate-700 rounded-lg flex items-center justify-center text-slate-300 transition-all"><i class="fa-solid fa-pen text-[9px]"></i></button>
+        </div>
+
+        <div class="w-full flex items-center justify-center gap-2 bg-slate-900/90 border border-amber-500/30 py-2.5 px-4 rounded-2xl shadow-inner">
+          <i class="fa-solid fa-coins text-amber-400 text-lg"></i>
+          <span id="user-coins" class="text-2xl font-black text-amber-300 tracking-wide">1000</span>
           <span class="text-xs text-amber-500 font-bold">₾</span>
-        </div>
-
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-sm font-semibold text-slate-200">გამარჯობა, <span id="user-display-name" class="text-indigo-300 font-bold">სტუმარი</span></span>
-          <button onclick="openProfileEditModal()" class="w-6 h-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg flex items-center justify-center text-slate-300 transition-all"><i class="fa-solid fa-pen text-[10px]"></i></button>
         </div>
       </div>
 
