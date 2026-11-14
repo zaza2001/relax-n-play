@@ -630,7 +630,6 @@
 
     window.hideToast = function() { document.getElementById('toast').classList.add('hidden'); };
 
-    // Prevent auth screen flash on initial load by waiting for auth state resolution
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
@@ -873,12 +872,16 @@
       if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
       roomCode = code;
       playerRole = 'player2';
+      isAiMode = false;
       await updateUserCoinsLocallyAndRemote(-wager);
-      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code), { player2Id: currentUser.uid, player2Name: playerName, status: 'playing' });
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code), { 
+        player2Id: currentUser.uid, 
+        player2Name: playerName, 
+        status: 'playing' 
+      });
       listenToRoom(code);
     };
 
-    // AI Game starts with Jeirani (Rock-Paper-Scissors) to decide first turn
     window.startAiGame = function() {
       const wager = parseInt(document.getElementById('table-wager-select').value) || 100;
       const selectedGameMode = document.getElementById('game-mode-select').value;
@@ -901,7 +904,6 @@
       switchScreen('jeirani-screen');
     };
 
-    // Multiplayer room creation goes DIRECTLY to waiting screen (No Jeirani needed)
     window.createRoom = async function() {
       const wager = parseInt(document.getElementById('table-wager-select').value) || 100;
       const selectedGameMode = document.getElementById('game-mode-select').value;
@@ -1001,7 +1003,6 @@
       }
     };
 
-    // Jeirani specifically for AI Game
     window.playJeirani = function(myChoice) {
       const choices = ['rock', 'paper', 'scissors'];
       const aiChoice = choices[Math.floor(Math.random() * choices.length)];
@@ -1069,15 +1070,21 @@
       const codeInput = document.getElementById('room-code-input').value.trim();
       if (codeInput.length !== 4) return showToast("შეიყვანეთ 4-ნიშნა კოდი!");
       roomCode = codeInput;
-      const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode));
+      const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode);
+      const snap = await getDoc(roomRef);
       if (!snap.exists()) return showToast("ოთახი ვერ მოიძებნა!");
       const data = snap.data();
       if ((userStats.coins || 0) < data.wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
 
       playerRole = 'player2';
+      isAiMode = false;
       await updateUserCoinsLocallyAndRemote(-data.wager);
-      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), { player2Id: currentUser.uid, player2Name: playerName, status: 'playing' });
-      listenToRoom(code);
+      await updateDoc(roomRef, { 
+        player2Id: currentUser.uid, 
+        player2Name: playerName, 
+        status: 'playing' 
+      });
+      listenToRoom(roomCode);
     };
 
     function listenToRoom(code) {
