@@ -417,7 +417,7 @@
         <div class="glass-card p-3 rounded-2xl flex items-center gap-3 border-l-4 border-pink-500 shadow-xl">
           <div class="w-10 h-10 rounded-full overflow-hidden bg-pink-900 border-2 border-pink-400 flex items-center justify-center shrink-0">
             <img id="sp-p2-img" src="" class="w-full h-full object-cover hidden">
-            <i id="sp-p2-icon" class="fa-solid fa-robot text-pink-200 text-lg"></i>
+            <i id="sp-p2-icon" class="fa-solid fa-user text-pink-200 text-lg"></i>
           </div>
           <div class="truncate text-left">
             <div id="sp-p2-name" class="text-xs font-bold text-slate-100 truncate">მოწინააღმდეგე</div>
@@ -874,12 +874,15 @@
       playerRole = 'player2';
       isAiMode = false;
       await updateUserCoinsLocallyAndRemote(-wager);
+      
+      // Listen to room BEFORE updating status so snapshot triggers instantly
+      listenToRoom(code);
+
       await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code), { 
         player2Id: currentUser.uid, 
         player2Name: playerName, 
         status: 'playing' 
       });
-      listenToRoom(code);
     };
 
     window.startAiGame = function() {
@@ -1079,12 +1082,15 @@
       playerRole = 'player2';
       isAiMode = false;
       await updateUserCoinsLocallyAndRemote(-data.wager);
+
+      // Listen to room BEFORE updating status so snapshot triggers instantly
+      listenToRoom(roomCode);
+
       await updateDoc(roomRef, { 
         player2Id: currentUser.uid, 
         player2Name: playerName, 
         status: 'playing' 
       });
-      listenToRoom(roomCode);
     };
 
     function listenToRoom(code) {
@@ -1132,6 +1138,12 @@
       document.getElementById('sp-p2-name').innerText = state.player2Name || "მოწინააღმდეგე";
       document.getElementById('sp-p1-pos').innerText = state.p1Pos || 0;
       document.getElementById('sp-p2-pos').innerText = state.p2Pos || 0;
+
+      // Update player 2 icon depending on AI vs Multiplayer
+      const p2Icon = document.getElementById('sp-p2-icon');
+      if (p2Icon) {
+        p2Icon.className = isAiMode ? "fa-solid fa-robot text-pink-200 text-lg" : "fa-solid fa-user text-pink-200 text-lg";
+      }
 
       const isMyTurn = (state.currentTurn === playerRole);
       document.getElementById('sp-status').innerText = isMyTurn ? "✨ შენი სვლაა!" : "⏳ მოწინააღმდეგის სვლაა...";
@@ -1326,7 +1338,7 @@
         } else {
           gameState.status = 'finished';
           gameState.winner = (gameState.p1Score > gameState.p2Score) ? 'player1' : 'player2';
-          handleGameFinish(gameState.winner);
+          handleGameFinish(state.winner);
         }
       }
 
