@@ -938,7 +938,6 @@
         aviatorState = 'flying';
         aviatorMultiplier = 1.00;
         
-        // Random crash point between 1.10x and 5.00x
         aviatorCrashPoint = parseFloat((1.1 + Math.random() * 3.9).toFixed(2));
         
         btn.innerText = "გატანა (Cashout)";
@@ -963,7 +962,6 @@
         }, 80);
 
       } else if (aviatorState === 'flying') {
-        // Cashout
         clearInterval(aviatorInterval);
         aviatorState = 'crashed';
         const winAmount = Math.floor(aviatorBet * aviatorMultiplier);
@@ -1155,6 +1153,28 @@
         rowDiv.appendChild(btns);
         boardEl.appendChild(rowDiv);
       }
+
+      if (isAiMode && state.currentTurn === 'player2' && state.status !== 'finished') {
+        setTimeout(() => {
+          const aiRow = state.p2Pos;
+          const aiCol = Math.floor(Math.random() * 3);
+          const isMine = (state.mineMap[aiRow] === aiCol);
+          if (isMine) {
+            state.p2Pos = 0;
+            showToast("🤖 AI-მ ნაღმზე აბიჯა და საწყისზე დაბრუნდა!");
+          } else {
+            state.p2Pos += 1;
+            showToast("🤖 AI-მ წარმატებით გადადგა ნაბიჯი!");
+            if (state.p2Pos >= 5) {
+              state.status = 'finished';
+              state.winner = 'player2';
+              handleGameFinish('player2');
+            }
+          }
+          state.currentTurn = 'player1';
+          updateSafePathUI(state);
+        }, 1500);
+      }
     }
 
     window.makeSafePathMove = async function(row, col) {
@@ -1174,7 +1194,7 @@
       }
       gameState.currentTurn = playerRole === 'player1' ? 'player2' : 'player1';
       if (!isAiMode) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
-      else updateUI(gameState);
+      else updateSafePathUI(gameState);
     };
 
     // --- 2. Word Game Logic with Timers per Round & Progression ---
@@ -1327,6 +1347,27 @@
           grid.appendChild(btn);
         });
       }
+
+      if (isAiMode && state.currentTurn === 'player2' && state.status !== 'finished') {
+        setTimeout(() => {
+          const unopened = state.boxes.filter(b => !b.isOpen);
+          if (unopened.length > 0) {
+            const aiBox = unopened[Math.floor(Math.random() * unopened.length)];
+            aiBox.isOpen = true;
+            state.p2Money = (state.p2Money || 0) + aiBox.amount;
+            showToast(`🤖 AI-მ გახსნა ყუთი და მოიგო ${aiBox.amount} ₾!`);
+            
+            state.round = (state.round || 1) + 1;
+            if (state.round > 5 || state.boxes.every(b => b.isOpen)) {
+              state.status = 'finished';
+              state.winner = (state.p1Money >= state.p2Money) ? 'player1' : 'player2';
+              handleGameFinish(state.winner);
+            }
+          }
+          state.currentTurn = 'player1';
+          updateBoxesUI(state);
+        }, 1500);
+      }
     }
 
     window.selectBox = async function(boxId) {
@@ -1339,6 +1380,14 @@
       else gameState.p2Money = (gameState.p2Money || 0) + box.amount;
 
       showToast(`მოიგე ${box.amount} ₾!`);
+      gameState.round = (gameState.round || 1) + 1;
+
+      if (gameState.round > 5 || gameState.boxes.every(b => b.isOpen)) {
+        gameState.status = 'finished';
+        gameState.winner = (gameState.p1Money >= gameState.p2Money) ? 'player1' : 'player2';
+        handleGameFinish(gameState.winner);
+      }
+
       gameState.currentTurn = playerRole === 'player1' ? 'player2' : 'player1';
 
       if (!isAiMode) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
@@ -1372,6 +1421,27 @@
         const val = state.board[i];
         btn.innerText = val;
         btn.disabled = !isMyTurn || val !== "" || winner !== null;
+      }
+
+      if (isAiMode && state.currentTurn === 'player2' && !winner && state.status !== 'finished') {
+        setTimeout(() => {
+          const emptyCells = [];
+          state.board.forEach((val, idx) => { if (val === "") emptyCells.push(idx); });
+          if (emptyCells.length > 0) {
+            const aiIdx = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            const aiSymbol = playerRole === 'player1' ? 'O' : 'X';
+            state.board[aiIdx] = aiSymbol;
+
+            const aiWinner = checkTicTacToeWinner(state.board);
+            if (aiWinner) {
+              state.status = 'finished';
+              state.winner = (aiSymbol === (playerRole === 'player1' ? 'X' : 'O')) ? playerRole : (playerRole === 'player1' ? 'player2' : 'player1');
+              handleGameFinish(state.winner);
+            }
+          }
+          state.currentTurn = 'player1';
+          updateTicTacToeUI(state);
+        }, 1500);
       }
     }
 
