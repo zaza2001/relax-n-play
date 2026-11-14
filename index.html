@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>მეგობრების თამაშები - Multiplayer & AI</title>
+  <title>მეგობრების თამაშები - Multiplayer & Coins</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
@@ -18,7 +18,7 @@
       color: #f8fafc;
     }
     .glass-panel {
-      background: rgba(30, 41, 59, 0.8);
+      background: rgba(30, 41, 59, 0.85);
       backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.12);
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
@@ -51,7 +51,7 @@
       <h1 class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 mb-2 drop-shadow-lg">
         <i class="fa-solid font-bold fa-dice mr-2"></i>მეგობრების თამაშები
       </h1>
-      <p class="text-xs md:text-sm text-slate-400">აირჩიე თამაში და ითამაშე მეგობრებთან ერთად</p>
+      <p class="text-xs md:text-sm text-slate-400">აირჩიე თამაში, დადე ფსონი და ითამაშე მეგობრებთან ერთად</p>
     </header>
 
     <!-- Notification Toast -->
@@ -106,7 +106,7 @@
     </div>
 
     <!-- Lobby Screen -->
-    <div id="lobby-screen" class="hidden w-full max-w-md glass-panel p-6 md:p-8 rounded-3xl shadow-2xl text-center">
+    <div id="lobby-screen" class="hidden w-full max-w-lg glass-panel p-6 md:p-8 rounded-3xl shadow-2xl text-center">
       <div class="flex justify-between items-center bg-slate-800/60 p-3 rounded-2xl border border-slate-700 mb-4 text-xs">
         <div class="flex items-center gap-2">
           <div id="user-avatar-container" class="w-9 h-9 rounded-full overflow-hidden bg-indigo-900 border border-indigo-500 flex items-center justify-center shrink-0">
@@ -118,10 +118,18 @@
             <span id="user-display-name" class="font-bold text-indigo-300 truncate block">სტუმარი</span>
           </div>
         </div>
-        <div class="flex gap-2">
-          <span class="text-emerald-400 font-bold">მოგება: <span id="user-wins">0</span></span>
-          <span class="text-rose-400 font-bold">წაგება: <span id="user-losses">0</span></span>
+        
+        <!-- Coins & Stats -->
+        <div class="flex items-center gap-3">
+          <div class="px-3 py-1.5 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-300 font-bold flex items-center gap-1.5 text-xs">
+            <i class="fa-solid fa-coins"></i> <span id="user-coins">1000</span> ₾
+          </div>
+          <div class="text-[11px] text-slate-300">
+            <span class="text-emerald-400 font-bold" id="user-wins">0</span>გ / 
+            <span class="text-rose-400 font-bold" id="user-losses">0</span>წ
+          </div>
         </div>
+
         <button onclick="logoutUser()" class="text-slate-400 hover:text-rose-400" title="გასვლა"><i class="fa-solid fa-right-from-bracket"></i></button>
       </div>
 
@@ -147,18 +155,31 @@
         <div class="w-12 h-12 bg-indigo-600/30 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-2 text-lg border border-indigo-500/30">
           <i class="fa-solid fa-gamepad"></i>
         </div>
-        <h2 class="text-lg font-bold mb-1">თამაშის მენიუ</h2>
+        <h2 class="text-lg font-bold mb-1">თამაშის შექმნა</h2>
       </div>
 
+      <!-- Game & Wager Setup -->
       <div class="space-y-3 mb-4 text-left">
-        <div>
-          <label class="text-xs text-slate-400 font-semibold ml-2">აირჩიეთ თამაში:</label>
-          <select id="game-mode-select" class="w-full mt-1 px-4 py-3 bg-slate-800 border border-slate-700 rounded-2xl text-white font-medium focus:outline-none focus:border-indigo-500 text-sm">
-            <option value="words">🔤 სიტყვების გამოცნობა</option>
-            <option value="safepath">💣 დანაღმული გზა (Safe Path)</option>
-            <option value="boxes">💰 თანხის ყუთები (Cash Boxes)</option>
-            <option value="tictactoe">❌ იქსიკი და ნოლიკი (Tic-Tac-Toe)</option>
-          </select>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs text-slate-400 font-semibold ml-1">აირჩიეთ თამაში:</label>
+            <select id="game-mode-select" class="w-full mt-1 px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-indigo-500 text-xs">
+              <option value="words">🔤 სიტყვების გამოცნობა</option>
+              <option value="safepath">💣 დანაღმული გზა (Safe Path)</option>
+              <option value="boxes">💰 თანხის ყუთები (Cash Boxes)</option>
+              <option value="tictactoe">❌ იქსიკი და ნოლიკი</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 font-semibold ml-1">ფსონი (ქოინები):</label>
+            <select id="table-wager-select" class="w-full mt-1 px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-amber-300 font-bold focus:outline-none focus:border-amber-500 text-xs">
+              <option value="50">50 ₾</option>
+              <option value="100" selected>100 ₾</option>
+              <option value="250">250 ₾</option>
+              <option value="500">500 ₾</option>
+              <option value="1000">1000 ₾</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -174,14 +195,14 @@
           <button onclick="addFriend()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 font-bold rounded-xl text-xs transition-all active:scale-95">დამატება</button>
         </div>
 
-        <div id="friends-list" class="space-y-2 max-h-36 overflow-y-auto pr-1">
+        <div id="friends-list" class="space-y-2 max-h-28 overflow-y-auto pr-1">
           <div class="text-xs text-slate-500 text-center py-2">მეგობრები არ გყავთ</div>
         </div>
       </div>
 
-      <div class="space-y-3">
+      <div class="space-y-3 mb-4">
         <button onclick="createRoom()" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center text-sm active:scale-95">
-          <i class="fa-solid fa-plus-circle mr-2"></i>ონლაინ ოთახის შექმნა (კოდით)
+          <i class="fa-solid fa-plus-circle mr-2"></i>მაგიდის შექმნა და გამოქვეყნება
         </button>
 
         <div class="flex gap-2">
@@ -205,6 +226,17 @@
           </div>
         </div>
       </div>
+
+      <!-- Public Open Tables List -->
+      <div class="bg-slate-900/80 p-4 rounded-2xl border border-indigo-500/30 text-left space-y-2">
+        <div class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center justify-between">
+          <span>🎲 ღია მაგიდები ლობიში</span>
+          <span class="text-[10px] text-slate-400">აირჩიეთ და შემოუერთდით</span>
+        </div>
+        <div id="public-tables-list" class="space-y-2 max-h-40 overflow-y-auto pr-1">
+          <div class="text-xs text-slate-500 text-center py-3">აქტიური მაგიდები არ არის...</div>
+        </div>
+      </div>
     </div>
 
     <!-- Waiting Screen -->
@@ -212,8 +244,9 @@
       <div class="animate-bounce w-16 h-16 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl border border-amber-500/30">
         <i class="fa-solid fa-user-clock"></i>
       </div>
-      <h2 class="text-2xl font-bold mb-2">ოთახი შექმნილია!</h2>
-      <p class="text-sm text-slate-400 mb-6">ველით მეორე მოთამაშეს...</p>
+      <h2 class="text-2xl font-bold mb-2">მაგიდა მზადაა!</h2>
+      <p class="text-sm text-slate-400 mb-2">ფსონი: <span id="waiting-room-wager" class="text-amber-300 font-bold">0</span> ₾</p>
+      <p class="text-xs text-slate-500 mb-6">ველით მოწინააღმდეგეს ან მეგობრის შემოსვლას...</p>
 
       <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700 mb-6 flex items-center justify-between">
         <span id="display-room-code" class="text-3xl font-mono font-bold tracking-widest text-indigo-400">----</span>
@@ -222,7 +255,7 @@
         </button>
       </div>
 
-      <button onclick="returnToLobby()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">გაუქმება</button>
+      <button onclick="cancelRoom()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">გაუქმება</button>
     </div>
 
     <!-- Jheirani Screen -->
@@ -313,9 +346,8 @@
       </div>
     </div>
 
-    <!-- Safe Path Game Screen (Upgraded Neon Arcade Style & Mine Reveal) -->
+    <!-- Safe Path Game Screen -->
     <div id="safepath-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-4">
-      <!-- Players Info Header -->
       <div class="grid grid-cols-2 gap-3">
         <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 border-l-4 border-indigo-500 shadow-xl neon-glow">
           <div class="w-10 h-10 rounded-full overflow-hidden bg-indigo-900 border-2 border-indigo-400 flex items-center justify-center shrink-0 shadow">
@@ -340,15 +372,11 @@
         </div>
       </div>
 
-      <!-- Status Banner -->
       <div class="glass-panel p-3.5 rounded-2xl text-center border border-indigo-500/30 shadow-inner bg-slate-900/90">
         <div id="sp-status" class="text-sm font-bold text-amber-300 tracking-wide">მიმდინარეობს...</div>
       </div>
 
-      <!-- Safe Path Board Grid -->
-      <div id="safepath-board" class="glass-panel p-5 rounded-3xl flex flex-col space-y-3 max-w-[360px] mx-auto w-full shadow-2xl border border-indigo-500/30">
-        <!-- Rendered via JS -->
-      </div>
+      <div id="safepath-board" class="glass-panel p-5 rounded-3xl flex flex-col space-y-3 max-w-[360px] mx-auto w-full shadow-2xl border border-indigo-500/30"></div>
 
       <div class="text-center pt-2">
         <button onclick="returnToLobby()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all shadow-md border border-slate-700">მთავარ მენიუში დაბრუნება</button>
@@ -458,13 +486,14 @@
     signOut(auth).catch(() => {});
 
     let currentUser = null;
-    let userStats = { wins: 0, losses: 0, friends: [], nickname: "", avatar: "" };
+    let userStats = { wins: 0, losses: 0, coins: 1000, friends: [], nickname: "", avatar: "" };
     let roomCode = null;
     let playerRole = null;
     let playerName = "";
     let currentUserAvatar = "";
     let roomUnsubscribe = null;
     let invitesUnsubscribe = null;
+    let publicRoomsUnsubscribe = null;
     let gameState = null;
     let clientTimerInterval = null;
     let isRegisterMode = false;
@@ -489,10 +518,12 @@
         currentUser = user;
         await loadUserData(user.uid, user.email);
         listenToIncomingInvites(user.uid);
+        listenToPublicRooms();
         switchScreen('lobby-screen');
       } else {
         currentUser = null;
         if (invitesUnsubscribe) invitesUnsubscribe();
+        if (publicRoomsUnsubscribe) publicRoomsUnsubscribe();
         switchScreen('auth-screen');
       }
     });
@@ -519,9 +550,10 @@
             avatar: "",
             wins: 0, 
             losses: 0,
+            coins: 1000,
             friends: [] 
           });
-          showToast("რეგისტრაცია წარმატებულია! 🎉");
+          showToast("რეგისტრაცია წარმატებულია! 🎉 +1000 ₾");
         } else {
           await signInWithEmailAndPassword(auth, email, password);
           showToast("წარმატებით შეხვედით სისტემაში! 👋");
@@ -544,26 +576,37 @@
       const snap = await getDoc(userRef);
       if (snap.exists()) {
         userStats = snap.data();
-        if (!userStats.email && email) {
-          userStats.email = email.toLowerCase();
-          await updateDoc(userRef, { email: email.toLowerCase() });
+        if (userStats.coins === undefined) {
+          userStats.coins = 1000;
+          await updateDoc(userRef, { coins: 1000 });
         }
         playerName = userStats.nickname || (email ? email.split('@')[0] : 'სტუმარი');
         currentUserAvatar = userStats.avatar || "";
       } else {
         playerName = email ? email.split('@')[0] : 'სტუმარი';
         currentUserAvatar = "";
-        userStats = { email: email ? email.toLowerCase() : 'anonymous', nickname: playerName, avatar: "", wins: 0, losses: 0, friends: [] };
+        userStats = { email: email ? email.toLowerCase() : 'anonymous', nickname: playerName, avatar: "", wins: 0, losses: 0, coins: 1000, friends: [] };
         await setDoc(userRef, userStats);
       }
       
       document.getElementById('user-display-name').innerText = playerName;
       document.getElementById('user-wins').innerText = userStats.wins || 0;
       document.getElementById('user-losses').innerText = userStats.losses || 0;
+      document.getElementById('user-coins').innerText = userStats.coins || 1000;
       document.getElementById('nickname-input').value = playerName;
 
       updateAvatarUI(currentUserAvatar);
       renderFriendsList();
+    }
+
+    async function updateUserCoinsLocallyAndRemote(delta) {
+      userStats.coins = (userStats.coins || 1000) + delta;
+      document.getElementById('user-coins').innerText = userStats.coins;
+      if (currentUser) {
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), {
+          coins: userStats.coins
+        });
+      }
     }
 
     function updateAvatarUI(base64Img) {
@@ -717,80 +760,98 @@
       });
     }
 
-    window.sendGameInvite = async function(friendUid, friendName) {
-      if (!currentUser) {
-        return showToast("გთხოვთ დაიცადოთ, მიმდინარეობს სერვერთან კავშირი...");
+    function listenToPublicRooms() {
+      if (publicRoomsUnsubscribe) publicRoomsUnsubscribe();
+      const roomsRef = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
+      const q = query(roomsRef, where("status", "==", "waiting"));
+
+      publicRoomsUnsubscribe = onSnapshot(q, (snapshot) => {
+        const listEl = document.getElementById('public-tables-list');
+        if (snapshot.empty) {
+          listEl.innerHTML = '<div class="text-xs text-slate-500 text-center py-3">აქტიური მაგიდები არ არის...</div>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        snapshot.forEach((docSnap) => {
+          const rData = docSnap.data();
+          const item = document.createElement('div');
+          item.className = "flex items-center justify-between bg-slate-800/90 p-2.5 rounded-xl border border-indigo-500/30 text-xs";
+          
+          let modeName = rData.gameMode;
+          if (modeName === 'words') modeName = '🔤 სიტყვები';
+          else if (modeName === 'safepath') modeName = '💣 დანაღმული გზა';
+          else if (modeName === 'boxes') modeName = '💰 ყუთები';
+          else if (modeName === 'tictactoe') modeName = '❌ ნოლიკი';
+
+          item.innerHTML = `
+            <div>
+              <span class="font-bold text-indigo-300 block">${rData.player1Name}</span>
+              <span class="text-[10px] text-slate-400">${modeName} • ფსონი: <span class="text-amber-300 font-bold">${rData.wager || 100} ₾</span></span>
+            </div>
+            <button onclick="joinPublicTable('${rData.code}', ${rData.wager || 100})" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-lg text-[11px] transition-all active:scale-95 shadow">
+              შესვლა
+            </button>
+          `;
+          listEl.appendChild(item);
+        });
+      });
+    }
+
+    window.joinPublicTable = async function(code, wager) {
+      if (!currentUser) return showToast("გთხოვთ გაიაროთ ავტორიზაცია");
+      if ((userStats.coins || 0) < wager) {
+        return showToast("არ გაქვთ საკმარისი ქოინები ამ მაგიდაზე სათამაშოდ! ❌");
       }
 
-      const gameMode = document.getElementById('game-mode-select').value;
+      roomCode = code;
+      const ref = getRoomRef(roomCode);
+
+      try {
+        const snap = await getDoc(ref);
+        if (!snap.exists()) return showToast("მაგიდა აღარ არსებობს!");
+
+        playerRole = 'player2';
+        await updateDoc(ref, {
+          player2Id: currentUser.uid,
+          player2Name: playerName,
+          player2Avatar: currentUserAvatar || "",
+          status: 'playing'
+        });
+
+        await updateUserCoinsLocallyAndRemote(-wager);
+        listenToRoom(roomCode);
+        showToast("წარმატებით შეუერთდით მაგიდას! 🎉");
+      } catch (err) {
+        showToast("შეცდომა მაგიდაში შესვლისას: " + err.message);
+      }
+    };
+
+    window.sendGameInvite = async function(friendUid, friendName) {
+      if (!currentUser) return showToast("გთხოვთ დაიცადოთ...");
+      const wager = parseInt(document.getElementById('table-wager-select').value) || 100;
+      if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
+
       roomCode = generateCode();
       playerRole = 'player1';
 
-      let initialRoomData = {
-        code: roomCode,
-        gameMode: gameMode,
-        player1Id: currentUser.uid,
-        player1Name: playerName,
-        player1Avatar: currentUserAvatar || "",
-        player2Id: null,
-        player2Name: null,
-        player2Avatar: "",
-        status: 'waiting',
-        createdAt: new Date().toISOString()
-      };
-
-      if (gameMode === 'words') {
-        const shuffled = [...ROUND_WORDS[1]].sort(() => 0.5 - Math.random());
-        const cards = shuffled.slice(0, 8).map((item, index) => ({
-          id: index,
-          word: item.word,
-          category: item.category,
-          masked: maskWord(item.word),
-          guessedMask: maskWord(item.word),
-          isGuessed: false,
-          guessedBy: null
-        }));
-        initialRoomData.currentTurn = 'player1';
-        initialRoomData.activeCardId = null;
-        initialRoomData.p1Score = 0;
-        initialRoomData.p2Score = 0;
-        initialRoomData.round = 1;
-        initialRoomData.turnDeadline = Date.now() + 15000;
-        initialRoomData.cards = cards;
-        initialRoomData.jheirani = { p1Choice: null, p2Choice: null, winner: null };
-      } else if (gameMode === 'safepath') {
-        initialRoomData.p1Pos = 0;
-        initialRoomData.p2Pos = 0;
-        initialRoomData.mineMap = generateSafePathMines();
-        initialRoomData.revealedMines = {}; // { "row-col": true }
-        initialRoomData.currentTurn = 'player1';
-      } else if (gameMode === 'boxes') {
-        initialRoomData.round = 1;
-        initialRoomData.boxes = generateBoxesForRound(1);
-        initialRoomData.p1Money = 0;
-        initialRoomData.p2Money = 0;
-        initialRoomData.showOpponentMoney = false;
-        initialRoomData.currentTurn = 'player1';
-        initialRoomData.jheirani = { p1Choice: null, p2Choice: null, winner: null };
-      } else if (gameMode === 'tictactoe') {
-        initialRoomData.board = Array(9).fill("");
-        initialRoomData.currentTurn = 'player1';
-        initialRoomData.jheirani = { p1Choice: null, p2Choice: null, winner: null };
-      }
+      let initialRoomData = buildInitialRoomData(roomCode, wager);
 
       try {
+        await updateUserCoinsLocallyAndRemote(-wager);
         await setDoc(getRoomRef(roomCode), initialRoomData);
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'invites', friendUid), {
           roomCode: roomCode,
           fromName: playerName,
-          gameMode: gameMode,
+          gameMode: initialRoomData.gameMode,
           timestamp: Date.now()
         });
 
         document.getElementById('display-room-code').innerText = roomCode;
+        document.getElementById('waiting-room-wager').innerText = wager;
         switchScreen('waiting-screen');
         listenToRoom(roomCode);
-        showToast(`მოწვევა გაეგზავნა მოთამაშეს: ${friendName}`);
+        showToast(`მოწვევა გაეგზავნა მეგობარს (${wager} ₾ ფსონით)`);
       } catch (err) {
         showToast("მოწვევის გაგზავნა ვერ მოხერხდა: " + err.message);
       }
@@ -820,9 +881,16 @@
 
       try {
         const snap = await getDoc(ref);
-        if (!snap.exists()) return showToast("ოთახი უკვე აღარ არსებობს");
+        if (!snap.exists()) return showToast("ოთახი აღარ არსებობს");
+        const roomData = snap.data();
+        const wager = roomData.wager || 100;
+
+        if ((userStats.coins || 0) < wager) {
+          return showToast("არ გაქვთ საკმარისი ქოინები ამ მოწვევის მისაღებად! ❌");
+        }
         
         playerRole = 'player2';
+        await updateUserCoinsLocallyAndRemote(-wager);
         await updateDoc(ref, {
           player2Id: currentUser.uid,
           player2Name: playerName,
@@ -903,93 +971,17 @@
       
       for (let i = 0; i < totalBoxes; i++) {
         const randomAmount = possibleAmounts[Math.floor(Math.random() * possibleAmounts.length)];
-        boxes.push({
-          id: i,
-          amount: randomAmount,
-          isOpen: false,
-          openedBy: null
-        });
+        boxes.push({ id: i, amount: randomAmount, isOpen: false, openedBy: null });
       }
       return boxes;
     }
 
-    window.startAiGame = function() {
-      aiDifficulty = document.getElementById('ai-difficulty').value;
+    function buildInitialRoomData(code, wager) {
       const gameMode = document.getElementById('game-mode-select').value;
-
-      isAiMode = true;
-      playerRole = 'player1';
-
-      let initialData = {
-        code: 'AI-ROOM',
-        gameMode: gameMode,
-        player1Name: playerName,
-        player1Avatar: currentUserAvatar || "",
-        player2Name: `🤖 AI (${aiDifficulty.toUpperCase()})`,
-        player2Avatar: "",
-        status: 'playing',
-        currentTurn: 'player1',
-        p1Score: 0,
-        p2Score: 0,
-        round: 1,
-        turnDeadline: Date.now() + 25000
-      };
-
-      if (gameMode === 'words') {
-        const shuffled = [...ROUND_WORDS[1]].sort(() => 0.5 - Math.random());
-        const cards = shuffled.slice(0, 8).map((item, index) => ({
-          id: index,
-          word: item.word,
-          category: item.category,
-          masked: maskWord(item.word),
-          guessedMask: maskWord(item.word),
-          isGuessed: false,
-          guessedBy: null
-        }));
-        initialData.cards = cards;
-        initialData.activeCardId = null;
-      } else if (gameMode === 'safepath') {
-        initialData.p1Pos = 0;
-        initialData.p2Pos = 0;
-        initialData.mineMap = generateSafePathMines();
-        initialData.revealedMines = {};
-      } else if (gameMode === 'boxes') {
-        initialData.status = 'jheirani';
-        initialData.boxes = generateBoxesForRound(1);
-        initialData.p1Money = 0;
-        initialData.p2Money = 0;
-        initialData.showOpponentMoney = false;
-        initialData.jheirani = { p1Choice: null, p2Choice: null, winner: null };
-      } else if (gameMode === 'tictactoe') {
-        initialData.status = 'jheirani';
-        initialData.board = Array(9).fill("");
-        initialData.jheirani = { p1Choice: null, p2Choice: null, winner: null };
-      }
-
-      gameState = initialData;
-      if (gameMode === 'safepath') {
-        switchScreen('safepath-screen');
-      } else if (gameMode === 'boxes' || gameMode === 'tictactoe') {
-        switchScreen('jheirani-screen');
-      } else {
-        switchScreen('game-screen');
-      }
-      updateUI(gameState);
-      showToast("🤖 AI რეჟიმი ჩაირთო წარმატებით!");
-    };
-
-    window.createRoom = async function() {
-      if (!currentUser) {
-        return showToast("გთხოვთ დაიცადოთ, მიმდინარეობს სერვერთან კავშირი...");
-      }
-
-      const gameMode = document.getElementById('game-mode-select').value;
-      roomCode = generateCode();
-      playerRole = 'player1';
-
       let initialRoomData = {
-        code: roomCode,
+        code: code,
         gameMode: gameMode,
+        wager: wager,
         player1Id: currentUser.uid,
         player1Name: playerName,
         player1Avatar: currentUserAvatar || "",
@@ -1011,62 +1003,99 @@
           isGuessed: false,
           guessedBy: null
         }));
-
-        initialRoomData = {
-          ...initialRoomData,
-          currentTurn: 'player1',
-          activeCardId: null,
-          p1Score: 0,
-          p2Score: 0,
-          round: 1,
-          turnDeadline: Date.now() + 15000,
-          cards: cards,
-          jheirani: { p1Choice: null, p2Choice: null, winner: null }
-        };
+        initialRoomData.currentTurn = 'player1';
+        initialRoomData.activeCardId = null;
+        initialRoomData.p1Score = 0;
+        initialRoomData.p2Score = 0;
+        initialRoomData.round = 1;
+        initialRoomData.turnDeadline = Date.now() + 15000;
+        initialRoomData.cards = cards;
+        initialRoomData.jheirani = { p1Choice: null, p2Choice: null, winner: null };
       } else if (gameMode === 'safepath') {
-        initialRoomData = {
-          ...initialRoomData,
-          p1Pos: 0,
-          p2Pos: 0,
-          mineMap: generateSafePathMines(),
-          revealedMines: {},
-          currentTurn: 'player1'
-        };
+        initialRoomData.p1Pos = 0;
+        initialRoomData.p2Pos = 0;
+        initialRoomData.mineMap = generateSafePathMines();
+        initialRoomData.revealedMines = {};
+        initialRoomData.currentTurn = 'player1';
       } else if (gameMode === 'boxes') {
-        initialRoomData = {
-          ...initialRoomData,
-          round: 1,
-          boxes: generateBoxesForRound(1),
-          p1Money: 0,
-          p2Money: 0,
-          showOpponentMoney: false,
-          currentTurn: 'player1',
-          jheirani: { p1Choice: null, p2Choice: null, winner: null }
-        };
+        initialRoomData.round = 1;
+        initialRoomData.boxes = generateBoxesForRound(1);
+        initialRoomData.p1Money = 0;
+        initialRoomData.p2Money = 0;
+        initialRoomData.showOpponentMoney = false;
+        initialRoomData.currentTurn = 'player1';
+        initialRoomData.jheirani = { p1Choice: null, p2Choice: null, winner: null };
       } else if (gameMode === 'tictactoe') {
-        initialRoomData = {
-          ...initialRoomData,
-          board: Array(9).fill(""),
-          currentTurn: 'player1',
-          jheirani: { p1Choice: null, p2Choice: null, winner: null }
-        };
+        initialRoomData.board = Array(9).fill("");
+        initialRoomData.currentTurn = 'player1';
+        initialRoomData.jheirani = { p1Choice: null, p2Choice: null, winner: null };
       }
+      return initialRoomData;
+    }
+
+    window.startAiGame = function() {
+      aiDifficulty = document.getElementById('ai-difficulty').value;
+      const wager = parseInt(document.getElementById('table-wager-select').value) || 100;
+      if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
+
+      updateUserCoinsLocallyAndRemote(-wager);
+      isAiMode = true;
+      playerRole = 'player1';
+
+      let initialData = buildInitialRoomData('AI-ROOM', wager);
+      initialData.status = 'playing';
+      initialData.player2Name = `🤖 AI (${aiDifficulty.toUpperCase()})`;
+      initialData.player2Avatar = "";
+
+      gameState = initialData;
+      if (initialData.gameMode === 'safepath') {
+        switchScreen('safepath-screen');
+      } else if (initialData.gameMode === 'boxes' || initialData.gameMode === 'tictactoe') {
+        initialData.status = 'jheirani';
+        switchScreen('jheirani-screen');
+      } else {
+        switchScreen('game-screen');
+      }
+      updateUI(gameState);
+      showToast(`🤖 AI თამაში დაიწყო! (${wager} ₾ ფსონი)`);
+    };
+
+    window.createRoom = async function() {
+      if (!currentUser) return showToast("გთხოვთ დაიცადოთ...");
+      const wager = parseInt(document.getElementById('table-wager-select').value) || 100;
+      if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები ამ ფსონისთვის! ❌");
+
+      roomCode = generateCode();
+      playerRole = 'player1';
+      let initialRoomData = buildInitialRoomData(roomCode, wager);
 
       try {
+        await updateUserCoinsLocallyAndRemote(-wager);
         await setDoc(getRoomRef(roomCode), initialRoomData);
         document.getElementById('display-room-code').innerText = roomCode;
+        document.getElementById('waiting-room-wager').innerText = wager;
         switchScreen('waiting-screen');
         listenToRoom(roomCode);
+        showToast("მაგიდა წარმატებით შეიქმნა და გამოქვეყნდა! 🎲");
       } catch (err) {
-        showToast("ოთახის შექმნა ვერ მოხერხდა: " + err.message);
+        showToast("მაგიდის შექმნა ვერ მოხერხდა: " + err.message);
       }
     };
 
-    window.joinRoom = async function() {
-      if (!currentUser) {
-        return showToast("გთხოვთ დაიცადოთ, მიმდინარეობს სერვერთან კავშირი...");
+    window.cancelRoom = async function() {
+      if (roomCode && !isAiMode) {
+        const wager = gameState?.wager || 100;
+        await updateUserCoinsLocallyAndRemote(wager); // Refund wager on cancel
+        try {
+          await setDoc(getRoomRef(roomCode), { status: 'cancelled' });
+        } catch(e){}
       }
+      returnToLobby();
+      showToast("მაგიდა გაუქმდა, ფსონი დაბრუნდა.");
+    };
 
+    window.joinRoom = async function() {
+      if (!currentUser) return showToast("გთხოვთ დაიცადოთ...");
       const codeInput = document.getElementById('room-code-input').value.trim();
       if (codeInput.length !== 4) return showToast("შეიყვანეთ ვალიდური 4-ნიშნა კოდი!");
 
@@ -1075,11 +1104,14 @@
 
       try {
         const snap = await getDoc(ref);
-        if (!snap.exists()) {
-          return showToast("ოთახი ამ კოდით ვერ მოიძებნა ბაზაში!");
-        }
+        if (!snap.exists()) return showToast("ოთახი ამ კოდით ვერ მოიძებნა!");
         
         const data = snap.data();
+        const wager = data.wager || 100;
+        if ((userStats.coins || 0) < wager) {
+          return showToast("არ გაქვთ საკმარისი ქოინები ამ მაგიდაზე შესასვლელად! ❌");
+        }
+
         if (data.player2Id && data.player2Id !== currentUser.uid) {
           return showToast("ეს ოთახი უკვე სავსეა!");
         }
@@ -1087,6 +1119,7 @@
         playerRole = (data.player1Id === currentUser.uid) ? 'player1' : 'player2';
 
         if (playerRole === 'player2') {
+          await updateUserCoinsLocallyAndRemote(-wager);
           await updateDoc(ref, {
             player2Id: currentUser.uid,
             player2Name: playerName,
@@ -1118,10 +1151,41 @@
       });
     }
 
+    async function handleGameFinish(winnerRole) {
+      if (gameState.rewardsDistributed) return;
+      gameState.rewardsDistributed = true;
+
+      const wager = gameState.wager || 100;
+      const pot = wager * 2;
+
+      if (winnerRole === playerRole) {
+        await updateUserCoinsLocallyAndRemote(pot);
+        showToast(`🎉 თქვენ მოიგეთ მაგიდა და მიიღეთ ${pot} ₾!`);
+      } else {
+        showToast(`😢 თქვენ წააგეთ მაგიდა (-${wager} ₾).`);
+      }
+
+      if (!isAiMode) {
+        try {
+          await updateDoc(getRoomRef(roomCode), {
+            status: 'finished',
+            winner: winnerRole,
+            rewardsDistributed: true
+          });
+        } catch(e){}
+      }
+    }
+
     function updateUI(state) {
       if (state.status === 'waiting') {
         switchScreen('waiting-screen');
         return;
+      }
+
+      if (state.status === 'finished' && !state.rewardsDistributed) {
+        if (state.winner) {
+          handleGameFinish(state.winner);
+        }
       }
 
       if (state.gameMode === 'safepath') {
@@ -1160,7 +1224,7 @@
       document.getElementById('p2-score').innerText = `${state.p2Score} ქულა`;
       document.getElementById('p1-label').innerText = state.player1Name || "მოთამაშე 1";
       document.getElementById('p2-label').innerText = state.player2Name || "მოწინააღმდეგე";
-      document.getElementById('round-indicator').innerText = `რაუნდი ${state.round} / 3`;
+      document.getElementById('round-indicator').innerText = `რაუნდი ${state.round} / 3 (ფსონი: ${state.wager || 100} ₾)`;
 
       const p1Img = document.getElementById('game-p1-img');
       const p1Icon = document.getElementById('game-p1-icon');
@@ -1188,7 +1252,7 @@
       const turnBanner = document.getElementById('turn-banner');
 
       if (state.status === 'finished') {
-        turnBanner.innerText = "🏆 თამაში დასრულებულია!";
+        turnBanner.innerText = `🏆 თამაში დასრულებულია! გამარჯვებულია: ${state.winner === playerRole ? 'თქვენ' : 'მოწინააღმდეგე'}`;
         document.getElementById('guess-controls').classList.add('hidden');
         clearInterval(clientTimerInterval);
         return;
@@ -1247,7 +1311,7 @@
       }
     }
 
-    // --- Safe Path Upgraded Logic & Mine Reveal ---
+    // --- Safe Path Game Logic ---
     function updateSafePathUI(state) {
       document.getElementById('sp-p1-name').innerText = state.player1Name || "მოთამაშე 1";
       document.getElementById('sp-p2-name').innerText = state.player2Name || "მოწინააღმდეგე";
@@ -1287,14 +1351,13 @@
         }
         statusEl.className = "text-sm font-bold text-emerald-400 animate-pulse";
       } else {
-        statusEl.innerText = isMyTurn ? "✨ შენი სვლაა — აირჩიე უსაფრთხო ბილიკი!" : "⏳ მოწინააღმდეგის სვლაა...";
+        statusEl.innerText = isMyTurn ? `✨ შენი სვლაა (ფსონი: ${state.wager || 100} ₾)` : "⏳ მოწინააღმდეგის სვლაა...";
         statusEl.className = isMyTurn ? "text-sm font-bold text-emerald-400 animate-pulse" : "text-sm font-bold text-slate-400";
       }
 
       const boardEl = document.getElementById('safepath-board');
       boardEl.innerHTML = '';
 
-      // Finish line header banner
       const finishDiv = document.createElement('div');
       finishDiv.className = "p-2.5 bg-gradient-to-r from-amber-600/30 via-yellow-500/20 to-amber-600/30 border border-amber-500/50 rounded-2xl text-center text-xs font-bold text-amber-300 mb-2 shadow-lg flex items-center justify-center gap-2";
       finishDiv.innerHTML = '<i class="fa-solid fa-flag-checkered text-amber-400"></i> ფინიშის ხაზი (დონე 5)';
@@ -1302,7 +1365,6 @@
 
       const revealedMines = state.revealedMines || {};
 
-      // Render rows 4 down to 0
       for (let r = 4; r >= 0; r--) {
         const rowWrapper = document.createElement('div');
         rowWrapper.className = "flex items-center justify-between gap-2 bg-slate-900/70 p-2.5 rounded-2xl border border-slate-700/80 shadow";
@@ -1346,7 +1408,6 @@
 
         rowWrapper.appendChild(cellsContainer);
 
-        // Player indicators on this row
         const indicators = document.createElement('div');
         indicators.className = "flex gap-1 w-12 justify-end";
         if (state.p1Pos === r) {
@@ -1360,7 +1421,6 @@
         boardEl.appendChild(rowWrapper);
       }
 
-      // Start line footer banner
       const startDiv = document.createElement('div');
       startDiv.className = "p-2.5 bg-slate-800/90 border border-slate-700/80 rounded-2xl text-center text-xs font-bold text-slate-300 mt-1 shadow";
       startDiv.innerHTML = '<i class="fa-solid fa-play text-emerald-400 mr-1"></i> სტარტი (დონე 0)';
@@ -1396,9 +1456,9 @@
         if (newPos >= 5) {
           gameState.status = 'finished';
           gameState.winner = playerRole;
-          showToast("🏆 გილოცავ! მიაღწიე ფინიშს და მოიგე!");
+          handleGameFinish(playerRole);
         } else {
-          showToast("✨სწორი ნაბიჯია! წინ მიიწევ!");
+          showToast("✨ სწორი ნაბიჯია! წინ მიიწევ!");
         }
       }
 
@@ -1439,7 +1499,7 @@
         if (newPos >= 5) {
           gameState.status = 'finished';
           gameState.winner = 'player2';
-          showToast("😢 AI-მ პირველმა მიაღწიე ფინიშს!");
+          handleGameFinish('player2');
         } else {
           showToast("🤖 AI-მ წარმატებით გადადგა ნაბიჯი!");
         }
@@ -1548,7 +1608,12 @@
 
       if (winResult.winner) {
         newStatus = 'finished';
-        winningPlayer = (winResult.winner === 'tie') ? 'tie' : (winResult.winner === mySymbol ? playerRole : (playerRole === 'player1' ? 'player2' : 'player1'));
+        if (winResult.winner === 'tie') {
+          winningPlayer = 'tie';
+        } else {
+          winningPlayer = (winResult.winner === mySymbol ? playerRole : (playerRole === 'player1' ? 'player2' : 'player1'));
+          handleGameFinish(winningPlayer);
+        }
       }
 
       const nextTurn = isAiMode ? 'player2' : (playerRole === 'player1' ? 'player2' : 'player1');
@@ -1591,7 +1656,12 @@
 
       if (winResult.winner) {
         newStatus = 'finished';
-        winningPlayer = (winResult.winner === 'tie') ? 'tie' : 'player2';
+        if (winResult.winner === 'tie') {
+          winningPlayer = 'tie';
+        } else {
+          winningPlayer = 'player2';
+          handleGameFinish('player2');
+        }
       }
 
       gameState.board = board;
@@ -1624,8 +1694,7 @@
 
       if (state.status === 'finished') {
         const p1Won = state.p1Money > state.p2Money;
-        const p2Won = state.p2Money > state.p1Money;
-        const winnerText = p1Won ? `${state.player1Name}მ მოიგო!` : (p2Won ? `${state.player2Name}მ მოიგო!` : "ფრეა!");
+        const winnerText = p1Won ? `${state.player1Name}მ მოიგო!` : "მოწინააღმდეგემ მოიგო!";
         turnBanner.innerText = `🏆 თამაში დასრულდა! ${winnerText}`;
         turnBanner.className = "text-base font-bold text-emerald-400";
       } else {
@@ -1685,6 +1754,7 @@
       let newStatus = gameState.status;
       let nextBoxes = boxes;
       let showOppMoney = false;
+      let winnerRole = null;
 
       if (allOpened) {
         if (gameState.round < 5) {
@@ -1694,6 +1764,8 @@
         } else {
           newStatus = 'finished';
           showOppMoney = true;
+          winnerRole = p1m > p2m ? 'player1' : 'player2';
+          handleGameFinish(winnerRole);
         }
       }
 
@@ -1704,6 +1776,7 @@
       gameState.p2Money = p2m;
       gameState.round = nextRound;
       gameState.status = newStatus;
+      gameState.winner = winnerRole;
       gameState.currentTurn = showOppMoney ? playerRole : nextTurn;
       gameState.showOpponentMoney = showOppMoney;
 
@@ -1714,27 +1787,12 @@
           p2Money: p2m,
           round: nextRound,
           status: newStatus,
+          winner: winnerRole,
           currentTurn: showOppMoney ? playerRole : nextTurn,
           showOpponentMoney: showOppMoney
         });
-        
-        if (showOppMoney && newStatus !== 'finished') {
-          setTimeout(async () => {
-            await updateDoc(getRoomRef(roomCode), {
-              showOpponentMoney: false,
-              currentTurn: playerRole
-            });
-          }, 4000);
-        }
       } else {
         updateUI(gameState);
-        if (showOppMoney && newStatus !== 'finished') {
-          setTimeout(() => {
-            gameState.showOpponentMoney = false;
-            gameState.currentTurn = 'player1';
-            updateUI(gameState);
-          }, 4000);
-        }
       }
     };
 
@@ -1762,6 +1820,8 @@
         } else {
           gameState.status = 'finished';
           showOppMoney = true;
+          gameState.winner = gameState.p1Money > gameState.p2Money ? 'player1' : 'player2';
+          handleGameFinish(gameState.winner);
         }
       }
 
@@ -1769,14 +1829,6 @@
       gameState.showOpponentMoney = showOppMoney;
 
       updateUI(gameState);
-
-      if (showOppMoney && gameState.status !== 'finished') {
-        setTimeout(() => {
-          gameState.showOpponentMoney = false;
-          gameState.currentTurn = 'player1';
-          updateUI(gameState);
-        }, 4000);
-      }
     }
 
     function manageClientTimer(state) {
@@ -1863,6 +1915,7 @@
         let nextRound = gameState.round;
         let newStatus = gameState.status;
         let nextCards = updatedCards;
+        let winnerRole = null;
 
         if (allGuessed) {
           if (gameState.round < 3) {
@@ -1875,6 +1928,8 @@
             });
           } else {
             newStatus = 'finished';
+            winnerRole = gameState.p1Score > p2s ? 'player1' : 'player2';
+            handleGameFinish(winnerRole);
           }
         }
 
@@ -1884,6 +1939,7 @@
         gameState.activeCardId = null;
         gameState.round = nextRound;
         gameState.status = newStatus;
+        gameState.winner = winnerRole;
         gameState.turnDeadline = Date.now() + getRoundTimeLimit(nextRound);
 
         if (!isAiMode) {
@@ -2007,6 +2063,7 @@
       let nextRound = gameState.round;
       let newStatus = gameState.status;
       let nextCards = updatedCards;
+      let winnerRole = null;
 
       if (allGuessed) {
         if (gameState.round < 3) {
@@ -2019,6 +2076,8 @@
           });
         } else {
           newStatus = 'finished';
+          winnerRole = p1s > p2s ? 'player1' : 'player2';
+          handleGameFinish(winnerRole);
         }
       }
 
@@ -2031,6 +2090,7 @@
       gameState.activeCardId = null;
       gameState.round = nextRound;
       gameState.status = newStatus;
+      gameState.winner = winnerRole;
       gameState.turnDeadline = Date.now() + timeLimit;
 
       if (!isAiMode) {
