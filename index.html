@@ -144,27 +144,6 @@
       </div>
     </div>
 
-    <!-- Shop Modal -->
-    <div id="shop-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="glass-card p-6 rounded-3xl max-w-xs w-full text-center space-y-4 border border-amber-500/40 shadow-2xl">
-        <div class="w-14 h-14 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-amber-500/30">
-          <i class="fa-solid fa-coins"></i>
-        </div>
-        <h3 class="text-lg font-bold">ქოინების მაღაზია</h3>
-        <div class="space-y-2">
-          <button onclick="buyCoins(1000, 5)" class="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl flex items-center justify-between px-4 transition-all">
-            <span class="text-xs font-bold text-amber-300">+1,000 ქოინი</span>
-            <span class="text-xs bg-emerald-600 px-2.5 py-1 rounded-xl font-bold">5 ₾</span>
-          </button>
-          <button onclick="buyCoins(5000, 20)" class="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl flex items-center justify-between px-4 transition-all">
-            <span class="text-xs font-bold text-amber-300">+5,000 ქოინი</span>
-            <span class="text-xs bg-emerald-600 px-2.5 py-1 rounded-xl font-bold">20 ₾</span>
-          </button>
-        </div>
-        <button onclick="closeShopModal()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded-xl text-xs font-semibold">დახურვა</button>
-      </div>
-    </div>
-
     <!-- Admin Panel Modal -->
     <div id="admin-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
       <div class="glass-card p-6 rounded-3xl max-w-md w-full text-center space-y-4 border border-rose-500/40 shadow-2xl max-h-[85vh] overflow-y-auto">
@@ -239,14 +218,6 @@
         </button>
         <button id="admin-panel-fab" onclick="openAdminModal()" class="hidden w-10 h-10 bg-rose-950/80 border border-rose-500/50 rounded-2xl flex items-center justify-center text-rose-400 shadow-md hover:bg-rose-900" title="ადმინ პანელი">
           <i class="fa-solid fa-shield-halved text-sm"></i>
-        </button>
-      </div>
-
-      <!-- Right Side Floating Action Buttons -->
-      <div class="absolute right-1 top-24 flex flex-col gap-2 z-20">
-        <button onclick="openShopModal()" class="w-11 h-11 bg-amber-500/20 border border-amber-500/50 rounded-2xl flex items-center justify-center text-amber-300 shadow-lg hover:bg-amber-500/30 transition-all relative">
-          <i class="fa-solid fa-coins text-lg"></i>
-          <span class="absolute -bottom-1 -right-1 bg-emerald-600 text-[9px] px-1.5 py-0.2 rounded-full font-bold">+1K</span>
         </button>
       </div>
 
@@ -590,7 +561,7 @@
     let pendingGameData = null;
 
     // Aviator variables
-    let aviatorState = 'idle'; // 'idle', 'flying', 'crashed'
+    let aviatorState = 'idle';
     let aviatorMultiplier = 1.00;
     let aviatorCrashPoint = 1.00;
     let aviatorBet = 0;
@@ -805,16 +776,8 @@
       listenToPublicRooms();
     };
 
-    window.openShopModal = () => document.getElementById('shop-modal').classList.remove('hidden');
-    window.closeShopModal = () => document.getElementById('shop-modal').classList.add('hidden');
     window.openProfileEditModal = () => document.getElementById('profile-edit-modal').classList.remove('hidden');
     window.closeProfileEditModal = () => document.getElementById('profile-edit-modal').classList.add('hidden');
-
-    window.buyCoins = async function(amount) {
-      await updateUserCoinsLocallyAndRemote(amount);
-      closeShopModal();
-      showToast(`შეიძინეთ +${amount} ₾ 🎉`);
-    };
 
     window.openAdminModal = async function() {
       document.getElementById('admin-modal').classList.remove('hidden');
@@ -875,7 +838,6 @@
       isAiMode = false;
       await updateUserCoinsLocallyAndRemote(-wager);
       
-      // Listen to room BEFORE updating status so snapshot triggers instantly
       listenToRoom(code);
 
       await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code), { 
@@ -1083,7 +1045,6 @@
       isAiMode = false;
       await updateUserCoinsLocallyAndRemote(-data.wager);
 
-      // Listen to room BEFORE updating status so snapshot triggers instantly
       listenToRoom(roomCode);
 
       await updateDoc(roomRef, { 
@@ -1139,7 +1100,6 @@
       document.getElementById('sp-p1-pos').innerText = state.p1Pos || 0;
       document.getElementById('sp-p2-pos').innerText = state.p2Pos || 0;
 
-      // Update player 2 icon depending on AI vs Multiplayer
       const p2Icon = document.getElementById('sp-p2-icon');
       if (p2Icon) {
         p2Icon.className = isAiMode ? "fa-solid fa-robot text-pink-200 text-lg" : "fa-solid fa-user text-pink-200 text-lg";
@@ -1215,7 +1175,7 @@
       else updateSafePathUI(gameState);
     };
 
-    // --- 2. Word Game Logic with Timers per Round & Progression ---
+    // --- 2. Word Game Logic ---
     function updateWordGameUI(state) {
       document.getElementById('p1-score').innerText = `${state.p1Score || 0} ქულა`;
       document.getElementById('p2-score').innerText = `${state.p2Score || 0} ქულა`;
@@ -1403,7 +1363,7 @@
       if (gameState.round > 5 || gameState.boxes.every(b => b.isOpen)) {
         gameState.status = 'finished';
         gameState.winner = (gameState.p1Money >= gameState.p2Money) ? 'player1' : 'player2';
-        handleGameFinish(gameState.winner);
+        handleGameFinish(state.winner);
       }
 
       gameState.currentTurn = playerRole === 'player1' ? 'player2' : 'player1';
