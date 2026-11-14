@@ -2,187 +2,259 @@
 <html lang="ka">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>მეგობრების თამაშები - Arcade Lobby</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Arcade Hub - მეგობრების თამაშები</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Font: Fira GO -->
-  <link href="https://fonts.googleapis.com/css2?family=Fira+GO:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+GO:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
     body {
       font-family: 'Fira GO', sans-serif;
-      background: linear-gradient(135deg, #06141b 0%, #0d1b2a 50%, #1b263b 100%);
+      background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0f172a 50%, #020617 100%);
       min-height: 100vh;
       color: #f8fafc;
+      overflow-x: hidden;
     }
     .glass-card {
-      background: rgba(15, 23, 42, 0.88);
-      backdrop-filter: blur(16px);
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+    .glass-input {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+    .glass-input:focus {
+      background: rgba(30, 41, 59, 0.9);
+      border-color: #6366f1;
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
     }
     .avatar-ring {
       background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
       padding: 3px;
     }
     .play-btn {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.5);
-      transition: all 0.25s ease;
-    }
-    .play-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 15px 30px -5px rgba(16, 185, 129, 0.7);
-    }
-    .path-tile, .card-tile, .box-tile {
+      background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+      box-shadow: 0 10px 30px -5px rgba(16, 185, 129, 0.5);
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .path-tile:hover:not(:disabled), .card-tile:hover:not(:disabled), .box-tile:hover:not(:disabled) {
-      transform: translateY(-3px) scale(1.03);
+    .play-btn:active {
+      transform: scale(0.97);
     }
-    @keyframes pulse-mine {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.15); opacity: 0.85; }
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
     }
-    .mine-exploded { animation: pulse-mine 0.4s ease-in-out infinite; }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(99, 102, 241, 0.5);
+      border-radius: 4px;
+    }
   </style>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="flex flex-col min-h-screen justify-between">
 
-  <div id="app" class="flex-grow flex flex-col justify-center items-center p-3 md:p-6 max-w-md mx-auto w-full relative">
+  <div id="app" class="flex-grow flex flex-col justify-center items-center p-4 max-w-md mx-auto w-full relative">
     
     <!-- Notification Toast -->
-    <div id="toast" class="hidden fixed top-4 right-4 left-4 md:left-auto md:w-96 glass-card border-l-4 border-emerald-500 p-4 rounded-2xl shadow-2xl z-50 text-sm flex items-center justify-between transition-all duration-300">
-      <div id="toast-message" class="text-slate-200"></div>
-      <button onclick="hideToast()" class="text-slate-400 hover:text-white ml-2"><i class="fa-solid fa-xmark"></i></button>
+    <div id="toast" class="hidden fixed top-5 right-4 left-4 md:left-auto md:w-96 glass-card border-l-4 border-emerald-500 p-4 rounded-2xl shadow-2xl z-50 text-sm flex items-center justify-between transition-all duration-300">
+      <div id="toast-message" class="text-slate-200 font-medium"></div>
+      <button onclick="hideToast()" class="text-slate-400 hover:text-white ml-2 p-1"><i class="fa-solid fa-xmark text-base"></i></button>
     </div>
 
     <!-- Left Sidebar Drawer (Hamburger Menu) -->
-    <div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-40" onclick="toggleSidebar(false)"></div>
-    <div id="sidebar-drawer" class="fixed top-0 left-0 bottom-0 w-72 bg-slate-900 border-r border-slate-800 z-50 p-5 flex flex-col justify-between transform -translate-x-full transition-transform duration-300 shadow-2xl">
+    <div id="sidebar-overlay" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-40 transition-opacity" onclick="toggleSidebar(false)"></div>
+    <div id="sidebar-drawer" class="fixed top-0 left-0 bottom-0 w-80 bg-slate-900/95 border-r border-slate-800/80 z-50 p-6 flex flex-col justify-between transform -translate-x-full transition-transform duration-300 shadow-2xl backdrop-blur-xl">
       <div class="space-y-6">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold">
-              <i class="fa-solid fa-dice"></i>
+            <div class="w-11 h-11 rounded-2xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400 font-bold shadow-lg">
+              <i class="fa-solid fa-dice text-lg"></i>
             </div>
             <div>
-              <h3 class="font-bold text-sm text-white">თამაშების მენიუ</h3>
-              <p class="text-[10px] text-slate-400">აირჩიეთ აპლიკაცია</p>
+              <h3 class="font-bold text-sm text-white tracking-wide">თამაშების მენიუ</h3>
+              <p class="text-[11px] text-slate-400">არკადული სივრცე</p>
             </div>
           </div>
-          <button onclick="toggleSidebar(false)" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+          <button onclick="toggleSidebar(false)" class="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
-        <div class="space-y-2">
-          <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">ხელმისაწვდომი თამაშები</div>
+        <div class="space-y-2.5 overflow-y-auto max-h-[calc(100vh-220px)] pr-1">
+          <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1 mb-1">სოციალური</div>
           
-          <button onclick="selectGameFromSidebar('safepath')" class="w-full p-3 bg-slate-800/80 hover:bg-emerald-900/40 border border-slate-700/80 rounded-2xl flex items-center gap-3 transition-all text-left">
-            <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm"><i class="fa-solid fa-bomb"></i></div>
+          <button onclick="openFriendsModal(); toggleSidebar(false);" class="w-full p-3.5 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 rounded-2xl flex items-center gap-3.5 transition-all text-left group">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center text-base group-hover:scale-110 transition-transform"><i class="fa-solid fa-user-group"></i></div>
             <div>
-              <div class="text-xs font-bold text-white">დანაღმული გზა (Safe Path)</div>
+              <div class="text-xs font-bold text-white">მეგობრები</div>
+              <div class="text-[10px] text-slate-400">დამატება და მართვა</div>
+            </div>
+          </button>
+
+          <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-1 mt-4 mb-1">კატალოგი</div>
+          
+          <button onclick="selectGameFromSidebar('safepath')" class="w-full p-3.5 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 rounded-2xl flex items-center gap-3.5 transition-all text-left group">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center text-base group-hover:scale-110 transition-transform"><i class="fa-solid fa-bomb"></i></div>
+            <div>
+              <div class="text-xs font-bold text-white">დანაღმული გზა</div>
               <div class="text-[10px] text-slate-400">არკადული მულტიფლეიერი</div>
             </div>
           </button>
 
-          <button onclick="selectGameFromSidebar('words')" class="w-full p-3 bg-slate-800/80 hover:bg-indigo-900/40 border border-slate-700/80 rounded-2xl flex items-center gap-3 transition-all text-left">
-            <div class="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-sm"><i class="fa-solid fa-font"></i></div>
+          <button onclick="selectGameFromSidebar('words')" class="w-full p-3.5 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 rounded-2xl flex items-center gap-3.5 transition-all text-left group">
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center text-base group-hover:scale-110 transition-transform"><i class="fa-solid fa-font"></i></div>
             <div>
               <div class="text-xs font-bold text-white">სიტყვების გამოცნობა</div>
               <div class="text-[10px] text-slate-400">ინტელექტუალური დუელი</div>
             </div>
           </button>
 
-          <button onclick="selectGameFromSidebar('boxes')" class="w-full p-3 bg-slate-800/80 hover:bg-amber-900/40 border border-slate-700/80 rounded-2xl flex items-center gap-3 transition-all text-left">
-            <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm"><i class="fa-solid fa-box-open"></i></div>
+          <button onclick="selectGameFromSidebar('boxes')" class="w-full p-3.5 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 rounded-2xl flex items-center gap-3.5 transition-all text-left group">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-base group-hover:scale-110 transition-transform"><i class="fa-solid fa-box-open"></i></div>
             <div>
-              <div class="text-xs font-bold text-white">თანხის ყუთები (Cash Boxes)</div>
+              <div class="text-xs font-bold text-white">თანხის ყუთები</div>
               <div class="text-[10px] text-slate-400">იღბლიანი ყუთები</div>
             </div>
           </button>
 
-          <button onclick="selectGameFromSidebar('tictactoe')" class="w-full p-3 bg-slate-800/80 hover:bg-pink-900/40 border border-slate-700/80 rounded-2xl flex items-center gap-3 transition-all text-left">
-            <div class="w-8 h-8 rounded-xl bg-pink-500/20 text-pink-400 flex items-center justify-center text-sm"><i class="fa-solid fa-xmark"></i></div>
+          <button onclick="selectGameFromSidebar('tictactoe')" class="w-full p-3.5 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 rounded-2xl flex items-center gap-3.5 transition-all text-left group">
+            <div class="w-10 h-10 rounded-xl bg-pink-500/15 text-pink-400 flex items-center justify-center text-base group-hover:scale-110 transition-transform"><i class="fa-solid fa-xmark"></i></div>
             <div>
               <div class="text-xs font-bold text-white">იქსიკი და ნოლიკი</div>
               <div class="text-[10px] text-slate-400">კლასიკური თამაში</div>
             </div>
           </button>
 
-          <button onclick="selectGameFromSidebar('aviator')" class="w-full p-3 bg-slate-800/80 hover:bg-sky-900/40 border border-slate-700/80 rounded-2xl flex items-center gap-3 transition-all text-left">
-            <div class="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center text-sm"><i class="fa-solid fa-jet-fighter"></i></div>
+          <button onclick="selectGameFromSidebar('aviator')" class="w-full p-3.5 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 rounded-2xl flex items-center gap-3.5 transition-all text-left group">
+            <div class="w-10 h-10 rounded-xl bg-sky-500/15 text-sky-400 flex items-center justify-center text-base group-hover:scale-110 transition-transform"><i class="fa-solid fa-jet-fighter"></i></div>
             <div>
-              <div class="text-xs font-bold text-white">Aviator (ჯეტის აფრენა)</div>
+              <div class="text-xs font-bold text-white">Aviator (ჯეტი)</div>
               <div class="text-[10px] text-slate-400">არკადული კრეში თამაში</div>
             </div>
           </button>
         </div>
       </div>
+      <div class="pt-4 border-t border-slate-800/80 text-center">
+        <span class="text-[10px] text-slate-500 font-mono">Arcade Hub v2.6.0</span>
+      </div>
     </div>
 
-    <!-- Game Switcher Dropdown Modal (Top Center) -->
-    <div id="game-switcher-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-40 flex items-center justify-center p-4" onclick="toggleGameSwitcher(false)">
-      <div class="glass-card p-4 rounded-3xl max-w-xs w-full text-center space-y-2 border border-indigo-500/40 shadow-2xl" onclick="event.stopPropagation()">
-        <h3 class="text-sm font-bold text-indigo-300 mb-2">აირჩიეთ თამაში</h3>
-        <button onclick="switchGameModeModal('safepath')" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-left flex items-center gap-2">
-          <i class="fa-solid fa-bomb text-amber-400"></i> დანაღმული გზა (Safe Path)
+    <!-- Friends Modal -->
+    <div id="friends-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div class="glass-card p-6 rounded-3xl max-w-md w-full space-y-4 border border-purple-500/40 shadow-2xl max-h-[85vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 bg-purple-600/20 text-purple-400 rounded-xl flex items-center justify-center text-base border border-purple-500/30">
+              <i class="fa-solid fa-user-group"></i>
+            </div>
+            <h3 class="text-base font-bold text-white">მეგობრები</h3>
+          </div>
+          <button onclick="closeFriendsModal()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+
+        <div class="bg-slate-900/80 p-3.5 rounded-2xl border border-slate-700/60 space-y-2">
+          <div class="text-[11px] text-slate-400 font-medium">შენი მეგობრის კოდი (ზიარებისთვის):</div>
+          <div class="flex items-center justify-between bg-slate-800 px-3 py-2 rounded-xl border border-slate-700">
+            <span id="my-friend-code" class="text-sm font-mono font-bold text-purple-300 tracking-wider">------</span>
+            <button onclick="copyMyFriendCode()" class="text-xs text-slate-300 hover:text-white bg-slate-700 px-2.5 py-1 rounded-lg transition-colors">
+              <i class="fa-regular fa-copy mr-1"></i> კოპირება
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <div class="text-xs text-slate-300 font-semibold">მეგობრის დამატება:</div>
+          <div class="flex gap-2">
+            <input type="text" id="friend-search-input" placeholder="მეილი ან მეგობრის კოდი..." class="flex-grow px-3 py-2.5 glass-input rounded-xl text-xs text-white focus:outline-none">
+            <button onclick="addFriend()" class="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 font-bold rounded-xl text-xs transition-all shadow shrink-0">დამატება</button>
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-2">
+          <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider">შენი მეგობრების სია</div>
+          <div id="friends-list-container" class="space-y-2 max-h-40 overflow-y-auto pr-1">
+            <div class="text-xs text-slate-500 text-center py-4">მეგობრები არ გყავთ...</div>
+          </div>
+        </div>
+
+        <button onclick="closeFriendsModal()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl text-xs font-semibold transition-all">დახურვა</button>
+      </div>
+    </div>
+
+    <!-- Game Switcher Dropdown Modal -->
+    <div id="game-switcher-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-40 flex items-center justify-center p-4 animate-fade-in" onclick="toggleGameSwitcher(false)">
+      <div class="glass-card p-5 rounded-3xl max-w-xs w-full text-center space-y-2.5 border border-indigo-500/30 shadow-2xl" onclick="event.stopPropagation()">
+        <h3 class="text-sm font-bold text-indigo-300 mb-3 tracking-wide">აირჩიეთ აქტიური თამაში</h3>
+        <button onclick="switchGameModeModal('safepath')" class="w-full py-3 px-4 bg-slate-800/80 hover:bg-slate-800 rounded-2xl text-xs font-semibold text-left flex items-center gap-3 transition-all border border-slate-700/40">
+          <i class="fa-solid fa-bomb text-amber-400 text-sm"></i> დანაღმული გზა
         </button>
-        <button onclick="switchGameModeModal('words')" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-left flex items-center gap-2">
-          <i class="fa-solid fa-font text-indigo-400"></i> სიტყვების გამოცნობა
+        <button onclick="switchGameModeModal('words')" class="w-full py-3 px-4 bg-slate-800/80 hover:bg-slate-800 rounded-2xl text-xs font-semibold text-left flex items-center gap-3 transition-all border border-slate-700/40">
+          <i class="fa-solid fa-font text-indigo-400 text-sm"></i> სიტყვების გამოცნობა
         </button>
-        <button onclick="switchGameModeModal('boxes')" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-left flex items-center gap-2">
-          <i class="fa-solid fa-box-open text-emerald-400"></i> თანხის ყუთები
+        <button onclick="switchGameModeModal('boxes')" class="w-full py-3 px-4 bg-slate-800/80 hover:bg-slate-800 rounded-2xl text-xs font-semibold text-left flex items-center gap-3 transition-all border border-slate-700/40">
+          <i class="fa-solid fa-box-open text-emerald-400 text-sm"></i> თანხის ყუთები
         </button>
-        <button onclick="switchGameModeModal('tictactoe')" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-left flex items-center gap-2">
-          <i class="fa-solid fa-xmark text-pink-400"></i> იქსიკი და ნოლიკი
+        <button onclick="switchGameModeModal('tictactoe')" class="w-full py-3 px-4 bg-slate-800/80 hover:bg-slate-800 rounded-2xl text-xs font-semibold text-left flex items-center gap-3 transition-all border border-slate-700/40">
+          <i class="fa-solid fa-xmark text-pink-400 text-sm"></i> იქსიკი და ნოლიკი
         </button>
-        <button onclick="switchGameModeModal('aviator')" class="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-left flex items-center gap-2">
-          <i class="fa-solid fa-jet-fighter text-sky-400"></i> Aviator (ჯეტის აფრენა)
+        <button onclick="switchGameModeModal('aviator')" class="w-full py-3 px-4 bg-slate-800/80 hover:bg-slate-800 rounded-2xl text-xs font-semibold text-left flex items-center gap-3 transition-all border border-slate-700/40">
+          <i class="fa-solid fa-jet-fighter text-sky-400 text-sm"></i> Aviator (ჯეტი)
         </button>
       </div>
     </div>
 
     <!-- Admin Panel Modal -->
     <div id="admin-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
-      <div class="glass-card p-6 rounded-3xl max-w-md w-full text-center space-y-4 border border-rose-500/40 shadow-2xl max-h-[85vh] overflow-y-auto">
-        <div class="w-14 h-14 bg-rose-600/20 text-rose-400 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-rose-500/30">
+      <div class="glass-card p-6 rounded-3xl max-w-md w-full text-center space-y-5 border border-rose-500/40 shadow-2xl max-h-[85vh] overflow-y-auto">
+        <div class="w-14 h-14 bg-rose-600/20 text-rose-400 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-rose-500/30 shadow-lg">
           <i class="fa-solid fa-shield-halved"></i>
         </div>
-        <h3 class="text-lg font-bold text-rose-300">ადმინ პანელი</h3>
-        <div id="admin-users-list" class="space-y-2 text-left max-h-60 overflow-y-auto pr-1">
-          <div class="text-xs text-slate-500 text-center py-4">იტვირთება მომხმარებლები...</div>
+        <div>
+          <h3 class="text-lg font-bold text-rose-300">ადმინ პანელი</h3>
+          <p class="text-[11px] text-slate-400 mt-1">მომხმარებელთა და ბალანსის მართვა</p>
         </div>
-        <button onclick="closeAdminModal()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">დახურვა</button>
+        <div id="admin-users-list" class="space-y-2.5 text-left max-h-60 overflow-y-auto pr-1">
+          <div class="text-xs text-slate-500 text-center py-6">იტვირთება მომხმარებლები...</div>
+        </div>
+        <button onclick="closeAdminModal()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl text-xs font-semibold transition-all">დახურვა</button>
       </div>
     </div>
 
     <!-- Auth Screen -->
-    <div id="auth-screen" class="hidden w-full glass-card p-6 md:p-8 rounded-3xl shadow-2xl text-center">
+    <div id="auth-screen" class="hidden w-full glass-card p-7 md:p-9 rounded-3xl shadow-2xl text-center border border-slate-700/50">
       <div class="mb-6">
-        <div class="w-16 h-16 bg-purple-600/30 text-purple-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl border border-purple-500/30">
-          <i class="fa-solid fa-user-lock"></i>
+        <div class="w-16 h-16 bg-gradient-to-tr from-indigo-600/30 to-violet-600/30 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl border border-indigo-500/30 shadow-inner">
+          <i class="fa-solid fa-gamepad"></i>
         </div>
-        <h2 id="auth-title" class="text-2xl font-bold mb-1">სისტემაში შესვლა</h2>
-        <p class="text-sm text-slate-400">აირჩიეთ ავტორიზაციის მეთოდი ან შედით როგორც სტუმარი</p>
+        <h2 id="auth-title" class="text-2xl font-extrabold mb-1.5 tracking-wide text-white">სისტემაში შესვლა</h2>
+        <p class="text-xs text-slate-400 leading-relaxed">შედით თქვენს ანგარიშში ან გააგრძელეთ სტუმრად</p>
       </div>
 
-      <div class="space-y-4 mb-6">
-        <input type="email" id="auth-email" placeholder="ელ-ფოსტა (Email)" class="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-2xl text-center text-sm font-semibold focus:outline-none focus:border-indigo-500">
-        <input type="password" id="auth-password" placeholder="პაროლი" class="w-full px-4 py-3 bg-slate-800/80 border border-slate-700 rounded-2xl text-center text-sm font-semibold focus:outline-none focus:border-indigo-500">
+      <div class="space-y-3.5 mb-6">
+        <input type="email" id="auth-email" placeholder="ელ-ფოსტა (Email)" class="w-full px-4 py-3.5 glass-input rounded-2xl text-center text-sm font-medium text-white focus:outline-none">
+        <input type="password" id="auth-password" placeholder="პაროლი" class="w-full px-4 py-3.5 glass-input rounded-2xl text-center text-sm font-medium text-white focus:outline-none">
       </div>
 
       <div class="space-y-3">
-        <button onclick="handleAuthSubmit()" id="auth-submit-btn" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-bold rounded-2xl shadow-lg transition-all text-base active:scale-95">
+        <button onclick="handleAuthSubmit()" id="auth-submit-btn" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-bold rounded-2xl shadow-xl shadow-indigo-600/20 transition-all text-sm tracking-wide">
           შესვლა
         </button>
-        <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl text-xs font-semibold transition-all">
+        <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="w-full py-3 bg-slate-800/80 hover:bg-slate-800 text-slate-300 rounded-2xl text-xs font-semibold transition-all border border-slate-700/50">
           არ გაქვს ანგარიში? დარეგისტრირდი
         </button>
-        <div class="pt-2">
-          <button onclick="continueAnonymously()" class="text-xs text-slate-400 hover:text-white underline transition-colors">
-            გაგრძელება სტუმრის რეჟიმში (Anonymous)
+        <div class="pt-3">
+          <button onclick="continueAnonymously()" class="text-xs text-slate-400 hover:text-indigo-300 transition-colors font-medium">
+            გაგრძელება სტუმრის რეჟიმში <i class="fa-solid fa-arrow-right ml-1 text-[10px]"></i>
           </button>
         </div>
       </div>
@@ -193,68 +265,68 @@
       
       <!-- Top Bar -->
       <div class="w-full flex justify-between items-center px-1">
-        <button onclick="toggleSidebar(true)" class="w-12 h-12 bg-emerald-950/80 border border-emerald-500/40 rounded-2xl flex items-center justify-center text-emerald-400 shadow-md hover:bg-emerald-900 transition-all">
-          <i class="fa-solid fa-bars text-lg"></i>
+        <button onclick="toggleSidebar(true)" class="w-11 h-11 bg-slate-800/80 border border-slate-700/60 rounded-2xl flex items-center justify-center text-indigo-400 shadow-md hover:bg-slate-800 transition-all">
+          <i class="fa-solid fa-bars text-base"></i>
         </button>
 
-        <div onclick="toggleGameSwitcher(true)" class="glass-card px-4 py-1.5 rounded-full flex items-center gap-2 border border-slate-700 shadow-lg cursor-pointer hover:border-indigo-500 transition-all">
-          <div id="header-game-icon" class="w-6 h-6 bg-indigo-600 rounded-lg flex items-center justify-center text-xs text-white"><i class="fa-solid fa-bomb"></i></div>
+        <div onclick="toggleGameSwitcher(true)" class="glass-card px-4 py-2 rounded-2xl flex items-center gap-2.5 border border-slate-700/60 shadow-lg cursor-pointer hover:border-indigo-500/50 transition-all">
+          <div id="header-game-icon" class="w-6 h-6 bg-indigo-600 rounded-lg flex items-center justify-center text-xs text-white shadow"><i class="fa-solid fa-bomb"></i></div>
           <div class="text-left">
-            <span id="header-game-name" class="text-xs font-extrabold text-white block leading-none">დანაღმული გზა</span>
-            <span class="text-[9px] text-slate-400">Multiplayer</span>
+            <span id="header-game-name" class="text-xs font-bold text-white block leading-tight">დანაღმული გზა</span>
+            <span class="text-[9px] text-slate-400">არკადული რეჟიმი</span>
           </div>
           <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-1"></i>
         </div>
 
-        <button onclick="logoutUser()" class="w-12 h-12 bg-slate-900/80 border border-slate-700 rounded-2xl flex items-center justify-center text-slate-300 shadow-md hover:text-rose-400 transition-all" title="გასვლა">
-          <i class="fa-solid fa-right-from-bracket text-base"></i>
+        <button onclick="logoutUser()" class="w-11 h-11 bg-slate-800/80 border border-slate-700/60 rounded-2xl flex items-center justify-center text-slate-300 shadow-md hover:text-rose-400 hover:bg-slate-800 transition-all" title="გასვლა">
+          <i class="fa-solid fa-right-from-bracket text-sm"></i>
         </button>
       </div>
 
-      <!-- Left Side Floating Action Buttons -->
-      <div class="absolute left-1 top-24 flex flex-col gap-2 z-20">
-        <button onclick="toggleSound()" class="w-10 h-10 bg-slate-900/80 border border-slate-700 rounded-2xl flex items-center justify-center text-indigo-300 shadow-md hover:bg-slate-800">
-          <i id="sound-icon" class="fa-solid fa-volume-high text-sm"></i>
+      <!-- Left Side Floating Buttons -->
+      <div class="absolute left-2 top-20 flex flex-col gap-2 z-20">
+        <button onclick="toggleSound()" class="w-10 h-10 bg-slate-900/80 border border-slate-700/60 rounded-2xl flex items-center justify-center text-indigo-300 shadow-lg hover:bg-slate-800 backdrop-blur-md">
+          <i id="sound-icon" class="fa-solid fa-volume-high text-xs"></i>
         </button>
-        <button id="admin-panel-fab" onclick="openAdminModal()" class="hidden w-10 h-10 bg-rose-950/80 border border-rose-500/50 rounded-2xl flex items-center justify-center text-rose-400 shadow-md hover:bg-rose-900" title="ადმინ პანელი">
-          <i class="fa-solid fa-shield-halved text-sm"></i>
+        <button id="admin-panel-fab" onclick="openAdminModal()" class="hidden w-10 h-10 bg-rose-950/80 border border-rose-500/50 rounded-2xl flex items-center justify-center text-rose-400 shadow-lg hover:bg-rose-900 backdrop-blur-md" title="ადმინ პანელი">
+          <i class="fa-solid fa-shield-halved text-xs"></i>
         </button>
       </div>
 
       <!-- Main Profile Center Card -->
-      <div class="w-full flex flex-col items-center pt-2">
-        <div class="text-xs font-mono text-slate-400 mb-2 tracking-wider">Your ID: <span id="user-display-id" class="text-indigo-300 font-bold">3351</span></div>
+      <div class="w-full flex flex-col items-center pt-1">
+        <div class="text-[11px] font-mono text-slate-400 mb-2.5 tracking-widest bg-slate-900/60 px-3 py-1 rounded-full border border-slate-800">ID: <span id="user-display-id" class="text-indigo-300 font-bold">3351</span></div>
 
         <div class="relative mb-3">
-          <div class="w-28 h-28 rounded-full avatar-ring p-1 shadow-2xl flex items-center justify-center overflow-hidden bg-slate-900">
+          <div class="w-24 h-24 rounded-full avatar-ring p-1 shadow-2xl flex items-center justify-center overflow-hidden bg-slate-900">
             <img id="user-display-avatar" src="" class="w-full h-full object-cover rounded-full hidden">
-            <i id="user-display-default-icon" class="fa-solid fa-user text-slate-500 text-4xl"></i>
+            <i id="user-display-default-icon" class="fa-solid fa-user text-slate-500 text-3xl"></i>
           </div>
-          <div class="absolute bottom-1 right-2 w-5 h-5 bg-emerald-500 border-2 border-slate-900 rounded-full"></div>
+          <div class="absolute bottom-1 right-2 w-4 h-4 bg-emerald-500 border-2 border-slate-900 rounded-full shadow"></div>
         </div>
 
-        <div class="flex items-center gap-2 bg-slate-900/90 border border-amber-500/40 px-5 py-2 rounded-2xl shadow-xl mb-3">
-          <i class="fa-solid fa-coins text-amber-400 text-lg"></i>
-          <span id="user-coins" class="text-2xl font-black text-amber-300 tracking-wide">1000</span>
+        <div class="flex items-center gap-2 bg-slate-900/80 border border-amber-500/30 px-5 py-2 rounded-2xl shadow-lg mb-2.5">
+          <i class="fa-solid fa-coins text-amber-400 text-base"></i>
+          <span id="user-coins" class="text-xl font-black text-amber-300 tracking-wide">1000</span>
           <span class="text-xs text-amber-500 font-bold">₾</span>
         </div>
 
-        <div class="flex items-center gap-2 mb-4">
-          <span class="text-base font-bold text-slate-100">Hello, <span id="user-display-name" class="text-indigo-300">სტუმარი</span></span>
-          <button onclick="openProfileEditModal()" class="w-7 h-7 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl flex items-center justify-center text-slate-300 transition-all"><i class="fa-solid fa-pen text-xs"></i></button>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-sm font-semibold text-slate-200">გამარჯობა, <span id="user-display-name" class="text-indigo-300 font-bold">სტუმარი</span></span>
+          <button onclick="openProfileEditModal()" class="w-6 h-6 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg flex items-center justify-center text-slate-300 transition-all"><i class="fa-solid fa-pen text-[10px]"></i></button>
         </div>
       </div>
 
       <!-- Game & Wager Setup Box -->
-      <div class="w-full glass-card p-4 rounded-3xl space-y-3 shadow-xl border border-slate-700/80">
-        <div class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center justify-between">
-          <span>🎮 თამაშის პარამეტრები</span>
+      <div class="w-full glass-card p-4 rounded-3xl space-y-3.5 shadow-xl border border-slate-700/50">
+        <div class="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center justify-between px-1">
+          <span><i class="fa-solid fa-sliders mr-1.5"></i> პარამეტრები</span>
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-2 gap-2.5">
           <div>
-            <label class="text-[11px] text-slate-400 font-semibold ml-1">თამაში:</label>
-            <select id="game-mode-select" onchange="onGameModeSelectChanged()" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-indigo-500 text-xs">
+            <label class="text-[10px] text-slate-400 font-semibold ml-1">არჩეული თამაში:</label>
+            <select id="game-mode-select" onchange="onGameModeSelectChanged()" class="w-full mt-1 px-3 py-2.5 glass-input rounded-xl text-white font-medium focus:outline-none text-xs">
               <option value="safepath">💣 დანაღმული გზა</option>
               <option value="words">🔤 სიტყვები</option>
               <option value="boxes">💰 ყუთები</option>
@@ -263,8 +335,8 @@
             </select>
           </div>
           <div>
-            <label class="text-[11px] text-slate-400 font-semibold ml-1">ფსონი:</label>
-            <select id="table-wager-select" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-amber-300 font-bold focus:outline-none focus:border-amber-500 text-xs">
+            <label class="text-[10px] text-slate-400 font-semibold ml-1">სასურველი ფსონი:</label>
+            <select id="table-wager-select" class="w-full mt-1 px-3 py-2.5 glass-input rounded-xl text-amber-300 font-bold focus:outline-none text-xs">
               <option value="50">50 ₾</option>
               <option value="100" selected>100 ₾</option>
               <option value="250">250 ₾</option>
@@ -274,40 +346,29 @@
           </div>
         </div>
 
-        <div class="flex gap-2 pt-1">
-          <input type="text" id="room-code-input" maxlength="4" placeholder="კოდი" class="w-20 px-3 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-center text-sm tracking-widest uppercase font-mono focus:outline-none focus:border-indigo-500">
-          <button onclick="joinRoom()" class="flex-grow py-2.5 bg-slate-800 hover:bg-slate-700 font-bold rounded-xl border border-slate-700 transition-all flex items-center justify-center active:scale-95 text-xs">
-            <i class="fa-solid fa-right-to-bracket mr-2"></i>კოდით შესვლა
+        <div class="flex gap-2 pt-0.5">
+          <input type="text" id="room-code-input" maxlength="4" placeholder="კოდი" class="w-24 px-3 py-2.5 glass-input rounded-xl text-center text-sm tracking-widest uppercase font-mono text-white focus:outline-none">
+          <button onclick="joinRoom()" class="flex-grow py-2.5 bg-slate-800/80 hover:bg-slate-800 font-bold rounded-xl border border-slate-700/60 transition-all flex items-center justify-center text-xs text-slate-200 shadow">
+            <i class="fa-solid fa-right-to-bracket mr-2 text-indigo-400"></i> შესვლა კოდით
           </button>
         </div>
 
         <div class="flex gap-2">
-          <select id="ai-difficulty" class="w-28 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500 text-emerald-400 font-bold">
+          <select id="ai-difficulty" class="w-32 px-3 py-2.5 glass-input rounded-xl text-xs font-semibold focus:outline-none text-emerald-400">
             <option value="easy">მარტივი AI</option>
             <option value="medium" selected>საშუალო AI</option>
             <option value="hard">რთული AI</option>
           </select>
-          <button onclick="startAiGame()" class="flex-grow py-2.5 bg-emerald-700 hover:bg-emerald-600 font-bold rounded-xl shadow transition-all text-xs active:scale-95 flex items-center justify-center">
+          <button onclick="startAiGame()" class="flex-grow py-2.5 bg-emerald-700/90 hover:bg-emerald-600 font-bold rounded-xl shadow-lg shadow-emerald-900/20 transition-all text-xs flex items-center justify-center text-white">
             <i class="fa-solid fa-robot mr-1.5"></i> თამაში AI-სთან
           </button>
         </div>
       </div>
 
-      <!-- Filtered Public Rooms List -->
-      <div class="w-full glass-card p-4 rounded-3xl space-y-2 shadow-xl border border-indigo-500/30 text-left">
-        <div class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center justify-between">
-          <span>👥 ამ თამაშის მომლოდინე ლობი</span>
-          <span id="lobby-game-filter-name" class="text-[10px] text-slate-400">დანაღმული გზა</span>
-        </div>
-        <div id="public-tables-list" class="space-y-2 max-h-36 overflow-y-auto pr-1">
-          <div class="text-xs text-slate-500 text-center py-2">ამ თამაშში მოლოდინში არავინ არის...</div>
-        </div>
-      </div>
-
       <!-- Big Bottom Play a Game Button -->
-      <div class="w-full pt-2 pb-4">
-        <button onclick="createRoom()" class="w-full py-4 play-btn rounded-2xl font-extrabold text-lg text-white shadow-2xl flex items-center justify-center tracking-wide active:scale-95">
-          <i class="fa-solid fa-gamepad mr-2 text-xl"></i> Play a game
+      <div class="w-full pt-1 pb-3">
+        <button onclick="createRoom()" class="w-full py-4 play-btn rounded-2xl font-extrabold text-base text-white shadow-2xl flex items-center justify-center tracking-wide">
+          <i class="fa-solid fa-gamepad mr-2 text-lg"></i> მაგიდის შექმნა (Play)
         </button>
       </div>
 
@@ -316,11 +377,11 @@
     <!-- Profile Edit Modal -->
     <div id="profile-edit-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div class="glass-card p-6 rounded-3xl max-w-xs w-full text-center space-y-4 border border-indigo-500/40 shadow-2xl">
-        <h3 class="text-lg font-bold">პროფილის რედაქტირება</h3>
+        <h3 class="text-base font-bold text-white">პროფილის რედაქტირება</h3>
         <div class="flex flex-col items-center gap-3">
           <div class="relative w-20 h-20 rounded-full overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center cursor-pointer shadow-lg" onclick="document.getElementById('avatar-file-input').click()">
             <img id="profile-avatar-preview" src="" class="w-full h-full object-cover hidden">
-            <i id="profile-avatar-icon" class="fa-solid fa-camera text-slate-400 text-2xl"></i>
+            <i id="profile-avatar-icon" class="fa-solid fa-camera text-slate-400 text-xl"></i>
           </div>
           <label class="cursor-pointer px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-xs font-semibold text-white transition-all shadow">
             ფოტოს არჩევა
@@ -328,205 +389,210 @@
           </label>
         </div>
         <div>
-          <input type="text" id="nickname-input" placeholder="თქვენი ნიქნეიმი..." class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500 text-center">
+          <input type="text" id="nickname-input" placeholder="თქვენი ნიქნეიმი..." class="w-full px-4 py-2.5 glass-input rounded-xl text-xs text-white focus:outline-none text-center">
         </div>
-        <div class="flex gap-2">
-          <button onclick="saveProfileSettings()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 font-bold rounded-xl text-xs transition-all active:scale-95">შენახვა</button>
+        <div class="flex gap-2 pt-1">
+          <button onclick="saveProfileSettings()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 font-bold rounded-xl text-xs transition-all shadow">შენახვა</button>
           <button onclick="closeProfileEditModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">გაუქმება</button>
         </div>
       </div>
     </div>
 
     <!-- Waiting Screen -->
-    <div id="waiting-screen" class="hidden w-full max-w-md glass-card p-8 rounded-3xl shadow-2xl text-center">
-      <div class="animate-bounce w-16 h-16 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl border border-amber-500/30">
+    <div id="waiting-screen" class="hidden w-full max-w-md glass-card p-8 rounded-3xl shadow-2xl text-center border border-slate-700/50">
+      <div class="animate-bounce w-16 h-16 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-xl border border-amber-500/30 shadow">
         <i class="fa-solid fa-user-clock"></i>
       </div>
-      <h2 class="text-2xl font-bold mb-2">მაგიდა მზადაა!</h2>
-      <p class="text-sm text-slate-400 mb-2">ფსონი: <span id="waiting-room-wager" class="text-amber-300 font-bold">100</span> ₾</p>
+      <h2 class="text-2xl font-bold mb-1.5 text-white">მაგიდა მზადაა!</h2>
+      <p class="text-xs text-slate-400 mb-1">ფსონი: <span id="waiting-room-wager" class="text-amber-300 font-bold">100</span> ₾</p>
       <p class="text-xs text-slate-500 mb-6">ველით მოწინააღმდეგეს...</p>
 
-      <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700 mb-6 flex items-center justify-between">
+      <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700/60 mb-6 flex items-center justify-between shadow-inner">
         <span id="display-room-code" class="text-3xl font-mono font-bold tracking-widest text-indigo-400">----</span>
-        <button onclick="copyRoomCode()" class="p-2 hover:bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-colors" title="კოდის კოპირება">
-          <i class="fa-regular fa-copy text-xl"></i>
+        <button onclick="copyRoomCode()" class="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-300 hover:text-white transition-colors" title="კოდის კოპირება">
+          <i class="fa-regular fa-copy text-base"></i>
         </button>
       </div>
 
-      <button onclick="cancelRoom()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">გაუქმება</button>
+      <button onclick="cancelRoom()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">გაუქმება</button>
     </div>
 
-    <!-- Jeirani (Rock-Paper-Scissors) Screen to decide who starts (AI Game Only) -->
-    <div id="jeirani-screen" class="hidden w-full max-w-md glass-card p-6 rounded-3xl shadow-2xl text-center space-y-4">
-      <div class="w-14 h-14 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-amber-500/30">
+    <!-- Jeirani (Rock-Paper-Scissors) Screen -->
+    <div id="jeirani-screen" class="hidden w-full max-w-md glass-card p-6 rounded-3xl shadow-2xl text-center space-y-4 border border-slate-700/50">
+      <div class="w-14 h-14 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mx-auto text-xl border border-amber-500/30">
         <i class="fa-solid fa-hand-fist"></i>
       </div>
-      <h2 class="text-xl font-bold text-amber-300">ჯეირანი (ვინ იწყებს?)</h2>
+      <h2 class="text-lg font-bold text-amber-300">ჯეირანი (ვინ იწყებს?)</h2>
       <p class="text-xs text-slate-400">აირჩიეთ ფიგურა, რომ დადგინდეს ვინ იწყებს პირველ სვლას AI-ს წინააღმდეგ:</p>
-      <div class="flex justify-center gap-3 py-3">
-        <button onclick="playJeirani('rock')" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl text-lg font-bold transition-all active:scale-95">✊ ქვა</button>
-        <button onclick="playJeirani('paper')" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl text-lg font-bold transition-all active:scale-95">✋ ქაღალდი</button>
-        <button onclick="playJeirani('scissors')" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl text-lg font-bold transition-all active:scale-95">✌️ მაკრატელი</button>
+      <div class="flex justify-center gap-2.5 py-2">
+        <button onclick="playJeirani('rock')" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl text-sm font-bold transition-all active:scale-95 shadow">✊ ქვა</button>
+        <button onclick="playJeirani('paper')" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl text-sm font-bold transition-all active:scale-95 shadow">✋ ქაღალდი</button>
+        <button onclick="playJeirani('scissors')" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl text-sm font-bold transition-all active:scale-95 shadow">✌️ მაკრატელი</button>
       </div>
-      <div id="jeirani-result" class="text-sm font-semibold text-indigo-300 min-h-[30px] flex items-center justify-center"></div>
+      <div id="jeirani-result" class="text-xs font-semibold text-indigo-300 min-h-[30px] flex items-center justify-center"></div>
     </div>
 
     <!-- 1. Safe Path Game Screen -->
-    <div id="safepath-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-4">
-      <div class="grid grid-cols-2 gap-3">
-        <div class="glass-card p-3 rounded-2xl flex items-center gap-3 border-l-4 border-indigo-500 shadow-xl">
-          <div class="w-10 h-10 rounded-full overflow-hidden bg-indigo-900 border-2 border-indigo-400 flex items-center justify-center shrink-0">
+    <div id="safepath-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-3.5">
+      <div class="grid grid-cols-2 gap-2.5">
+        <div class="glass-card p-3 rounded-2xl flex items-center gap-2.5 border-l-4 border-indigo-500 shadow-lg">
+          <div class="w-9 h-9 rounded-full overflow-hidden bg-indigo-900 border-2 border-indigo-400 flex items-center justify-center shrink-0">
             <img id="sp-p1-img" src="" class="w-full h-full object-cover hidden">
-            <i id="sp-p1-icon" class="fa-solid fa-person-running text-indigo-200 text-lg"></i>
+            <i id="sp-p1-icon" class="fa-solid fa-person-running text-indigo-200 text-sm"></i>
           </div>
           <div class="truncate text-left">
-            <div id="sp-p1-name" class="text-xs font-bold text-slate-100 truncate">მოთამაშე 1</div>
+            <div id="sp-p1-name" class="text-[11px] font-bold text-slate-100 truncate">მოთამაშე 1</div>
             <div class="text-[10px] text-indigo-300 font-bold">დონე: <span id="sp-p1-pos">0</span> / 5</div>
           </div>
         </div>
 
-        <div class="glass-card p-3 rounded-2xl flex items-center gap-3 border-l-4 border-pink-500 shadow-xl">
-          <div class="w-10 h-10 rounded-full overflow-hidden bg-pink-900 border-2 border-pink-400 flex items-center justify-center shrink-0">
+        <div class="glass-card p-3 rounded-2xl flex items-center gap-2.5 border-l-4 border-pink-500 shadow-lg">
+          <div class="w-9 h-9 rounded-full overflow-hidden bg-pink-900 border-2 border-pink-400 flex items-center justify-center shrink-0">
             <img id="sp-p2-img" src="" class="w-full h-full object-cover hidden">
-            <i id="sp-p2-icon" class="fa-solid fa-user text-pink-200 text-lg"></i>
+            <i id="sp-p2-icon" class="fa-solid fa-user text-pink-200 text-sm"></i>
           </div>
           <div class="truncate text-left">
-            <div id="sp-p2-name" class="text-xs font-bold text-slate-100 truncate">მოწინააღმდეგე</div>
+            <div id="sp-p2-name" class="text-[11px] font-bold text-slate-100 truncate">მოწინააღმდეგე</div>
             <div class="text-[10px] text-pink-300 font-bold">დონე: <span id="sp-p2-pos">0</span> / 5</div>
           </div>
         </div>
       </div>
 
-      <div class="glass-card p-3.5 rounded-2xl text-center border border-indigo-500/30 shadow-inner bg-slate-900/90">
-        <div id="sp-status" class="text-sm font-bold text-amber-300 tracking-wide">მიმდინარეობს...</div>
+      <div class="glass-card p-3 rounded-2xl text-center border border-indigo-500/20 shadow-inner bg-slate-900/80">
+        <div id="sp-status" class="text-xs font-bold text-amber-300 tracking-wide">მიმდინარეობს...</div>
       </div>
 
-      <div id="safepath-board" class="glass-card p-5 rounded-3xl flex flex-col space-y-3 max-w-[360px] mx-auto w-full shadow-2xl border border-indigo-500/30"></div>
+      <div id="safepath-board" class="glass-card p-4 rounded-3xl flex flex-col space-y-2.5 max-w-[350px] mx-auto w-full shadow-2xl border border-indigo-500/20"></div>
 
-      <div class="text-center pt-2">
-        <button onclick="returnToLobby()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all shadow-md border border-slate-700">მთავარ მენიუში დაბრუნება</button>
+      <div class="text-center pt-1">
+        <button onclick="returnToLobby()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all shadow border border-slate-700/50">მთავარ მენიუში დაბრუნება</button>
       </div>
     </div>
 
-    <!-- 2. Word Game Screen with Round-Specific Timers & Progression -->
-    <div id="game-screen" class="hidden w-full flex flex-col space-y-4">
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <!-- 2. Word Game Screen -->
+    <div id="game-screen" class="hidden w-full flex flex-col space-y-3.5">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
         <div class="glass-card p-3 rounded-2xl flex items-center justify-between border-l-4 border-indigo-500">
           <div>
-            <div class="text-xs text-slate-400 font-semibold" id="p1-label">მოთამაშე 1</div>
-            <div id="p1-score" class="text-lg font-bold text-indigo-400">0 ქულა</div>
+            <div class="text-[10px] text-slate-400 font-semibold" id="p1-label">მოთამაშე 1</div>
+            <div id="p1-score" class="text-base font-bold text-indigo-400">0 ქულა</div>
           </div>
         </div>
         <div class="glass-card p-3 rounded-2xl flex items-center justify-between border-l-4 border-pink-500">
           <div>
-            <div class="text-xs text-slate-400 font-semibold" id="p2-label">მოწინააღმდეგე</div>
-            <div id="p2-score" class="text-lg font-bold text-pink-400">0 ქულა</div>
+            <div class="text-[10px] text-slate-400 font-semibold" id="p2-label">მოწინააღმდეგე</div>
+            <div id="p2-score" class="text-base font-bold text-pink-400">0 ქულა</div>
           </div>
         </div>
         <div class="glass-card p-3 rounded-2xl flex flex-col justify-center border-l-4 border-amber-500 text-center">
-          <span class="text-xs text-slate-400 font-semibold" id="round-indicator">რაუნდი 1 / 3</span>
-          <span id="word-timer" class="text-sm font-mono font-bold text-amber-400 mt-0.5">⏱️ 15 წმ</span>
-          <span id="turn-banner" class="text-xs font-bold text-indigo-300 mt-0.5">იტვირთება...</span>
+          <span class="text-[10px] text-slate-400 font-semibold" id="round-indicator">რაუნდი 1 / 3</span>
+          <span id="word-timer" class="text-xs font-mono font-bold text-amber-400 mt-0.5">⏱️ 15 წმ</span>
+          <span id="turn-banner" class="text-[10px] font-bold text-indigo-300 mt-0.5">იტვირთება...</span>
         </div>
       </div>
 
-      <div class="glass-card p-6 rounded-3xl text-center space-y-4">
-        <div class="text-xs font-bold text-indigo-400 uppercase tracking-widest">არჩეული ბარათი</div>
-        <div id="masked-word-display" class="text-2xl md:text-3xl font-mono font-extrabold tracking-widest text-slate-300 min-h-[48px] flex items-center justify-center">
+      <div class="glass-card p-5 rounded-3xl text-center space-y-3 border border-slate-700/50">
+        <div class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">არჩეული ბარათი</div>
+        <div id="masked-word-display" class="text-2xl font-mono font-extrabold tracking-widest text-slate-200 min-h-[44px] flex items-center justify-center">
           აირჩიეთ ბარათი ქვემოთ
         </div>
         <div id="word-category-display" class="text-xs text-slate-400 italic"></div>
 
-        <div id="guess-controls" class="flex gap-2 max-w-lg mx-auto pt-2 hidden">
-          <input type="text" id="guess-input" placeholder="ჩაწერეთ სიტყვა..." class="flex-grow px-4 py-3 bg-slate-800 border border-slate-700 rounded-2xl text-left focus:outline-none focus:border-indigo-500 text-sm">
-          <button onclick="submitGuess()" class="px-5 py-3 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-2xl shadow-lg transition-all active:scale-95 text-xs">გამოცნობა</button>
+        <div id="guess-controls" class="flex gap-2 max-w-lg mx-auto pt-1 hidden">
+          <input type="text" id="guess-input" placeholder="ჩაწერეთ სიტყვა..." class="flex-grow px-4 py-3 glass-input rounded-2xl text-left text-xs text-white focus:outline-none">
+          <button onclick="submitGuess()" class="px-4 py-3 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-2xl shadow-lg transition-all text-xs">გამოცნობა</button>
         </div>
       </div>
 
-      <div id="cards-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 py-2"></div>
+      <div id="cards-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 py-1"></div>
 
-      <div class="text-center pt-2">
-        <button onclick="returnToLobby()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-semibold">მთავარ მენიუში დაბრუნება</button>
-      </div>
-    </div>
-
-    <!-- 3. Cash Boxes Screen -->
-    <div id="boxes-screen" class="hidden w-full flex flex-col space-y-4">
-      <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-2">
-        <div>
-          <div class="text-xs text-slate-400">თამაში: <span class="text-emerald-400 font-bold">თანხის ყუთები (Cash Boxes)</span></div>
-          <div id="boxes-round-title" class="text-lg font-bold text-amber-400 mt-1">რაუნდი 1 / 5</div>
-        </div>
-        <div class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm font-semibold">
-          შენი ბალანსი: <span id="my-box-balance" class="text-emerald-400 font-bold ml-1">0 ₾</span>
-        </div>
-      </div>
-      <div class="glass-card p-4 rounded-2xl text-center">
-        <div id="boxes-turn-banner" class="text-base font-bold text-amber-400">აირჩიეთ ყუთი!</div>
-      </div>
-      <div id="boxes-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 py-2"></div>
-      <div class="text-center pt-2">
-        <button onclick="returnToLobby()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-semibold">მთავარ მენიუში დაბრუნება</button>
-      </div>
-    </div>
-
-    <!-- 4. Tic-Tac-Toe Screen -->
-    <div id="tictactoe-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-4">
-      <div class="glass-card p-3 rounded-2xl text-center border border-slate-700">
-        <div id="ttt-status" class="text-sm font-bold text-amber-400">იქსიკი და ნოლიკი — მიმდინარეობს...</div>
-      </div>
-      <div class="glass-card p-5 rounded-3xl grid grid-cols-3 gap-3 aspect-square max-w-[320px] mx-auto w-full shadow-2xl">
-        <button onclick="makeTttMove(0)" id="ttt-cell-0" class="bg-slate-800 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center min-h-[80px]"></button>
-        <button onclick="makeTttMove(1)" id="ttt-cell-1" class="bg-slate-800 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center min-h-[80px]"></button>
-        <button onclick="makeTttMove(2)" id="ttt-cell-2" class="bg-slate-800 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center min-h-[80px]"></button>
-        <button onclick="makeTttMove(3)" id="ttt-cell-3" class="bg-slate-800 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center min-h-[80px]"></button>
-        <button onclick="makeTttMove(4)" id="ttt-cell-4" class="bg-slate-800 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center min-h-[80px]"></button>
-        <button onclick="makeTttMove(5)" id="ttt-cell-5" class="bg-slate-800 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center min-h-[80px]"></button>
-        <button onclick="makeTttMove(6)" id="ttt-cell-6" class="bg-slate-800 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center min-h-[80px]"></button>
-        <button onclick="makeTttMove(7)" id="ttt-cell-7" class="bg-slate-800 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center min-h-[80px]"></button>
-        <button onclick="makeTttMove(8)" id="ttt-cell-8" class="bg-slate-800 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center min-h-[80px]"></button>
-      </div>
-      <div class="text-center pt-2">
+      <div class="text-center pt-1">
         <button onclick="returnToLobby()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">მთავარ მენიუში დაბრუნება</button>
       </div>
     </div>
 
-    <!-- 5. Aviator (Jet Crash) Screen -->
-    <div id="aviator-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-4">
+    <!-- 3. Cash Boxes Screen -->
+    <div id="boxes-screen" class="hidden w-full flex flex-col space-y-3.5">
+      <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-2 border border-slate-700/50">
+        <div>
+          <div class="text-[11px] text-slate-400">თამაში: <span class="text-emerald-400 font-bold">თანხის ყუთები</span></div>
+          <div id="boxes-round-title" class="text-base font-bold text-amber-400 mt-0.5">რაუნდი 1 / 5</div>
+        </div>
+        <div class="px-3.5 py-2 bg-slate-800/80 border border-slate-700 rounded-xl text-xs font-semibold">
+          შენი ბალანსი: <span id="my-box-balance" class="text-emerald-400 font-bold ml-1">0 ₾</span>
+        </div>
+      </div>
+      <div class="glass-card p-3 rounded-2xl text-center border border-slate-700/50">
+        <div id="boxes-turn-banner" class="text-sm font-bold text-amber-300">აირჩიეთ ყუთი!</div>
+      </div>
+      <div id="boxes-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 py-1"></div>
+      <div class="text-center pt-1">
+        <button onclick="returnToLobby()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">მთავარ მენიუში დაბრუნება</button>
+      </div>
+    </div>
+
+    <!-- 4. Tic-Tac-Toe Screen -->
+    <div id="tictactoe-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-3.5">
+      <div class="glass-card p-3 rounded-2xl text-center border border-slate-700/50">
+        <div id="ttt-status" class="text-xs font-bold text-amber-300">იქსიკი და ნოლიკი — მიმდინარეობს...</div>
+      </div>
+      <div class="glass-card p-5 rounded-3xl grid grid-cols-3 gap-3 aspect-square max-w-[300px] mx-auto w-full shadow-2xl border border-slate-700/50">
+        <button onclick="makeTttMove(0)" id="ttt-cell-0" class="bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 rounded-2xl text-3xl font-black flex items-center justify-center min-h-[70px] transition-colors"></button>
+        <button onclick="makeTttMove(1)" id="ttt-cell-1" class="bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 rounded-2xl text-3xl font-black flex items-center justify-center min-h-[70px] transition-colors"></button>
+        <button onclick="makeTttMove(2)" id="ttt-cell-2" class="bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 rounded-2xl text-3xl font-black flex items-center justify-center min-h-[70px] transition-colors"></button>
+        <button onclick="makeTttMove(3)" id="ttt-cell-3" class="bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 rounded-2xl text-3xl font-black flex items-center justify-center min-h-[70px] transition-colors"></button>
+        <button onclick="makeTttMove(4)" id="ttt-cell-4" class="bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 rounded-2xl text-3xl font-black flex items-center justify-center min-h-[70px] transition-colors"></button>
+        <button onclick="makeTttMove(5)" id="ttt-cell-5" class="bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 rounded-2xl text-3xl font-black flex items-center justify-center min-h-[70px] transition-colors"></button>
+        <button onclick="makeTttMove(6)" id="ttt-cell-6" class="bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 rounded-2xl text-3xl font-black flex items-center justify-center min-h-[70px] transition-colors"></button>
+        <button onclick="makeTttMove(7)" id="ttt-cell-7" class="bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 rounded-2xl text-3xl font-black flex items-center justify-center min-h-[70px] transition-colors"></button>
+        <button onclick="makeTttMove(8)" id="ttt-cell-8" class="bg-slate-800/90 hover:bg-slate-800 border border-slate-700/80 rounded-2xl text-3xl font-black flex items-center justify-center min-h-[70px] transition-colors"></button>
+      </div>
+      <div class="text-center pt-1">
+        <button onclick="returnToLobby()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">მთავარ მენიუში დაბრუნება</button>
+      </div>
+    </div>
+
+    <!-- 5. Aviator Screen -->
+    <div id="aviator-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-3.5">
       <div class="glass-card p-4 rounded-2xl flex justify-between items-center border border-sky-500/30">
         <div>
-          <div class="text-xs text-slate-400">თამაში: <span class="text-sky-400 font-bold">Aviator (ჯეტის აფრენა)</span></div>
-          <div class="text-sm font-bold text-slate-200 mt-1">ბალანსი: <span id="aviator-balance" class="text-amber-400">1000</span> ₾</div>
+          <div class="text-[11px] text-slate-400">თამაში: <span class="text-sky-400 font-bold">Aviator</span></div>
+          <div class="text-xs font-bold text-slate-200 mt-0.5">ბალანსი: <span id="aviator-balance" class="text-amber-400 font-bold">1000</span> ₾</div>
         </div>
-        <div id="aviator-status" class="text-xs font-bold px-3 py-1.5 bg-sky-600/30 border border-sky-500/40 rounded-xl text-sky-300">მზადება აფრენისთვის</div>
+        <div id="aviator-status" class="text-[11px] font-bold px-3 py-1.5 bg-sky-600/20 border border-sky-500/40 rounded-xl text-sky-300">მზადება აფრენისთვის</div>
       </div>
 
-      <div class="glass-card p-6 rounded-3xl text-center relative overflow-hidden h-52 flex flex-col items-center justify-center border border-sky-500/30 shadow-2xl">
+      <div class="glass-card p-6 rounded-3xl text-center relative overflow-hidden h-48 flex flex-col items-center justify-center border border-sky-500/30 shadow-2xl">
         <div id="jet-multiplier" class="text-5xl font-mono font-black text-amber-300 tracking-wider">1.00x</div>
-        <div id="jet-visual" class="mt-4 text-3xl text-sky-400 transition-all duration-100">
+        <div id="jet-visual" class="mt-3 text-3xl text-sky-400 transition-all duration-100">
           <i class="fa-solid fa-jet-fighter animate-pulse"></i>
         </div>
       </div>
 
-      <div class="glass-card p-4 rounded-3xl space-y-3 shadow-xl border border-slate-700">
-        <div class="flex gap-2">
-          <input type="number" id="aviator-bet-input" value="100" min="10" class="w-1/2 px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-amber-300 font-bold text-center text-sm focus:outline-none focus:border-amber-500" placeholder="ფსონი">
-          <button id="aviator-action-btn" onclick="handleAviatorAction()" class="w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg active:scale-95">ფსონის დადება</button>
+      <div class="glass-card p-4 rounded-3xl space-y-3 shadow-xl border border-slate-700/50">
+        <div class="flex gap-2.5">
+          <input type="number" id="aviator-bet-input" value="100" min="10" class="w-1/2 px-3 py-3 glass-input rounded-xl text-amber-300 font-bold text-center text-sm focus:outline-none" placeholder="ფსონი">
+          <button id="aviator-action-btn" onclick="handleAviatorAction()" class="w-1/2 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-all shadow-lg active:scale-95">ფსონის დადება</button>
         </div>
       </div>
 
-      <div class="text-center pt-2">
+      <div class="text-center pt-1">
         <button onclick="returnToLobby()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">მთავარ მენიუში დაბრუნება</button>
       </div>
     </div>
 
   </div>
 
+  <!-- Footer Info -->
+  <footer class="w-full text-center py-3 text-[10px] text-slate-500 font-medium">
+    Arcade Hub Engine • Built for Google Play
+  </footer>
+
   <!-- Firebase Script & App Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     
     const firebaseConfig = {
       apiKey: "AIzaSyCcRzuTSNoomOKf4MC7sFRqwO8CAc2zfsw",
@@ -544,30 +610,26 @@
     const auth = getAuth(app);
 
     let currentUser = null;
-    let userStats = { wins: 0, losses: 0, coins: 1000, friends: [], nickname: "", avatar: "", isAdmin: false, isBanned: false };
+    let userStats = { wins: 0, losses: 0, coins: 1000, friends: [], nickname: "", avatar: "", friendCode: "", isAdmin: false, isBanned: false };
     let roomCode = null;
     let playerRole = null;
     let playerName = "";
     let currentUserAvatar = "";
     let roomUnsubscribe = null;
-    let publicRoomsUnsubscribe = null;
     let gameState = null;
     let isRegisterMode = false;
     let isAiMode = false;
-    let aiDifficulty = 'medium';
     let isSoundMuted = false;
     let wordTimerInterval = null;
     let timeLeft = 15;
     let pendingGameData = null;
 
-    // Aviator variables
     let aviatorState = 'idle';
     let aviatorMultiplier = 1.00;
     let aviatorCrashPoint = 1.00;
     let aviatorBet = 0;
     let aviatorInterval = null;
 
-    // ROUND_WORDS Database
     const ROUND_WORDS = {
       1: [
         { word: "მზე", category: "ბუნება" }, { word: "ვაშლი", category: "ხილი" },
@@ -605,10 +667,8 @@
       if (user) {
         currentUser = user;
         await loadUserData(user.uid, user.email);
-        listenToPublicRooms();
       } else {
         currentUser = null;
-        if (publicRoomsUnsubscribe) publicRoomsUnsubscribe();
         switchScreen('auth-screen');
       }
     });
@@ -625,10 +685,11 @@
       if (!email || !password) return showToast("შეიყვანეთ მეილი და პაროლი!");
 
       try {
+        const generatedCode = Math.random().toString(36).substring(2, 8).toUpperCase();
         if (isRegisterMode) {
           const res = await createUserWithEmailAndPassword(auth, email, password);
           await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', res.user.uid), { 
-            email: email.toLowerCase(), nickname: email.split('@')[0], wins: 0, losses: 0, coins: 1000, isAdmin: false, isBanned: false 
+            email: email.toLowerCase(), nickname: email.split('@')[0], wins: 0, losses: 0, coins: 1000, friendCode: generatedCode, friends: [], isAdmin: false, isBanned: false 
           });
         } else {
           await signInWithEmailAndPassword(auth, email, password);
@@ -636,7 +697,10 @@
       } catch (err) { showToast("შეცდომა: " + err.message); }
     };
 
-    window.continueAnonymously = async () => signInAnonymously(auth);
+    window.continueAnonymously = async () => {
+      const res = await signInAnonymously(auth);
+      // Ensure anonymous user gets a friendCode if doesn't exist
+    };
     window.logoutUser = async () => signOut(auth);
 
     async function loadUserData(uid, email) {
@@ -647,14 +711,20 @@
         if (userStats.isBanned) { alert("ანგარიში დაბლოკილია!"); await signOut(auth); return; }
         playerName = userStats.nickname || (email ? email.split('@')[0] : 'სტუმარი');
         currentUserAvatar = userStats.avatar || "";
+        if (!userStats.friendCode) {
+          userStats.friendCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+          await updateDoc(userRef, { friendCode: userStats.friendCode });
+        }
       } else {
         playerName = email ? email.split('@')[0] : 'სტუმარი';
-        userStats = { email: email ? email.toLowerCase() : 'anonymous', nickname: playerName, coins: 1000, isAdmin: false, isBanned: false };
+        const generatedCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        userStats = { email: email ? email.toLowerCase() : 'anonymous', nickname: playerName, coins: 1000, friendCode: generatedCode, friends: [], isAdmin: false, isBanned: false };
         await setDoc(userRef, userStats);
       }
       document.getElementById('user-display-name').innerText = playerName;
       document.getElementById('user-coins').innerText = userStats.coins || 1000;
       document.getElementById('user-display-id').innerText = uid.substring(0, 4).toUpperCase();
+      document.getElementById('my-friend-code').innerText = userStats.friendCode;
       if (userStats.isAdmin || (email && email.includes('admin'))) document.getElementById('admin-panel-fab').classList.remove('hidden');
       updateAvatarUI(currentUserAvatar);
       switchScreen('lobby-screen');
@@ -740,7 +810,7 @@
       document.getElementById('game-mode-select').value = gameMode;
       onGameModeSelectChanged();
       toggleSidebar(false);
-      showToast(`არჩეულია თამაში: ${getGameName(gameMode)}`);
+      showToast(`არჩეულია: ${getGameName(gameMode)}`);
     };
 
     window.toggleGameSwitcher = (open) => {
@@ -752,7 +822,7 @@
       document.getElementById('game-mode-select').value = gameMode;
       onGameModeSelectChanged();
       toggleGameSwitcher(false);
-      showToast(`შეიცვალა თამაში: ${getGameName(gameMode)}`);
+      showToast(`რეჟიმი შეიცვალა: ${getGameName(gameMode)}`);
     };
 
     function getGameName(mode) {
@@ -771,13 +841,93 @@
 
     window.onGameModeSelectChanged = function() {
       const mode = document.getElementById('game-mode-select').value;
-      document.getElementById('lobby-game-filter-name').innerText = getGameName(mode);
       document.getElementById('header-game-name').innerText = getGameName(mode);
-      listenToPublicRooms();
     };
 
     window.openProfileEditModal = () => document.getElementById('profile-edit-modal').classList.remove('hidden');
     window.closeProfileEditModal = () => document.getElementById('profile-edit-modal').classList.add('hidden');
+
+    // Friends System Functions
+    window.openFriendsModal = async function() {
+      document.getElementById('friends-modal').classList.remove('hidden');
+      await renderFriendsList();
+    };
+
+    window.closeFriendsModal = () => document.getElementById('friends-modal').classList.add('hidden');
+
+    window.copyMyFriendCode = function() {
+      navigator.clipboard.writeText(userStats.friendCode || "");
+      showToast("მეგობრის კოდი დაკოპირდა! 📋");
+    };
+
+    window.addFriend = async function() {
+      const queryVal = document.getElementById('friend-search-input').value.trim();
+      if (!queryVal) return showToast("შეიყვანეთ მეილი ან მეგობრის კოდი!");
+
+      const usersRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
+      let targetDocSnap = null;
+
+      if (queryVal.includes('@')) {
+        const qEmail = query(usersRef, where("email", "==", queryVal.toLowerCase()));
+        const snap = await getDocs(qEmail);
+        if (!snap.empty) targetDocSnap = snap.docs[0];
+      } else {
+        const qCode = query(usersRef, where("friendCode", "==", queryVal.toUpperCase()));
+        const snap = await getDocs(qCode);
+        if (!snap.empty) targetDocSnap = snap.docs[0];
+      }
+
+      if (!targetDocSnap) return showToast("მომხმარებელი ვერ მოიძებნა!");
+      const targetUid = targetDocSnap.id;
+
+      if (targetUid === currentUser.uid) return showToast("საკუთარ თავს ვერ დაიმატებ მეგობრად!");
+
+      let currentFriends = userStats.friends || [];
+      if (currentFriends.includes(targetUid)) return showToast("ეს მომხმარებელი უკვე შენი მეგობარია!");
+
+      currentFriends.push(targetUid);
+      userStats.friends = currentFriends;
+
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), {
+        friends: currentFriends
+      });
+
+      document.getElementById('friend-search-input').value = "";
+      showToast("მეგობარი წარმატებით დაემატა! 🎉");
+      await renderFriendsList();
+    };
+
+    async function renderFriendsList() {
+      const container = document.getElementById('friends-list-container');
+      const friends = userStats.friends || [];
+
+      if (friends.length === 0) {
+        container.innerHTML = '<div class="text-xs text-slate-500 text-center py-4">მეგობრები არ გყავთ...</div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      for (const fUid of friends) {
+        const fSnap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', fUid));
+        if (fSnap.exists()) {
+          const fData = fSnap.data();
+          container.innerHTML += `
+            <div class="bg-slate-900/90 p-3 rounded-2xl border border-slate-700/60 text-xs flex justify-between items-center shadow">
+              <div class="flex items-center gap-2.5 truncate mr-2">
+                <div class="w-8 h-8 rounded-full bg-purple-900/50 border border-purple-500/40 flex items-center justify-center text-purple-300 font-bold shrink-0">
+                  <i class="fa-solid fa-user text-xs"></i>
+                </div>
+                <div class="truncate">
+                  <div class="font-bold text-white truncate">${fData.nickname || fData.email}</div>
+                  <div class="text-[10px] text-amber-300 font-mono">ბალანსი: ${fData.coins || 1000} ₾</div>
+                </div>
+              </div>
+              <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-lg border border-emerald-500/30 shrink-0">მეგობარი</span>
+            </div>
+          `;
+        }
+      }
+    }
 
     window.openAdminModal = async function() {
       document.getElementById('admin-modal').classList.remove('hidden');
@@ -786,9 +936,9 @@
       listEl.innerHTML = '';
       usersSnap.forEach(docSnap => {
         const uId = docSnap.id, uData = docSnap.data();
-        listEl.innerHTML += `<div class="bg-slate-900 p-2.5 rounded-xl border border-slate-700 text-xs flex justify-between items-center">
-          <span>${uData.nickname || uData.email} (${uData.coins} ₾)</span>
-          <button onclick="adminGiveCoins('${uId}')" class="px-2 py-1 bg-amber-600 rounded">ქოინი</button>
+        listEl.innerHTML += `<div class="bg-slate-900/90 p-3 rounded-2xl border border-slate-700/60 text-xs flex justify-between items-center shadow">
+          <div><div class="font-bold text-white">${uData.nickname || uData.email}</div><div class="text-[10px] text-amber-300 font-mono mt-0.5">${uData.coins} ₾ | კოდი: ${uData.friendCode || 'N/A'}</div></div>
+          <button onclick="adminGiveCoins('${uId}')" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 font-bold rounded-xl text-[11px] transition-colors">+5K ₾</button>
         </div>`;
       });
     };
@@ -796,7 +946,7 @@
     window.adminGiveCoins = async function(targetUid) {
       const ref = doc(db, 'artifacts', appId, 'public', 'data', 'users', targetUid);
       const snap = await getDoc(ref);
-      if (snap.exists()) { await updateDoc(ref, { coins: (snap.data().coins || 1000) + 5000 }); showToast("დაემატა!"); openAdminModal(); }
+      if (snap.exists()) { await updateDoc(ref, { coins: (snap.data().coins || 1000) + 5000 }); showToast("ქოინები წარმატებით დაემატა!"); openAdminModal(); }
     };
 
     window.copyRoomCode = function() {
@@ -810,42 +960,6 @@
       if (word.length <= 2) return word;
       return `${word[0]}${"*".repeat(word.length - 2)}${word[word.length - 1]}`;
     }
-
-    function listenToPublicRooms() {
-      if (publicRoomsUnsubscribe) publicRoomsUnsubscribe();
-      const selectedGameMode = document.getElementById('game-mode-select').value;
-      const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'rooms'), where("status", "==", "waiting"), where("gameMode", "==", selectedGameMode));
-
-      publicRoomsUnsubscribe = onSnapshot(q, (snapshot) => {
-        const listEl = document.getElementById('public-tables-list');
-        if (snapshot.empty) { listEl.innerHTML = '<div class="text-xs text-slate-500 text-center py-2">ამ თამაშში მოლოდინში არავინ არის...</div>'; return; }
-        listEl.innerHTML = '';
-        snapshot.forEach((docSnap) => {
-          const rData = docSnap.data();
-          const roomWager = rData.wager || 100;
-          listEl.innerHTML += `<div class="flex items-center justify-between bg-slate-800 p-2.5 rounded-xl border border-indigo-500/30 text-xs">
-            <span>${rData.player1Name} (ფსონი: ${roomWager} ₾)</span>
-            <button onclick="joinPublicTable('${rData.code}', ${roomWager})" class="px-3 py-1.5 bg-emerald-600 font-bold rounded-lg">შესვლა</button>
-          </div>`;
-        });
-      });
-    }
-
-    window.joinPublicTable = async function(code, wager) {
-      if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
-      roomCode = code;
-      playerRole = 'player2';
-      isAiMode = false;
-      await updateUserCoinsLocallyAndRemote(-wager);
-      
-      listenToRoom(code);
-
-      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code), { 
-        player2Id: currentUser.uid, 
-        player2Name: playerName, 
-        status: 'playing' 
-      });
-    };
 
     window.startAiGame = function() {
       const wager = parseInt(document.getElementById('table-wager-select').value) || 100;
@@ -910,7 +1024,6 @@
       listenToRoom(roomCode);
     };
 
-    // --- Aviator Game Logic ---
     function resetAviatorGame() {
       aviatorState = 'idle';
       aviatorMultiplier = 1.00;
@@ -918,7 +1031,7 @@
       document.getElementById('aviator-status').innerText = "მზადება აფრენისთვის";
       const btn = document.getElementById('aviator-action-btn');
       btn.innerText = "ფსონის დადება";
-      btn.className = "w-1/2 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg active:scale-95";
+      btn.className = "w-1/2 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-all shadow-lg active:scale-95";
     }
 
     window.handleAviatorAction = async function() {
@@ -935,7 +1048,7 @@
         aviatorCrashPoint = parseFloat((1.1 + Math.random() * 3.9).toFixed(2));
         
         btn.innerText = "გატანა (Cashout)";
-        btn.className = "w-1/2 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-sm transition-all shadow-lg active:scale-95";
+        btn.className = "w-1/2 py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs transition-all shadow-lg active:scale-95";
         document.getElementById('aviator-status').innerText = "ჯეტი მიფრინავს... ✈️";
 
         if (aviatorInterval) clearInterval(aviatorInterval);
@@ -949,7 +1062,7 @@
             document.getElementById('jet-multiplier').innerText = "CRASHED (" + aviatorCrashPoint.toFixed(2) + "x)";
             document.getElementById('aviator-status').innerText = "ჯეტი გაფრინდა! 💥";
             btn.innerText = "ახალი ფსონი";
-            btn.className = "w-1/2 py-2.5 bg-slate-700 text-slate-400 font-bold rounded-xl text-sm cursor-not-allowed";
+            btn.className = "w-1/2 py-3 bg-slate-700 text-slate-400 font-bold rounded-xl text-xs cursor-not-allowed";
             showToast("💥 ჯეტი გაფრინდა! თქვენ წააგეთ ფსონი.");
             setTimeout(() => { resetAviatorGame(); }, 3000);
           }
@@ -962,7 +1075,7 @@
         await updateUserCoinsLocallyAndRemote(winAmount);
         document.getElementById('aviator-status').innerText = `მოიგეთ ${winAmount} ₾! 🎉`;
         btn.innerText = "ახალი ფსონი";
-        btn.className = "w-1/2 py-2.5 bg-slate-700 text-slate-400 font-bold rounded-xl text-sm cursor-not-allowed";
+        btn.className = "w-1/2 py-3 bg-slate-700 text-slate-400 font-bold rounded-xl text-xs cursor-not-allowed";
         showToast(`🎉 წარმატებული გატანა! მოიგეთ +${winAmount} ₾`);
         setTimeout(() => { resetAviatorGame(); }, 3000);
       }
@@ -1045,7 +1158,7 @@
       isAiMode = false;
       await updateUserCoinsLocallyAndRemote(-data.wager);
 
-      listenToRoom(roomCode);
+      listenToRoom(code);
 
       await updateDoc(roomRef, { 
         player2Id: currentUser.uid, 
@@ -1093,7 +1206,6 @@
       }
     }
 
-    // --- 1. Safe Path Logic ---
     function updateSafePathUI(state) {
       document.getElementById('sp-p1-name').innerText = state.player1Name || "მოთამაშე 1";
       document.getElementById('sp-p2-name').innerText = state.player2Name || "მოწინააღმდეგე";
@@ -1102,19 +1214,19 @@
 
       const p2Icon = document.getElementById('sp-p2-icon');
       if (p2Icon) {
-        p2Icon.className = isAiMode ? "fa-solid fa-robot text-pink-200 text-lg" : "fa-solid fa-user text-pink-200 text-lg";
+        p2Icon.className = isAiMode ? "fa-solid fa-robot text-pink-200 text-sm" : "fa-solid fa-user text-pink-200 text-sm";
       }
 
       const isMyTurn = (state.currentTurn === playerRole);
       document.getElementById('sp-status').innerText = isMyTurn ? "✨ შენი სვლაა!" : "⏳ მოწინააღმდეგის სვლაა...";
 
       const boardEl = document.getElementById('safepath-board');
-      boardEl.innerHTML = '<div class="p-2 bg-amber-500/20 text-amber-300 font-bold text-center rounded-xl text-xs">ფინიშის ხაზი (დონე 5)</div>';
+      boardEl.innerHTML = '<div class="p-2 bg-amber-500/15 text-amber-300 font-bold text-center rounded-xl text-xs border border-amber-500/30">ფინიშის ხაზი (დონე 5)</div>';
 
       for (let r = 4; r >= 0; r--) {
         let rowDiv = document.createElement('div');
-        rowDiv.className = "flex justify-between items-center bg-slate-900 p-2 rounded-xl border border-slate-700 text-xs";
-        rowDiv.innerHTML = `<span>დონე ${r+1}</span>`;
+        rowDiv.className = "flex justify-between items-center bg-slate-900/90 p-2.5 rounded-2xl border border-slate-700/60 text-xs shadow-sm";
+        rowDiv.innerHTML = `<span class="font-medium text-slate-300">დონე ${r+1}</span>`;
         let btns = document.createElement('div');
         btns.className = "flex gap-2";
         const myPos = playerRole === 'player1' ? state.p1Pos : state.p2Pos;
@@ -1123,7 +1235,7 @@
         for (let c = 0; c < 3; c++) {
           let btn = document.createElement('button');
           btn.disabled = !canClick;
-          btn.className = `w-10 h-10 rounded-lg font-bold ${canClick ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-slate-800 text-slate-500'}`;
+          btn.className = `w-11 h-11 rounded-xl font-bold flex items-center justify-center transition-all ${canClick ? 'bg-indigo-600 hover:bg-indigo-500 shadow-md text-white' : 'bg-slate-800 text-slate-500'}`;
           btn.innerHTML = `<i class="fa-solid fa-shoe-prints text-xs"></i>`;
           btn.onclick = () => makeSafePathMove(r, c);
           btns.appendChild(btn);
@@ -1175,7 +1287,6 @@
       else updateSafePathUI(gameState);
     };
 
-    // --- 2. Word Game Logic ---
     function updateWordGameUI(state) {
       document.getElementById('p1-score').innerText = `${state.p1Score || 0} ქულა`;
       document.getElementById('p2-score').innerText = `${state.p2Score || 0} ქულა`;
@@ -1226,9 +1337,9 @@
       state.cards.forEach((card) => {
         const btn = document.createElement('button');
         btn.disabled = !isMyTurn || card.isGuessed;
-        btn.className = `p-3 rounded-2xl border text-center text-xs font-bold ${card.isGuessed ? 'bg-emerald-900/40 border-emerald-500 text-emerald-300' : 'bg-slate-800 border-slate-700 hover:border-indigo-500'}`;
+        btn.className = `p-3 rounded-2xl border text-center text-xs font-bold transition-all ${card.isGuessed ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-300' : 'bg-slate-800/90 border-slate-700/80 hover:border-indigo-500 shadow-sm'}`;
         btn.onclick = () => selectCard(card.id);
-        btn.innerHTML = `<div>${card.category}</div><div class="text-base font-mono mt-1">${card.isGuessed ? card.word : card.masked}</div>`;
+        btn.innerHTML = `<div class="text-[10px] text-slate-400 mb-1">${card.category}</div><div class="text-sm font-mono">${card.isGuessed ? card.word : card.masked}</div>`;
         grid.appendChild(btn);
       });
 
@@ -1297,7 +1408,7 @@
           gameState.activeCardId = null;
         } else {
           gameState.status = 'finished';
-          gameState.winner = (gameState.p1Score > gameState.p2Score) ? 'player1' : 'player2';
+          gameState.winner = (state.p1Score > state.p2Score) ? 'player1' : 'player2';
           handleGameFinish(state.winner);
         }
       }
@@ -1306,7 +1417,6 @@
       else updateWordGameUI(gameState);
     };
 
-    // --- 3. Cash Boxes Logic ---
     function updateBoxesUI(state) {
       document.getElementById('boxes-round-title').innerText = `რაუნდი ${state.round || 1} / 5`;
       const myM = playerRole === 'player1' ? (state.p1Money || 0) : (state.p2Money || 0);
@@ -1319,7 +1429,7 @@
         state.boxes.forEach(box => {
           const btn = document.createElement('button');
           btn.disabled = box.isOpen || state.currentTurn !== playerRole;
-          btn.className = `box-tile p-4 rounded-2xl border text-center text-xs font-bold ${box.isOpen ? 'bg-slate-900 border-slate-800 text-amber-400' : 'bg-slate-800 border-slate-700 hover:border-emerald-500'}`;
+          btn.className = `box-tile p-4 rounded-2xl border text-center text-xs font-bold shadow transition-all ${box.isOpen ? 'bg-slate-900/90 border-slate-800 text-amber-400' : 'bg-slate-800/90 border-slate-700 hover:border-emerald-500'}`;
           btn.onclick = () => selectBox(box.id);
           btn.innerHTML = box.isOpen ? `<i class="fa-solid fa-box text-lg mb-1"></i><div>${box.amount} ₾</div>` : `<i class="fa-solid fa-box-open text-xl mb-1 text-emerald-400"></i><div>ყუთი #${box.id+1}</div>`;
           grid.appendChild(btn);
@@ -1372,7 +1482,6 @@
       else updateBoxesUI(gameState);
     };
 
-    // --- 4. Tic-Tac-Toe Logic ---
     function checkTicTacToeWinner(board) {
       const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
       for (let l of lines) {
