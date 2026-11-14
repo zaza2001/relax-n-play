@@ -370,6 +370,21 @@
       <button onclick="cancelRoom()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">გაუქმება</button>
     </div>
 
+    <!-- Jeirani (Rock-Paper-Scissors) Screen to decide who starts -->
+    <div id="jeirani-screen" class="hidden w-full max-w-md glass-card p-6 rounded-3xl shadow-2xl text-center space-y-4">
+      <div class="w-14 h-14 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-amber-500/30">
+        <i class="fa-solid fa-hand-fist"></i>
+      </div>
+      <h2 class="text-xl font-bold text-amber-300">ჯეირანი (ვინ იწყებს?)</h2>
+      <p class="text-xs text-slate-400">აირჩიეთ ფიგურა, რომ დადგინდეს ვინ იწყებს პირველ სვლას:</p>
+      <div class="flex justify-center gap-3 py-3">
+        <button onclick="playJeirani('rock')" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl text-lg font-bold transition-all active:scale-95">✊ ქვა</button>
+        <button onclick="playJeirani('paper')" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl text-lg font-bold transition-all active:scale-95">✋ ქაღალდი</button>
+        <button onclick="playJeirani('scissors')" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl text-lg font-bold transition-all active:scale-95">✌️ მაკრატელი</button>
+      </div>
+      <div id="jeirani-result" class="text-sm font-semibold text-indigo-300 min-h-[30px] flex items-center justify-center"></div>
+    </div>
+
     <!-- 1. Safe Path Game Screen -->
     <div id="safepath-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-4">
       <div class="grid grid-cols-2 gap-3">
@@ -407,7 +422,7 @@
       </div>
     </div>
 
-    <!-- 2. Word Game Screen -->
+    <!-- 2. Word Game Screen with Timer -->
     <div id="game-screen" class="hidden w-full flex flex-col space-y-4">
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div class="glass-card p-3 rounded-2xl flex items-center justify-between border-l-4 border-indigo-500">
@@ -424,7 +439,8 @@
         </div>
         <div class="glass-card p-3 rounded-2xl flex flex-col justify-center border-l-4 border-amber-500 text-center">
           <span class="text-xs text-slate-400 font-semibold" id="round-indicator">რაუნდი 1 / 3</span>
-          <span id="turn-banner" class="text-sm font-bold text-amber-400 mt-1">იტვირთება...</span>
+          <span id="word-timer" class="text-sm font-mono font-bold text-amber-400 mt-0.5">⏱️ 30 წმ</span>
+          <span id="turn-banner" class="text-xs font-bold text-indigo-300 mt-0.5">იტვირთება...</span>
         </div>
       </div>
 
@@ -527,6 +543,9 @@
     let isAiMode = false;
     let aiDifficulty = 'medium';
     let isSoundMuted = false;
+    let wordTimerInterval = null;
+    let timeLeft = 30;
+    let pendingGameData = null;
 
     // ROUND_WORDS Database
     const ROUND_WORDS = {
@@ -736,7 +755,7 @@
       listenToRoom(code);
     };
 
-    // --- AI & Create Room Logic supporting all 4 games ---
+    // --- Jeirani (Rock-Paper-Scissors) Game Start Decider ---
     window.startAiGame = function() {
       const wager = parseInt(document.getElementById('table-wager-select').value) || 100;
       const selectedGameMode = document.getElementById('game-mode-select').value;
@@ -745,70 +764,107 @@
       isAiMode = true;
       playerRole = 'player1';
 
-      if (selectedGameMode === 'words') {
-        const shuffled = [...ROUND_WORDS[1]].sort(() => 0.5 - Math.random());
-        gameState = {
-          gameMode: 'words', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
-          currentTurn: 'player1', p1Score: 0, p2Score: 0, round: 1, activeCardId: null,
-          cards: shuffled.slice(0, 8).map((item, i) => ({ id: i, word: item.word, category: item.category, masked: maskWord(item.word), guessedMask: maskWord(item.word), isGuessed: false }))
-        };
-        switchScreen('game-screen');
-        updateWordGameUI(gameState);
-      } else if (selectedGameMode === 'boxes') {
-        gameState = {
-          gameMode: 'boxes', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
-          currentTurn: 'player1', p1Money: 0, p2Money: 0, round: 1,
-          boxes: [ {id:0, amount:500, isOpen:false}, {id:1, amount:1000, isOpen:false}, {id:2, amount:5000, isOpen:false}, {id:3, amount:10000, isOpen:false} ]
-        };
-        switchScreen('boxes-screen');
-        updateBoxesUI(gameState);
-      } else if (selectedGameMode === 'tictactoe') {
-        gameState = {
-          gameMode: 'tictactoe', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
-          currentTurn: 'player1', board: Array(9).fill("")
-        };
-        switchScreen('tictactoe-screen');
-        updateTicTacToeUI(gameState);
-      } else {
-        gameState = {
-          gameMode: 'safepath', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
-          currentTurn: 'player1', p1Pos: 0, p2Pos: 0, mineMap: [0, 1, 2, 0, 1], revealedMines: {}
-        };
-        switchScreen('safepath-screen');
-        updateSafePathUI(gameState);
-      }
-      showToast("🤖 AI თამაში დაიწყო!");
+      pendingGameData = { gameMode: selectedGameMode, wager: wager };
+      document.getElementById('jeirani-result').innerText = "";
+      switchScreen('jeirani-screen');
     };
 
     window.createRoom = async function() {
       const wager = parseInt(document.getElementById('table-wager-select').value) || 100;
       const selectedGameMode = document.getElementById('game-mode-select').value;
       if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
-      roomCode = Math.floor(1000 + Math.random() * 9000).toString();
-      playerRole = 'player1';
+      
+      pendingGameData = { gameMode: selectedGameMode, wager: wager, isCreate: true };
+      document.getElementById('jeirani-result').innerText = "";
+      switchScreen('jeirani-screen');
+    };
 
-      let initialData = {
-        code: roomCode, gameMode: selectedGameMode, wager: wager, player1Id: currentUser.uid, player1Name: playerName, status: 'waiting',
-        currentTurn: 'player1', p1Pos: 0, p2Pos: 0, mineMap: [0, 1, 2, 0, 1], revealedMines: {}
-      };
-
-      if (selectedGameMode === 'words') {
-        const shuffled = [...ROUND_WORDS[1]].sort(() => 0.5 - Math.random());
-        initialData.cards = shuffled.slice(0, 8).map((item, i) => ({ id: i, word: item.word, category: item.category, masked: maskWord(item.word), guessedMask: maskWord(item.word), isGuessed: false }));
-        initialData.p1Score = 0; initialData.p2Score = 0; initialData.round = 1; initialData.activeCardId = null;
-      } else if (selectedGameMode === 'boxes') {
-        initialData.p1Money = 0; initialData.p2Money = 0; initialData.round = 1;
-        initialData.boxes = [ {id:0, amount:500, isOpen:false}, {id:1, amount:1000, isOpen:false}, {id:2, amount:5000, isOpen:false}, {id:3, amount:10000, isOpen:false} ];
-      } else if (selectedGameMode === 'tictactoe') {
-        initialData.board = Array(9).fill("");
+    window.playJeirani = function(myChoice) {
+      const choices = ['rock', 'paper', 'scissors'];
+      const aiChoice = choices[Math.floor(Math.random() * choices.length)];
+      const names = { rock: '✊ ქვა', paper: '✋ ქაღალდი', scissors: '✌️ მაკრატელი' };
+      
+      let winner = 'player2';
+      if (myChoice === aiChoice) {
+        winner = Math.random() < 0.5 ? 'player1' : 'player2';
+      } else if (
+        (myChoice === 'rock' && aiChoice === 'scissors') ||
+        (myChoice === 'paper' && aiChoice === 'rock') ||
+        (myChoice === 'scissors' && aiChoice === 'paper')
+      ) {
+        winner = 'player1';
       }
 
-      await updateUserCoinsLocallyAndRemote(-wager);
-      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), initialData);
-      document.getElementById('display-room-code').innerText = roomCode;
-      document.getElementById('waiting-room-wager').innerText = wager;
-      switchScreen('waiting-screen');
-      listenToRoom(roomCode);
+      document.getElementById('jeirani-result').innerText = `შენ: ${names[myChoice]} | AI: ${names[aiChoice]} — ${winner === 'player1' ? '🎉 შენ იწყებ პირველი!' : '⏳ AI იწყებს პირველი!'}`;
+
+      setTimeout(async () => {
+        if (pendingGameData.isCreate) {
+          roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+          playerRole = winner; // Jeirani decides role/first turn
+
+          let initialData = {
+            code: roomCode, gameMode: pendingGameData.gameMode, wager: pendingGameData.wager,
+            player1Id: currentUser.uid, player1Name: playerName, status: 'waiting',
+            currentTurn: winner === 'player1' ? 'player1' : 'player2',
+            p1Pos: 0, p2Pos: 0, mineMap: [0, 1, 2, 0, 1], revealedMines: {}
+          };
+
+          if (pendingGameData.gameMode === 'words') {
+            const shuffled = [...ROUND_WORDS[1]].sort(() => 0.5 - Math.random());
+            initialData.cards = shuffled.slice(0, 8).map((item, i) => ({ id: i, word: item.word, category: item.category, masked: maskWord(item.word), guessedMask: maskWord(item.word), isGuessed: false }));
+            initialData.p1Score = 0; initialData.p2Score = 0; initialData.round = 1; initialData.activeCardId = null;
+          } else if (pendingGameData.gameMode === 'boxes') {
+            initialData.p1Money = 0; initialData.p2Money = 0; initialData.round = 1;
+            initialData.boxes = [ {id:0, amount:500, isOpen:false}, {id:1, amount:1000, isOpen:false}, {id:2, amount:5000, isOpen:false}, {id:3, amount:10000, isOpen:false} ];
+          } else if (pendingGameData.gameMode === 'tictactoe') {
+            initialData.board = Array(9).fill("");
+          }
+
+          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), initialData);
+          document.getElementById('display-room-code').innerText = roomCode;
+          document.getElementById('waiting-room-wager').innerText = pendingGameData.wager;
+          switchScreen('waiting-screen');
+          listenToRoom(roomCode);
+        } else {
+          // AI Game setup
+          const selectedGameMode = pendingGameData.gameMode;
+          const wager = pendingGameData.wager;
+          const firstTurn = winner === 'player1' ? 'player1' : 'player2';
+
+          if (selectedGameMode === 'words') {
+            const shuffled = [...ROUND_WORDS[1]].sort(() => 0.5 - Math.random());
+            gameState = {
+              gameMode: 'words', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
+              currentTurn: firstTurn, p1Score: 0, p2Score: 0, round: 1, activeCardId: null,
+              cards: shuffled.slice(0, 8).map((item, i) => ({ id: i, word: item.word, category: item.category, masked: maskWord(item.word), guessedMask: maskWord(item.word), isGuessed: false }))
+            };
+            switchScreen('game-screen');
+            updateWordGameUI(gameState);
+          } else if (selectedGameMode === 'boxes') {
+            gameState = {
+              gameMode: 'boxes', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
+              currentTurn: firstTurn, p1Money: 0, p2Money: 0, round: 1,
+              boxes: [ {id:0, amount:500, isOpen:false}, {id:1, amount:1000, isOpen:false}, {id:2, amount:5000, isOpen:false}, {id:3, amount:10000, isOpen:false} ]
+            };
+            switchScreen('boxes-screen');
+            updateBoxesUI(gameState);
+          } else if (selectedGameMode === 'tictactoe') {
+            gameState = {
+              gameMode: 'tictactoe', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
+              currentTurn: firstTurn, board: Array(9).fill("")
+            };
+            switchScreen('tictactoe-screen');
+            updateTicTacToeUI(gameState);
+          } else {
+            gameState = {
+              gameMode: 'safepath', wager: wager, player1Name: playerName, player2Name: "🤖 AI", status: 'playing',
+              currentTurn: firstTurn, p1Pos: 0, p2Pos: 0, mineMap: [0, 1, 2, 0, 1], revealedMines: {}
+            };
+            switchScreen('safepath-screen');
+            updateSafePathUI(gameState);
+          }
+        }
+      }, 1500);
     };
 
     window.cancelRoom = async function() {
@@ -828,7 +884,7 @@
       playerRole = 'player2';
       await updateUserCoinsLocallyAndRemote(-data.wager);
       await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), { player2Id: currentUser.uid, player2Name: playerName, status: 'playing' });
-      listenToRoom(code);
+      listenToRoom(roomCode);
     };
 
     function listenToRoom(code) {
@@ -843,6 +899,7 @@
     async function handleGameFinish(winnerRole) {
       if (gameState.rewardsDistributed) return;
       gameState.rewardsDistributed = true;
+      if (wordTimerInterval) clearInterval(wordTimerInterval);
       const pot = (gameState.wager || 100) * 2;
       if (winnerRole === playerRole) {
         await updateUserCoinsLocallyAndRemote(pot);
@@ -924,7 +981,7 @@
       else updateUI(gameState);
     };
 
-    // --- 2. Word Game Logic ---
+    // --- 2. Word Game Logic with Timer ---
     function updateWordGameUI(state) {
       document.getElementById('p1-score').innerText = `${state.p1Score || 0} ქულა`;
       document.getElementById('p2-score').innerText = `${state.p2Score || 0} ქულა`;
@@ -934,6 +991,26 @@
 
       const isMyTurn = (state.currentTurn === playerRole);
       document.getElementById('turn-banner').innerText = isMyTurn ? "შენი სვლაა!" : "მოწინააღმდეგის სვლაა...";
+
+      // Timer Logic
+      if (wordTimerInterval) clearInterval(wordTimerInterval);
+      timeLeft = 30;
+      const timerEl = document.getElementById('word-timer');
+      timerEl.innerText = `⏱️ ${timeLeft} წმ`;
+
+      if (isMyTurn && state.status !== 'finished') {
+        wordTimerInterval = setInterval(() => {
+          timeLeft--;
+          timerEl.innerText = `⏱️ ${timeLeft} წმ`;
+          if (timeLeft <= 0) {
+            clearInterval(wordTimerInterval);
+            showToast("⏱️ დრო ამოიწურა! სვლა გადავიდა მოწინააღმდეგეზე.");
+            gameState.currentTurn = playerRole === 'player1' ? 'player2' : 'player1';
+            if (!isAiMode) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
+            else updateWordGameUI(gameState);
+          }
+        }, 1000);
+      }
 
       const maskedDisplay = document.getElementById('masked-word-display');
       const guessControls = document.getElementById('guess-controls');
@@ -958,6 +1035,22 @@
         btn.innerHTML = `<div>${card.category}</div><div class="text-base font-mono mt-1">${card.isGuessed ? card.word : card.masked}</div>`;
         grid.appendChild(btn);
       });
+
+      if (isAiMode && state.currentTurn === 'player2' && state.status !== 'finished') {
+        setTimeout(() => {
+          if (wordTimerInterval) clearInterval(wordTimerInterval);
+          // AI makes move
+          const unguesses = state.cards.filter(c => !c.isGuessed);
+          if (unguesses.length > 0) {
+            const aiCard = unguesses[Math.floor(Math.random() * unguesses.length)];
+            aiCard.isGuessed = true;
+            state.p2Score = (state.p2Score || 0) + 10;
+            showToast("🤖 AI-მ გამოიცნო სიტყვა!");
+          }
+          state.currentTurn = 'player1';
+          updateWordGameUI(state);
+        }, 1500);
+      }
     }
 
     window.selectCard = async function(cardId) {
@@ -972,6 +1065,7 @@
       const guess = input.value.trim().toLowerCase();
       input.value = '';
       if (!guess) return;
+      if (wordTimerInterval) clearInterval(wordTimerInterval);
 
       const activeCard = gameState.cards[gameState.activeCardId];
       if (guess === activeCard.word.toLowerCase()) {
@@ -983,6 +1077,14 @@
         gameState.currentTurn = playerRole === 'player1' ? 'player2' : 'player1';
       }
       gameState.activeCardId = null;
+      
+      // Check if all cards guessed
+      if (gameState.cards.every(c => c.isGuessed)) {
+        gameState.status = 'finished';
+        gameState.winner = (gameState.p1Score > gameState.p2Score) ? 'player1' : 'player2';
+        handleGameFinish(gameState.winner);
+      }
+
       if (!isAiMode) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
       else updateWordGameUI(gameState);
     };
@@ -1073,12 +1175,13 @@
 
     window.returnToLobby = function() {
       if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
+      if (wordTimerInterval) clearInterval(wordTimerInterval);
       roomCode = null; playerRole = null; gameState = null; isAiMode = false;
       switchScreen('lobby-screen');
     };
 
     function switchScreen(screenId) {
-      ['auth-screen', 'lobby-screen', 'waiting-screen', 'safepath-screen', 'game-screen', 'boxes-screen', 'tictactoe-screen'].forEach(id => {
+      ['auth-screen', 'lobby-screen', 'waiting-screen', 'jeirani-screen', 'safepath-screen', 'game-screen', 'boxes-screen', 'tictactoe-screen'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
       });
       document.getElementById(screenId).classList.remove('hidden');
