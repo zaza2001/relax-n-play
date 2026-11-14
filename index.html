@@ -145,7 +145,7 @@
         </div>
       </div>
       <div class="pt-4 border-t border-slate-800/80 text-center">
-        <span class="text-[10px] text-slate-500 font-mono">Arcade Hub v2.7.0</span>
+        <span class="text-[10px] text-slate-500 font-mono">Arcade Hub v2.7.2</span>
       </div>
     </div>
 
@@ -263,13 +263,20 @@
     <!-- Lobby Screen -->
     <div id="lobby-screen" class="hidden w-full flex flex-col items-center space-y-4">
       
-      <!-- Top Bar -->
-      <div class="w-full flex justify-between items-center px-1">
-        <button onclick="toggleSidebar(true)" class="w-11 h-11 bg-slate-800/80 border border-slate-700/60 rounded-2xl flex items-center justify-center text-indigo-400 shadow-md hover:bg-slate-800 transition-all">
-          <i class="fa-solid fa-bars text-base"></i>
-        </button>
+      <!-- Top Bar (Clean & Symmetric Layout without Overlaps) -->
+      <div class="w-full flex justify-between items-center px-1 gap-2">
+        <!-- Left group: Hamburger & Sound -->
+        <div class="flex items-center gap-2">
+          <button onclick="toggleSidebar(true)" class="w-11 h-11 bg-slate-800/80 border border-slate-700/60 rounded-2xl flex items-center justify-center text-indigo-400 shadow-md hover:bg-slate-800 transition-all" title="მენიუ">
+            <i class="fa-solid fa-bars text-base"></i>
+          </button>
+          <button onclick="toggleSound()" class="w-11 h-11 bg-slate-800/80 border border-slate-700/60 rounded-2xl flex items-center justify-center text-indigo-300 shadow-md hover:bg-slate-800 transition-all" title="ხმა">
+            <i id="sound-icon" class="fa-solid fa-volume-high text-xs"></i>
+          </button>
+        </div>
 
-        <div onclick="toggleGameSwitcher(true)" class="glass-card px-4 py-2 rounded-2xl flex items-center gap-2.5 border border-slate-700/60 shadow-lg cursor-pointer hover:border-indigo-500/50 transition-all">
+        <!-- Center: Game Switcher -->
+        <div onclick="toggleGameSwitcher(true)" class="glass-card px-3 py-2 rounded-2xl flex items-center gap-2 border border-slate-700/60 shadow-lg cursor-pointer hover:border-indigo-500/50 transition-all">
           <div id="header-game-icon" class="w-6 h-6 bg-indigo-600 rounded-lg flex items-center justify-center text-xs text-white shadow"><i class="fa-solid fa-bomb"></i></div>
           <div class="text-left">
             <span id="header-game-name" class="text-xs font-bold text-white block leading-tight">დანაღმული გზა</span>
@@ -278,19 +285,15 @@
           <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-1"></i>
         </div>
 
-        <button onclick="logoutUser()" class="w-11 h-11 bg-slate-800/80 border border-slate-700/60 rounded-2xl flex items-center justify-center text-slate-300 shadow-md hover:text-rose-400 hover:bg-slate-800 transition-all" title="გასვლა">
-          <i class="fa-solid fa-right-from-bracket text-sm"></i>
-        </button>
-      </div>
-
-      <!-- Left Side Floating Buttons -->
-      <div class="absolute left-2 top-20 flex flex-col gap-2 z-20">
-        <button onclick="toggleSound()" class="w-10 h-10 bg-slate-900/80 border border-slate-700/60 rounded-2xl flex items-center justify-center text-indigo-300 shadow-lg hover:bg-slate-800 backdrop-blur-md">
-          <i id="sound-icon" class="fa-solid fa-volume-high text-xs"></i>
-        </button>
-        <button id="admin-panel-fab" onclick="openAdminModal()" class="hidden w-10 h-10 bg-rose-950/80 border border-rose-500/50 rounded-2xl flex items-center justify-center text-rose-400 shadow-lg hover:bg-rose-900 backdrop-blur-md" title="ადმინ პანელი">
-          <i class="fa-solid fa-shield-halved text-xs"></i>
-        </button>
+        <!-- Right group: Admin Panel & Logout -->
+        <div class="flex items-center gap-2">
+          <button id="admin-panel-fab" onclick="openAdminModal()" class="hidden w-11 h-11 bg-rose-950/80 border border-rose-500/50 rounded-2xl flex items-center justify-center text-rose-400 shadow-md hover:bg-rose-900 transition-all" title="ადმინ პანელი">
+            <i class="fa-solid fa-shield-halved text-xs"></i>
+          </button>
+          <button onclick="logoutUser()" class="w-11 h-11 bg-slate-800/80 border border-slate-700/60 rounded-2xl flex items-center justify-center text-slate-300 shadow-md hover:text-rose-400 hover:bg-slate-800 transition-all" title="გასვლა">
+            <i class="fa-solid fa-right-from-bracket text-sm"></i>
+          </button>
+        </div>
       </div>
 
       <!-- Main Profile Center Card -->
@@ -835,7 +838,14 @@
 
     window.toggleSound = () => {
       isSoundMuted = !isSoundMuted;
-      showToast(isSoundMuted ? "ხმა გაითიშა 🔇" : "ხმა ჩაირთო 🔊");
+      const icon = document.getElementById('sound-icon');
+      if (isSoundMuted) {
+        icon.className = "fa-solid fa-volume-xmark text-xs text-rose-400";
+        showToast("ხმა გაითიშა 🔇");
+      } else {
+        icon.className = "fa-solid fa-volume-high text-xs text-indigo-300";
+        showToast("ხმა ჩაირთო 🔊");
+      }
     };
 
     window.onGameModeSelectChanged = function() {
@@ -1028,7 +1038,6 @@
 
       listenToRoom(roomCode);
 
-      // When player 2 joins, trigger Jeirani phase for both players
       await updateDoc(roomRef, { 
         player2Id: currentUser.uid, 
         player2Name: playerName, 
@@ -1069,7 +1078,6 @@
         }, 1500);
 
       } else {
-        // Multiplayer Jeirani
         document.getElementById('jeirani-result').innerText = `შენ აირჩიე: ${names[myChoice]}. ველით მოწინააღმდეგეს...`;
         const updateObj = {};
         updateObj[playerRole === 'player1' ? 'p1Jeirani' : 'p2Jeirani'] = myChoice;
@@ -1099,7 +1107,6 @@
         gameState = Object.assign({ gameMode, wager, player1Name: playerName, player2Name: "🤖 AI" }, initialData);
         enterGameScreen(gameMode, gameState);
       } else if (playerRole === 'player1') {
-        // Player 1 updates the multiplayer room with initialized game data
         updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), initialData);
       }
     }
@@ -1125,15 +1132,6 @@
       returnToLobby();
     };
 
-    function listenToRoom(code) {
-      if (roomUnsubscribe) roomUnsubscribe();
-      roomUnsubscribe = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code), (snapshot) => {
-        if (!snapshot.exists()) return;
-        gameState = snapshot.data();
-        updateUI(gameState);
-      });
-    }
-
     async function handleGameFinish(winnerRole) {
       if (gameState.rewardsDistributed) return;
       gameState.rewardsDistributed = true;
@@ -1155,7 +1153,6 @@
         switchScreen('jeirani-screen');
         document.getElementById('jeirani-result').innerText = "აირჩიეთ ფიგურა ჯეირანისთვის!";
         
-        // If both players have chosen in multiplayer, Player 1 calculates the winner and starts
         if (!isAiMode && state.p1Jeirani && state.p2Jeirani && playerRole === 'player1' && !state.jeiraniProcessed) {
           const m1 = state.p1Jeirani;
           const m2 = state.p2Jeirani;
@@ -1274,7 +1271,6 @@
       const isMyTurn = (state.currentTurn === playerRole);
       document.getElementById('turn-banner').innerText = isMyTurn ? "შენი სვლაა!" : "მოწინააღმდეგის სვლაა...";
 
-      // Strict 15 seconds per turn for each player
       if (wordTimerInterval) clearInterval(wordTimerInterval);
       timeLeft = 15;
 
