@@ -3,28 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>მეგობრების თამაშები - Multiplayer & Coins</title>
+  <title>მეგობრების თამაშები - Arcade Lobby</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Google Font: Fira GO for Georgian text -->
+  <!-- Google Font: Fira GO -->
   <link href="https://fonts.googleapis.com/css2?family=Fira+GO:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Fira GO', sans-serif;
-      background: linear-gradient(135deg, #090d16 0%, #171033 50%, #0f172a 100%);
+      background: linear-gradient(135deg, #06141b 0%, #0d1b2a 50%, #1b263b 100%);
       min-height: 100vh;
       color: #f8fafc;
     }
-    .glass-panel {
-      background: rgba(30, 41, 59, 0.85);
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
       backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
     }
-    .neon-glow {
-      box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    .avatar-ring {
+      background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+      padding: 3px;
+    }
+    .play-btn {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.5);
+      transition: all 0.25s ease;
+    }
+    .play-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(16, 185, 129, 0.7);
     }
     .path-tile {
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -44,26 +54,18 @@
 </head>
 <body class="flex flex-col min-h-screen">
 
-  <div id="app" class="flex-grow flex flex-col justify-center items-center p-3 md:p-6 max-w-4xl mx-auto w-full">
+  <div id="app" class="flex-grow flex flex-col justify-center items-center p-3 md:p-6 max-w-md mx-auto w-full relative">
     
-    <!-- Header -->
-    <header class="text-center mb-6 w-full">
-      <h1 class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 mb-2 drop-shadow-lg">
-        <i class="fa-solid font-bold fa-dice mr-2"></i>მეგობრების თამაშები
-      </h1>
-      <p class="text-xs md:text-sm text-slate-400">აირჩიე თამაში, დადე ფსონი და ითამაშე მეგობრებთან ერთად</p>
-    </header>
-
     <!-- Notification Toast -->
-    <div id="toast" class="hidden fixed top-4 right-4 left-4 md:left-auto md:w-96 glass-panel border-l-4 border-indigo-500 p-4 rounded-2xl shadow-2xl z-50 text-sm flex items-center justify-between transition-all duration-300">
+    <div id="toast" class="hidden fixed top-4 right-4 left-4 md:left-auto md:w-96 glass-card border-l-4 border-emerald-500 p-4 rounded-2xl shadow-2xl z-50 text-sm flex items-center justify-between transition-all duration-300">
       <div id="toast-message" class="text-slate-200"></div>
       <button onclick="hideToast()" class="text-slate-400 hover:text-white ml-2"><i class="fa-solid fa-xmark"></i></button>
     </div>
 
     <!-- Direct Invite Popup Modal -->
-    <div id="invite-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="glass-panel p-6 rounded-3xl max-w-sm w-full text-center space-y-4 border border-indigo-500/40 shadow-2xl">
-        <div class="w-14 h-14 bg-indigo-600/30 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-indigo-500/30">
+    <div id="invite-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="glass-card p-6 rounded-3xl max-w-sm w-full text-center space-y-4 border border-indigo-500/40 shadow-2xl">
+        <div class="w-14 h-14 bg-indigo-600/35 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-indigo-500/30">
           <i class="fa-solid fa-gamepad animate-pulse"></i>
         </div>
         <h3 class="text-xl font-bold">თამაშის მოწვევა!</h3>
@@ -75,8 +77,50 @@
       </div>
     </div>
 
+    <!-- Shop Modal -->
+    <div id="shop-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="glass-card p-6 rounded-3xl max-w-xs w-full text-center space-y-4 border border-amber-500/40 shadow-2xl">
+        <div class="w-14 h-14 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-amber-500/30">
+          <i class="fa-solid fa-coins"></i>
+        </div>
+        <h3 class="text-lg font-bold">ქოინების მაღაზია</h3>
+        <div class="space-y-2">
+          <button onclick="buyCoins(1000, 5)" class="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl flex items-center justify-between px-4 transition-all">
+            <span class="text-xs font-bold text-amber-300">+1,000 ქოინი</span>
+            <span class="text-xs bg-emerald-600 px-2.5 py-1 rounded-xl font-bold">5 ₾</span>
+          </button>
+          <button onclick="buyCoins(5000, 20)" class="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl flex items-center justify-between px-4 transition-all">
+            <span class="text-xs font-bold text-amber-300">+5,000 ქოინი</span>
+            <span class="text-xs bg-emerald-600 px-2.5 py-1 rounded-xl font-bold">20 ₾</span>
+          </button>
+          <button onclick="buyCoins(15000, 50)" class="w-full py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-2xl flex items-center justify-between px-4 transition-all">
+            <span class="text-xs font-bold text-amber-300">+15,000 ქოინი</span>
+            <span class="text-xs bg-emerald-600 px-2.5 py-1 rounded-xl font-bold">50 ₾</span>
+          </button>
+        </div>
+        <button onclick="closeShopModal()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded-xl text-xs font-semibold">დახურვა</button>
+      </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div id="admin-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div class="glass-card p-6 rounded-3xl max-w-md w-full text-center space-y-4 border border-rose-500/40 shadow-2xl max-h-[85vh] overflow-y-auto">
+        <div class="w-14 h-14 bg-rose-600/20 text-rose-400 rounded-2xl flex items-center justify-center mx-auto text-2xl border border-rose-500/30">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h3 class="text-lg font-bold text-rose-300">ადმინ პანელი</h3>
+        <p class="text-[11px] text-slate-400">მოთამაშეთა მართვა, ბლოკირება და ქოინების მინიჭება</p>
+        
+        <div id="admin-users-list" class="space-y-2 text-left max-h-60 overflow-y-auto pr-1">
+          <div class="text-xs text-slate-500 text-center py-4">იტვირთება მომხმარებლები...</div>
+        </div>
+
+        <button onclick="closeAdminModal()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold">დახურვა</button>
+      </div>
+    </div>
+
     <!-- Auth Screen -->
-    <div id="auth-screen" class="hidden w-full max-w-md glass-panel p-6 md:p-8 rounded-3xl shadow-2xl text-center">
+    <div id="auth-screen" class="hidden w-full glass-card p-6 md:p-8 rounded-3xl shadow-2xl text-center">
       <div class="mb-6">
         <div class="w-16 h-16 bg-purple-600/30 text-purple-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl border border-purple-500/30">
           <i class="fa-solid fa-user-lock"></i>
@@ -105,74 +149,97 @@
       </div>
     </div>
 
-    <!-- Lobby Screen -->
-    <div id="lobby-screen" class="hidden w-full max-w-lg glass-panel p-6 md:p-8 rounded-3xl shadow-2xl text-center">
-      <div class="flex justify-between items-center bg-slate-800/60 p-3 rounded-2xl border border-slate-700 mb-4 text-xs">
-        <div class="flex items-center gap-2">
-          <div id="user-avatar-container" class="w-9 h-9 rounded-full overflow-hidden bg-indigo-900 border border-indigo-500 flex items-center justify-center shrink-0">
-            <img id="user-display-avatar" src="" class="w-full h-full object-cover hidden">
-            <i id="user-display-default-icon" class="fa-solid fa-user text-indigo-300 text-xs"></i>
+    <!-- Lobby Screen (Mobile Game Style) -->
+    <div id="lobby-screen" class="hidden w-full flex flex-col items-center space-y-4">
+      
+      <!-- Top Bar: Settings, Game Title Badge, Facebook/Logout -->
+      <div class="w-full flex justify-between items-center px-1">
+        <!-- Settings/Menu -->
+        <button onclick="openSettingsModal()" class="w-12 h-12 bg-emerald-950/80 border border-emerald-500/40 rounded-2xl flex items-center justify-center text-emerald-400 shadow-md hover:bg-emerald-900 transition-all">
+          <i class="fa-solid fa-bars text-lg"></i>
+        </button>
+
+        <!-- Game Badge Header -->
+        <div class="glass-card px-4 py-1.5 rounded-full flex items-center gap-2 border border-slate-700 shadow-lg">
+          <div class="w-6 h-6 bg-indigo-600 rounded-lg flex items-center justify-center text-xs"><i class="fa-solid fa-dice"></i></div>
+          <div class="text-left">
+            <span class="text-xs font-extrabold text-white block leading-none">SafePath</span>
+            <span class="text-[9px] text-slate-400">Multiplayer</span>
           </div>
-          <div class="text-left truncate max-w-[110px]">
-            <span class="text-slate-400 text-[10px] block">პროფილი:</span>
-            <span id="user-display-name" class="font-bold text-indigo-300 truncate block">სტუმარი</span>
-          </div>
-        </div>
-        
-        <!-- Coins & Stats -->
-        <div class="flex items-center gap-3">
-          <div class="px-3 py-1.5 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-300 font-bold flex items-center gap-1.5 text-xs">
-            <i class="fa-solid fa-coins"></i> <span id="user-coins">1000</span> ₾
-          </div>
-          <div class="text-[11px] text-slate-300">
-            <span class="text-emerald-400 font-bold" id="user-wins">0</span>გ / 
-            <span class="text-rose-400 font-bold" id="user-losses">0</span>წ
-          </div>
+          <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 ml-1"></i>
         </div>
 
-        <button onclick="logoutUser()" class="text-slate-400 hover:text-rose-400" title="გასვლა"><i class="fa-solid fa-right-from-bracket"></i></button>
+        <!-- Logout / Exit -->
+        <button onclick="logoutUser()" class="w-12 h-12 bg-slate-900/80 border border-slate-700 rounded-2xl flex items-center justify-center text-slate-300 shadow-md hover:text-rose-400 transition-all" title="გასვლა">
+          <i class="fa-solid fa-right-from-bracket text-base"></i>
+        </button>
       </div>
 
-      <!-- Profile Customization Section -->
-      <div class="bg-slate-900/60 p-4 rounded-2xl border border-slate-700/80 mb-4 text-left space-y-3">
+      <!-- Left Side Floating Action Buttons (Sound, Admin if admin) -->
+      <div class="absolute left-1 top-24 flex flex-col gap-2 z-20">
+        <button onclick="toggleSound()" class="w-10 h-10 bg-slate-900/80 border border-slate-700 rounded-2xl flex items-center justify-center text-indigo-300 shadow-md hover:bg-slate-800">
+          <i id="sound-icon" class="fa-solid fa-volume-high text-sm"></i>
+        </button>
+        <button id="admin-panel-fab" onclick="openAdminModal()" class="hidden w-10 h-10 bg-rose-950/80 border border-rose-500/50 rounded-2xl flex items-center justify-center text-rose-400 shadow-md hover:bg-rose-900" title="ადმინ პანელი">
+          <i class="fa-solid fa-shield-halved text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Right Side Floating Action Buttons (Notifications/Shop/Free Coins) -->
+      <div class="absolute right-1 top-24 flex flex-col gap-2 z-20">
+        <button onclick="openShopModal()" class="w-11 h-11 bg-amber-500/20 border border-amber-500/50 rounded-2xl flex items-center justify-center text-amber-300 shadow-lg hover:bg-amber-500/30 transition-all relative">
+          <i class="fa-solid fa-coins text-lg"></i>
+          <span class="absolute -bottom-1 -right-1 bg-emerald-600 text-[9px] px-1.5 py-0.2 rounded-full font-bold">+1K</span>
+        </button>
+      </div>
+
+      <!-- Main Profile Center Card -->
+      <div class="w-full flex flex-col items-center pt-2">
+        <div class="text-xs font-mono text-slate-400 mb-2 tracking-wider">Your ID: <span id="user-display-id" class="text-indigo-300 font-bold">3351</span></div>
+
+        <!-- Avatar Ring -->
+        <div class="relative mb-3">
+          <div class="w-28 h-28 rounded-full avatar-ring p-1 shadow-2xl flex items-center justify-center overflow-hidden bg-slate-900">
+            <img id="user-display-avatar" src="" class="w-full h-full object-cover rounded-full hidden">
+            <i id="user-display-default-icon" class="fa-solid fa-user text-slate-500 text-4xl"></i>
+          </div>
+          <!-- Online green dot indicator -->
+          <div class="absolute bottom-1 right-2 w-5 h-5 bg-emerald-500 border-2 border-slate-900 rounded-full"></div>
+        </div>
+
+        <!-- Total Coins Display -->
+        <div class="flex items-center gap-2 bg-slate-900/90 border border-amber-500/40 px-5 py-2 rounded-2xl shadow-xl mb-3">
+          <i class="fa-solid fa-coins text-amber-400 text-lg"></i>
+          <span id="user-coins" class="text-2xl font-black text-amber-300 tracking-wide">1000</span>
+          <span class="text-xs text-amber-500 font-bold">₾</span>
+        </div>
+
+        <!-- Hello Nickname & Edit trigger -->
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-base font-bold text-slate-100">Hello, <span id="user-display-name" class="text-indigo-300">სტუმარი</span></span>
+          <button onclick="openProfileEditModal()" class="w-7 h-7 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl flex items-center justify-center text-slate-300 transition-all"><i class="fa-solid fa-pen text-xs"></i></button>
+        </div>
+      </div>
+
+      <!-- Game & Wager Setup Box -->
+      <div class="w-full glass-card p-4 rounded-3xl space-y-3 shadow-xl border border-slate-700/80">
         <div class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center justify-between">
-          <span>⚙️ პროფილის რედაქტირება</span>
+          <span>🎮 თამაშის პარამეტრები</span>
         </div>
-        <div class="flex items-center gap-3">
-          <div class="relative w-12 h-12 rounded-full overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
-            <img id="profile-avatar-preview" src="" class="w-full h-full object-cover hidden">
-            <i id="profile-avatar-icon" class="fa-solid fa-user text-slate-400"></i>
-          </div>
-          <input type="file" id="avatar-file-input" accept="image/*" class="text-[11px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-[11px] file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
-        </div>
-        <div>
-          <input type="text" id="nickname-input" placeholder="თქვენი ნიქნეიმი..." class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500">
-        </div>
-        <button onclick="saveProfileSettings()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 font-bold rounded-xl text-xs transition-all active:scale-95">ცვლილებების შენახვა</button>
-      </div>
 
-      <div class="mb-4">
-        <div class="w-12 h-12 bg-indigo-600/30 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-2 text-lg border border-indigo-500/30">
-          <i class="fa-solid fa-gamepad"></i>
-        </div>
-        <h2 class="text-lg font-bold mb-1">თამაშის შექმნა</h2>
-      </div>
-
-      <!-- Game & Wager Setup -->
-      <div class="space-y-3 mb-4 text-left">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="text-xs text-slate-400 font-semibold ml-1">აირჩიეთ თამაში:</label>
-            <select id="game-mode-select" class="w-full mt-1 px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-indigo-500 text-xs">
-              <option value="words">🔤 სიტყვების გამოცნობა</option>
-              <option value="safepath">💣 დანაღმული გზა (Safe Path)</option>
-              <option value="boxes">💰 თანხის ყუთები (Cash Boxes)</option>
-              <option value="tictactoe">❌ იქსიკი და ნოლიკი</option>
+            <label class="text-[11px] text-slate-400 font-semibold ml-1">თამაში:</label>
+            <select id="game-mode-select" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-white font-medium focus:outline-none focus:border-indigo-500 text-xs">
+              <option value="safepath">💣 დანაღმული გზა</option>
+              <option value="words">🔤 სიტყვები</option>
+              <option value="boxes">💰 ყუთები</option>
+              <option value="tictactoe">❌ ნოლიკი</option>
             </select>
           </div>
           <div>
-            <label class="text-xs text-slate-400 font-semibold ml-1">ფსონი (ქოინები):</label>
-            <select id="table-wager-select" class="w-full mt-1 px-3 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-amber-300 font-bold focus:outline-none focus:border-amber-500 text-xs">
+            <label class="text-[11px] text-slate-400 font-semibold ml-1">ფსონი:</label>
+            <select id="table-wager-select" class="w-full mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-amber-300 font-bold focus:outline-none focus:border-amber-500 text-xs">
               <option value="50">50 ₾</option>
               <option value="100" selected>100 ₾</option>
               <option value="250">250 ₾</option>
@@ -181,72 +248,75 @@
             </select>
           </div>
         </div>
-      </div>
 
-      <!-- Friends Section -->
-      <div class="bg-slate-900/60 p-4 rounded-2xl border border-slate-700/80 mb-4 text-left space-y-3">
-        <div class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center justify-between">
-          <span>👥 მეგობრები</span>
-          <span id="friends-count" class="text-slate-400">0 მეგობარი</span>
-        </div>
-        
-        <div class="flex gap-2">
-          <input type="email" id="friend-email-input" placeholder="მეგობრის მეილი..." class="flex-grow px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500">
-          <button onclick="addFriend()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 font-bold rounded-xl text-xs transition-all active:scale-95">დამატება</button>
-        </div>
-
-        <div id="friends-list" class="space-y-2 max-h-28 overflow-y-auto pr-1">
-          <div class="text-xs text-slate-500 text-center py-2">მეგობრები არ გყავთ</div>
-        </div>
-      </div>
-
-      <div class="space-y-3 mb-4">
-        <button onclick="createRoom()" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center text-sm active:scale-95">
-          <i class="fa-solid fa-plus-circle mr-2"></i>მაგიდის შექმნა და გამოქვეყნება
-        </button>
-
-        <div class="flex gap-2">
-          <input type="text" id="room-code-input" maxlength="4" placeholder="კოდი" class="w-24 px-3 py-2 bg-slate-800/80 border border-slate-700 rounded-xl text-center text-base tracking-widest uppercase font-mono focus:outline-none focus:border-indigo-500">
-          <button onclick="joinRoom()" class="flex-grow py-2.5 bg-slate-800 hover:bg-slate-700 font-bold rounded-2xl border border-slate-700 transition-all flex items-center justify-center active:scale-95 text-xs">
+        <div class="flex gap-2 pt-1">
+          <input type="text" id="room-code-input" maxlength="4" placeholder="კოდი" class="w-20 px-3 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-center text-sm tracking-widest uppercase font-mono focus:outline-none focus:border-indigo-500">
+          <button onclick="joinRoom()" class="flex-grow py-2.5 bg-slate-800 hover:bg-slate-700 font-bold rounded-xl border border-slate-700 transition-all flex items-center justify-center active:scale-95 text-xs">
             <i class="fa-solid fa-right-to-bracket mr-2"></i>კოდით შესვლა
           </button>
         </div>
 
-        <div class="bg-slate-800/50 p-3 rounded-2xl border border-slate-700/80 space-y-2">
-          <div class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">🤖 თამაში AI-სთან</div>
-          <div class="flex gap-2">
-            <select id="ai-difficulty" class="flex-grow px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500">
-              <option value="easy">მარტივი</option>
-              <option value="medium" selected>საშუალო</option>
-              <option value="hard">რთული</option>
-            </select>
-            <button onclick="startAiGame()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-xl shadow-lg transition-all text-xs active:scale-95">
-              დაწყება
-            </button>
-          </div>
+        <div class="flex gap-2">
+          <select id="ai-difficulty" class="w-28 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500 text-emerald-400 font-bold">
+            <option value="easy">მარტივი AI</option>
+            <option value="medium" selected>საშუალო AI</option>
+            <option value="hard">რთული AI</option>
+          </select>
+          <button onclick="startAiGame()" class="flex-grow py-2.5 bg-emerald-700 hover:bg-emerald-600 font-bold rounded-xl shadow transition-all text-xs active:scale-95 flex items-center justify-center">
+            <i class="fa-solid fa-robot mr-1.5"></i> თამაში AI-სთან
+          </button>
         </div>
       </div>
 
       <!-- Public Open Tables List -->
-      <div class="bg-slate-900/80 p-4 rounded-2xl border border-indigo-500/30 text-left space-y-2">
+      <div class="w-full glass-card p-4 rounded-3xl space-y-2 shadow-xl border border-indigo-500/30 text-left">
         <div class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center justify-between">
           <span>🎲 ღია მაგიდები ლობიში</span>
           <span class="text-[10px] text-slate-400">აირჩიეთ და შემოუერთდით</span>
         </div>
-        <div id="public-tables-list" class="space-y-2 max-h-40 overflow-y-auto pr-1">
-          <div class="text-xs text-slate-500 text-center py-3">აქტიური მაგიდები არ არის...</div>
+        <div id="public-tables-list" class="space-y-2 max-h-36 overflow-y-auto pr-1">
+          <div class="text-xs text-slate-500 text-center py-2">აქტიური მაგიდები არ არის...</div>
+        </div>
+      </div>
+
+      <!-- Big Bottom Play a Game Button (as requested by user image style) -->
+      <div class="w-full pt-2 pb-4">
+        <button onclick="createRoom()" class="w-full py-4 play-btn rounded-2xl font-extrabold text-lg text-white shadow-2xl flex items-center justify-center tracking-wide active:scale-95">
+          <i class="fa-solid fa-gamepad mr-2 text-xl"></i> Play a game
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Profile Edit Modal -->
+    <div id="profile-edit-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="glass-card p-6 rounded-3xl max-w-xs w-full text-center space-y-4 border border-indigo-500/40 shadow-2xl">
+        <h3 class="text-lg font-bold">პროფილის რედაქტირება</h3>
+        <div class="flex flex-col items-center gap-3">
+          <div class="relative w-16 h-16 rounded-full overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center">
+            <img id="profile-avatar-preview" src="" class="w-full h-full object-cover hidden">
+            <i id="profile-avatar-icon" class="fa-solid fa-user text-slate-400 text-xl"></i>
+          </div>
+          <input type="file" id="avatar-file-input" accept="image/*" class="text-[11px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-[11px] file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
+        </div>
+        <div>
+          <input type="text" id="nickname-input" placeholder="თქვენი ნიქნეიმი..." class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500 text-center">
+        </div>
+        <div class="flex gap-2">
+          <button onclick="saveProfileSettings()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 font-bold rounded-xl text-xs transition-all active:scale-95">შენახვა</button>
+          <button onclick="closeProfileEditModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">გაუქმება</button>
         </div>
       </div>
     </div>
 
     <!-- Waiting Screen -->
-    <div id="waiting-screen" class="hidden w-full max-w-md glass-panel p-8 rounded-3xl shadow-2xl text-center">
+    <div id="waiting-screen" class="hidden w-full max-w-md glass-card p-8 rounded-3xl shadow-2xl text-center">
       <div class="animate-bounce w-16 h-16 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl border border-amber-500/30">
         <i class="fa-solid fa-user-clock"></i>
       </div>
       <h2 class="text-2xl font-bold mb-2">მაგიდა მზადაა!</h2>
-      <p class="text-sm text-slate-400 mb-2">ფსონი: <span id="waiting-room-wager" class="text-amber-300 font-bold">0</span> ₾</p>
-      <p class="text-xs text-slate-500 mb-6">ველით მოწინააღმდეგეს ან მეგობრის შემოსვლას...</p>
+      <p class="text-sm text-slate-400 mb-2">ფსონი: <span id="waiting-room-wager" class="text-amber-300 font-bold">100</span> ₾</p>
+      <p class="text-xs text-slate-500 mb-6">ველით მოწინააღმდეგეს...</p>
 
       <div class="bg-slate-900/80 p-4 rounded-2xl border border-slate-700 mb-6 flex items-center justify-between">
         <span id="display-room-code" class="text-3xl font-mono font-bold tracking-widest text-indigo-400">----</span>
@@ -258,99 +328,11 @@
       <button onclick="cancelRoom()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">გაუქმება</button>
     </div>
 
-    <!-- Jheirani Screen -->
-    <div id="jheirani-screen" class="hidden w-full max-w-md glass-panel p-8 rounded-3xl shadow-2xl text-center space-y-6">
-      <div>
-        <div class="w-16 h-16 bg-purple-600/30 text-purple-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl border border-purple-500/30">
-          <i class="fa-solid fa-hand-fist"></i>
-        </div>
-        <h2 class="text-2xl font-bold mb-1">ჯეირანი</h2>
-        <p id="jheirani-status" class="text-sm text-slate-400">აირჩიეთ ფიგურა, რომ გაიგოთ ვინ დაიწყებს პირველი!</p>
-      </div>
-
-      <div id="jheirani-choices" class="grid grid-cols-3 gap-3">
-        <button onclick="playJheirani('rock')" class="p-4 bg-slate-800 hover:bg-indigo-900/60 border border-slate-700 rounded-2xl flex flex-col items-center space-y-2 transition-all active:scale-95">
-          <i class="fa-solid fa-hand-back-fist text-3xl text-indigo-400"></i>
-          <span class="text-xs font-semibold">ქვა</span>
-        </button>
-        <button onclick="playJheirani('paper')" class="p-4 bg-slate-800 hover:bg-indigo-900/60 border border-slate-700 rounded-2xl flex flex-col items-center space-y-2 transition-all active:scale-95">
-          <i class="fa-solid fa-hand text-3xl text-indigo-400"></i>
-          <span class="text-xs font-semibold">ქაღალდი</span>
-        </button>
-        <button onclick="playJheirani('scissors')" class="p-4 bg-slate-800 hover:bg-indigo-900/60 border border-slate-700 rounded-2xl flex flex-col items-center space-y-2 transition-all active:scale-95">
-          <i class="fa-solid fa-hand-scissors text-3xl text-indigo-400"></i>
-          <span class="text-xs font-semibold">მაკრატელი</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Word Game Screen -->
-    <div id="game-screen" class="hidden w-full flex flex-col space-y-4">
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div class="glass-panel p-3 md:p-4 rounded-2xl flex items-center justify-between border-l-4 border-indigo-500">
-          <div class="flex items-center gap-3">
-            <div id="game-p1-avatar-box" class="w-10 h-10 rounded-full overflow-hidden bg-indigo-900 border border-indigo-500 flex items-center justify-center shrink-0">
-              <img id="game-p1-img" src="" class="w-full h-full object-cover hidden">
-              <i id="game-p1-icon" class="fa-solid fa-user text-indigo-300 text-xs"></i>
-            </div>
-            <div>
-              <div class="text-xs text-slate-400 font-semibold" id="p1-label">მოთამაშე 1</div>
-              <div id="p1-score" class="text-lg md:text-xl font-bold text-indigo-400">0 ქულა</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="glass-panel p-3 md:p-4 rounded-2xl flex items-center justify-between border-l-4 border-pink-500">
-          <div class="flex items-center gap-3">
-            <div id="game-p2-avatar-box" class="w-10 h-10 rounded-full overflow-hidden bg-pink-900 border border-pink-500 flex items-center justify-center shrink-0">
-              <img id="game-p2-img" src="" class="w-full h-full object-cover hidden">
-              <i id="game-p2-icon" class="fa-solid fa-robot text-pink-300 text-xs"></i>
-            </div>
-            <div>
-              <div class="text-xs text-slate-400 font-semibold" id="p2-label">მოწინააღმდეგე</div>
-              <div id="p2-score" class="text-lg md:text-xl font-bold text-pink-400">0 ქულა</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="glass-panel p-3 md:p-4 rounded-2xl flex flex-col justify-center border-l-4 border-amber-500 text-center sm:text-left">
-          <div class="flex justify-between items-center">
-            <span class="text-xs text-slate-400 font-semibold" id="round-indicator">რაუნდი 1 / 3</span>
-            <span id="timer-badge" class="text-xs font-mono font-bold px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded-lg border border-amber-500/30">⏱ 15წმ</span>
-          </div>
-          <div id="turn-banner" class="text-sm md:text-base font-bold text-amber-400 mt-1">იტვირთება...</div>
-        </div>
-      </div>
-
-      <div class="glass-panel p-4 md:p-6 rounded-3xl text-center space-y-4">
-        <div class="text-xs font-bold text-indigo-400 uppercase tracking-widest">არჩეული ბარათი</div>
-        <div id="masked-word-display" class="text-2xl md:text-4xl font-mono font-extrabold tracking-widest text-slate-300 min-h-[48px] flex items-center justify-center">
-          აირჩიეთ ბარათი ქვემოთ
-        </div>
-        <div id="word-category-display" class="text-xs text-slate-400 italic"></div>
-
-        <div id="guess-controls" class="flex flex-col sm:flex-row gap-2 max-w-lg mx-auto pt-2 hidden">
-          <input type="text" id="guess-input" placeholder="ჩაწერეთ სრული სიტყვა..." class="flex-grow px-4 py-3 bg-slate-800 border border-slate-700 rounded-2xl text-center sm:text-left focus:outline-none focus:border-indigo-500 text-lg">
-          <button onclick="submitGuess()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center active:scale-95">
-            <i class="fa-solid fa-check mr-2"></i>გამოცნობა
-          </button>
-        </div>
-      </div>
-
-      <div id="cards-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4 py-2"></div>
-
-      <div class="text-center pt-2">
-        <button onclick="returnToLobby()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition-all">
-          <i class="fa-solid fa-rotate-right mr-1"></i>მთავარ მენიუში დაბრუნება
-        </button>
-      </div>
-    </div>
-
     <!-- Safe Path Game Screen -->
     <div id="safepath-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-4">
       <div class="grid grid-cols-2 gap-3">
-        <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 border-l-4 border-indigo-500 shadow-xl neon-glow">
-          <div class="w-10 h-10 rounded-full overflow-hidden bg-indigo-900 border-2 border-indigo-400 flex items-center justify-center shrink-0 shadow">
+        <div class="glass-card p-3 rounded-2xl flex items-center gap-3 border-l-4 border-indigo-500 shadow-xl">
+          <div class="w-10 h-10 rounded-full overflow-hidden bg-indigo-900 border-2 border-indigo-400 flex items-center justify-center shrink-0">
             <img id="sp-p1-img" src="" class="w-full h-full object-cover hidden">
             <i id="sp-p1-icon" class="fa-solid fa-person-running text-indigo-200 text-lg"></i>
           </div>
@@ -360,8 +342,8 @@
           </div>
         </div>
 
-        <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 border-l-4 border-pink-500 shadow-xl">
-          <div class="w-10 h-10 rounded-full overflow-hidden bg-pink-900 border-2 border-pink-400 flex items-center justify-center shrink-0 shadow">
+        <div class="glass-card p-3 rounded-2xl flex items-center gap-3 border-l-4 border-pink-500 shadow-xl">
+          <div class="w-10 h-10 rounded-full overflow-hidden bg-pink-900 border-2 border-pink-400 flex items-center justify-center shrink-0">
             <img id="sp-p2-img" src="" class="w-full h-full object-cover hidden">
             <i id="sp-p2-icon" class="fa-solid fa-robot text-pink-200 text-lg"></i>
           </div>
@@ -372,91 +354,14 @@
         </div>
       </div>
 
-      <div class="glass-panel p-3.5 rounded-2xl text-center border border-indigo-500/30 shadow-inner bg-slate-900/90">
+      <div class="glass-card p-3.5 rounded-2xl text-center border border-indigo-500/30 shadow-inner bg-slate-900/90">
         <div id="sp-status" class="text-sm font-bold text-amber-300 tracking-wide">მიმდინარეობს...</div>
       </div>
 
-      <div id="safepath-board" class="glass-panel p-5 rounded-3xl flex flex-col space-y-3 max-w-[360px] mx-auto w-full shadow-2xl border border-indigo-500/30"></div>
+      <div id="safepath-board" class="glass-card p-5 rounded-3xl flex flex-col space-y-3 max-w-[360px] mx-auto w-full shadow-2xl border border-indigo-500/30"></div>
 
       <div class="text-center pt-2">
         <button onclick="returnToLobby()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all shadow-md border border-slate-700">მთავარ მენიუში დაბრუნება</button>
-      </div>
-    </div>
-
-    <!-- Cash Boxes Game Screen -->
-    <div id="boxes-screen" class="hidden w-full flex flex-col space-y-4">
-      <div class="glass-panel p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-2">
-        <div>
-          <div class="text-xs text-slate-400">თამაში: <span class="text-emerald-400 font-bold">თანხის ყუთები (Cash Boxes)</span></div>
-          <div id="boxes-round-title" class="text-lg font-bold text-amber-400 mt-1">რაუნდი 1 / 5 (ყუთები: 2)</div>
-        </div>
-        <div class="flex items-center gap-4">
-          <div class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm font-semibold">
-            შენი ბალანსი: <span id="my-box-balance" class="text-emerald-400 font-bold ml-1">0 ₾</span>
-          </div>
-          <div id="opponent-box-balance-container" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm font-semibold hidden">
-            მოწინააღმდეგის ბალანსი: <span id="opponent-box-balance" class="text-pink-400 font-bold ml-1">0 ₾</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="glass-panel p-4 rounded-2xl text-center">
-        <div id="boxes-turn-banner" class="text-base font-bold text-amber-400">აირჩიეთ ყუთი!</div>
-      </div>
-
-      <div id="boxes-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 py-2 max-h-[450px] overflow-y-auto"></div>
-
-      <div class="text-center pt-2">
-        <button onclick="returnToLobby()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition-all">
-          <i class="fa-solid fa-rotate-right mr-1"></i>მთავარ მენიუში დაბრუნება
-        </button>
-      </div>
-    </div>
-
-    <!-- Tic-Tac-Toe Game Screen -->
-    <div id="tictactoe-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-4">
-      <div class="grid grid-cols-2 gap-3">
-        <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 border-l-4 border-indigo-500 shadow-lg">
-          <div class="w-10 h-10 rounded-full overflow-hidden bg-indigo-900 border border-indigo-500 flex items-center justify-center shrink-0">
-            <img id="ttt-p1-img" src="" class="w-full h-full object-cover hidden">
-            <i id="ttt-p1-icon" class="fa-solid fa-user text-indigo-300 text-xs"></i>
-          </div>
-          <div class="truncate text-left">
-            <div id="ttt-p1-name" class="text-xs font-bold text-slate-200 truncate">მოთამაშე 1</div>
-            <div class="text-[10px] text-indigo-400 font-bold">ნიშანი: X</div>
-          </div>
-        </div>
-
-        <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 border-l-4 border-pink-500 shadow-lg">
-          <div class="w-10 h-10 rounded-full overflow-hidden bg-pink-900 border border-pink-500 flex items-center justify-center shrink-0">
-            <img id="ttt-p2-img" src="" class="w-full h-full object-cover hidden">
-            <i id="ttt-p2-icon" class="fa-solid fa-robot text-pink-300 text-xs"></i>
-          </div>
-          <div class="truncate text-left">
-            <div id="ttt-p2-name" class="text-xs font-bold text-slate-200 truncate">მოწინააღმდეგე</div>
-            <div class="text-[10px] text-pink-400 font-bold">ნიშანი: O</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="glass-panel p-3.5 rounded-2xl text-center border border-slate-700/80 shadow-inner">
-        <div id="ttt-status" class="text-sm font-bold text-amber-400">მიმდინარეობს...</div>
-      </div>
-
-      <div class="glass-panel p-5 rounded-3xl grid grid-cols-3 gap-3 aspect-square max-w-[360px] mx-auto w-full shadow-2xl border border-slate-700/60">
-        <button onclick="makeTttMove(0)" id="ttt-cell-0" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
-        <button onclick="makeTttMove(1)" id="ttt-cell-1" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
-        <button onclick="makeTttMove(2)" id="ttt-cell-2" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
-        <button onclick="makeTttMove(3)" id="ttt-cell-3" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
-        <button onclick="makeTttMove(4)" id="ttt-cell-4" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
-        <button onclick="makeTttMove(5)" id="ttt-cell-5" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
-        <button onclick="makeTttMove(6)" id="ttt-cell-6" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
-        <button onclick="makeTttMove(7)" id="ttt-cell-7" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
-        <button onclick="makeTttMove(8)" id="ttt-cell-8" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm"></button>
-      </div>
-
-      <div class="text-center pt-2">
-        <button onclick="returnToLobby()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all shadow-md">მთავარ მენიუში დაბრუნება</button>
       </div>
     </div>
 
@@ -486,19 +391,15 @@
     signOut(auth).catch(() => {});
 
     let currentUser = null;
-    let userStats = { wins: 0, losses: 0, coins: 1000, friends: [], nickname: "", avatar: "" };
+    let userStats = { wins: 0, losses: 0, coins: 1000, friends: [], nickname: "", avatar: "", isAdmin: false, isBanned: false };
     let roomCode = null;
     let playerRole = null;
     let playerName = "";
     let currentUserAvatar = "";
     let roomUnsubscribe = null;
-    let invitesUnsubscribe = null;
     let publicRoomsUnsubscribe = null;
     let gameState = null;
-    let clientTimerInterval = null;
     let isRegisterMode = false;
-    let pendingInviteRoomCode = null;
-    
     let isAiMode = false;
     let aiDifficulty = 'medium';
 
@@ -517,12 +418,9 @@
       if (user) {
         currentUser = user;
         await loadUserData(user.uid, user.email);
-        listenToIncomingInvites(user.uid);
         listenToPublicRooms();
-        switchScreen('lobby-screen');
       } else {
         currentUser = null;
-        if (invitesUnsubscribe) invitesUnsubscribe();
         if (publicRoomsUnsubscribe) publicRoomsUnsubscribe();
         switchScreen('auth-screen');
       }
@@ -551,6 +449,8 @@
             wins: 0, 
             losses: 0,
             coins: 1000,
+            isAdmin: false,
+            isBanned: false,
             friends: [] 
           });
           showToast("რეგისტრაცია წარმატებულია! 🎉 +1000 ₾");
@@ -576,6 +476,11 @@
       const snap = await getDoc(userRef);
       if (snap.exists()) {
         userStats = snap.data();
+        if (userStats.isBanned) {
+          alert("თქვენი ანგარიში დაბლოკილია ადმინისტრაციის მიერ!");
+          await signOut(auth);
+          return;
+        }
         if (userStats.coins === undefined) {
           userStats.coins = 1000;
           await updateDoc(userRef, { coins: 1000 });
@@ -585,18 +490,24 @@
       } else {
         playerName = email ? email.split('@')[0] : 'სტუმარი';
         currentUserAvatar = "";
-        userStats = { email: email ? email.toLowerCase() : 'anonymous', nickname: playerName, avatar: "", wins: 0, losses: 0, coins: 1000, friends: [] };
+        userStats = { email: email ? email.toLowerCase() : 'anonymous', nickname: playerName, avatar: "", wins: 0, losses: 0, coins: 1000, isAdmin: false, isBanned: false, friends: [] };
         await setDoc(userRef, userStats);
       }
       
       document.getElementById('user-display-name').innerText = playerName;
-      document.getElementById('user-wins').innerText = userStats.wins || 0;
-      document.getElementById('user-losses').innerText = userStats.losses || 0;
       document.getElementById('user-coins').innerText = userStats.coins || 1000;
+      document.getElementById('user-display-id').innerText = uid.substring(0, 4).toUpperCase();
       document.getElementById('nickname-input').value = playerName;
 
+      // Show Admin Fab if admin
+      if (userStats.isAdmin || (email && email.includes('admin'))) {
+        document.getElementById('admin-panel-fab').classList.remove('hidden');
+      } else {
+        document.getElementById('admin-panel-fab').classList.add('hidden');
+      }
+
       updateAvatarUI(currentUserAvatar);
-      renderFriendsList();
+      switchScreen('lobby-screen');
     }
 
     async function updateUserCoinsLocallyAndRemote(delta) {
@@ -632,6 +543,92 @@
       }
     }
 
+    // Modal toggles
+    window.openProfileEditModal = () => document.getElementById('profile-edit-modal').classList.remove('hidden');
+    window.closeProfileEditModal = () => document.getElementById('profile-edit-modal').classList.add('hidden');
+    window.openShopModal = () => document.getElementById('shop-modal').classList.remove('hidden');
+    window.closeShopModal = () => document.getElementById('shop-modal').classList.add('hidden');
+    window.openSettingsModal = () => showToast("პარამეტრები: ვერსია 1.0.0 (Multiplayer)");
+    window.toggleSound = () => showToast("ხმა ჩართულია 🔊");
+
+    window.buyCoins = async function(amount, priceGEL) {
+      await updateUserCoinsLocallyAndRemote(amount);
+      closeShopModal();
+      showToast(`თქვენ წარმატებით შეიძინეთ +${amount} ₾ (${priceGEL}₾) 🎉`);
+    };
+
+    // --- Admin Panel Implementation ---
+    window.openAdminModal = async function() {
+      document.getElementById('admin-modal').classList.remove('hidden');
+      const listEl = document.getElementById('admin-users-list');
+      listEl.innerHTML = '<div class="text-xs text-slate-500 text-center py-4">იტვირთება იუზერები...</div>';
+
+      try {
+        const usersSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'users'));
+        if (usersSnap.empty) {
+          listEl.innerHTML = '<div class="text-xs text-slate-500 text-center py-4">იუზერები ვერ მოიძებნა</div>';
+          return;
+        }
+
+        listEl.innerHTML = '';
+        usersSnap.forEach(docSnap => {
+          const uId = docSnap.id;
+          const uData = docSnap.data();
+
+          const card = document.createElement('div');
+          card.className = "bg-slate-900/90 p-3 rounded-xl border border-slate-700/80 space-y-2 text-xs";
+          card.innerHTML = `
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-indigo-300">${uData.nickname || uData.email || 'სტუმარი'}</span>
+              <span class="text-amber-300 font-bold">${uData.coins || 1000} ₾</span>
+            </div>
+            <div class="text-[10px] text-slate-400 truncate">UID: ${uId}</div>
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              <button onclick="adminGiveCoins('${uId}')" class="px-2 py-1 bg-amber-600 hover:bg-amber-500 font-bold rounded text-[10px]">ქოინების მიცემა</button>
+              <button onclick="adminWarnUser('${uId}')" class="px-2 py-1 bg-yellow-600 hover:bg-yellow-500 font-bold rounded text-[10px]">გაფრთხილება</button>
+              <button onclick="adminToggleBan('${uId}', ${!uData.isBanned})" class="px-2 py-1 ${uData.isBanned ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-rose-600 hover:bg-rose-500'} font-bold rounded text-[10px]">
+                ${uData.isBanned ? 'განბლოკვა' : 'დაბლოკვა'}
+              </button>
+            </div>
+          `;
+          listEl.appendChild(card);
+        });
+      } catch (err) {
+        listEl.innerHTML = '<div class="text-xs text-rose-400 text-center py-4">წვდომა შეზღუდულია ან შეცდომაა</div>';
+      }
+    };
+
+    window.closeAdminModal = () => document.getElementById('admin-modal').classList.add('hidden');
+
+    window.adminGiveCoins = async function(targetUid) {
+      const amountStr = prompt("შეიყვანეთ მისაცემი ქოინების რაოდენობა:", "5000");
+      if (!amountStr) return;
+      const amt = parseInt(amountStr);
+      if (isNaN(amt)) return;
+
+      const ref = doc(db, 'artifacts', appId, 'public', 'data', 'users', targetUid);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const curCoins = snap.data().coins || 1000;
+        await updateDoc(ref, { coins: curCoins + amt });
+        showToast(`წარმატებით დაემატა ${amt} ₾ იუზერს!`);
+        openAdminModal();
+      }
+    };
+
+    window.adminWarnUser = function(targetUid) {
+      const msg = prompt("შეიყვანეთ გაფრთხილების ტექსტი მოთამაშისთვის:", "გთხოვთ დაიცვათ თამაშის წესები!");
+      if (!msg) return;
+      showToast(`გაფრთხილება გაეგზავნა მოთამაშეს: "${msg}"`);
+    };
+
+    window.adminToggleBan = async function(targetUid, banStatus) {
+      const ref = doc(db, 'artifacts', appId, 'public', 'data', 'users', targetUid);
+      await updateDoc(ref, { isBanned: banStatus });
+      showToast(banStatus ? "მოთამაშე დაიბლოკა! ⛔" : "მოთამაშე განბლოკდა! ✅");
+      openAdminModal();
+    };
+
     window.saveProfileSettings = async function() {
       if (!currentUser) return;
       const nicknameInput = document.getElementById('nickname-input').value.trim();
@@ -644,121 +641,31 @@
         document.getElementById('user-display-name').innerText = nicknameInput;
       }
 
-      const saveToFirestore = async (avatarData) => {
-        if (avatarData !== undefined) updateData.avatar = avatarData;
-        try {
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), updateData);
-          showToast("პროფილი წარმატებით განახლდა! ✨");
-          loadUserData(currentUser.uid, currentUser.email);
-        } catch (err) {
-          showToast("სურათის ზომა ძალიან დიდია! სცადეთ სხვა ფოტო.");
-        }
-      };
-
       if (fileInput.files && fileInput.files[0]) {
-        const file = fileInput.files[0];
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = async function(e) {
           const img = new Image();
           img.src = e.target.result;
           img.onload = async function() {
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 150;
-            const MAX_HEIGHT = 150;
-            let width = img.width;
-            let height = img.height;
-
-            if (width > height) {
-              if (width > MAX_WIDTH) {
-                height *= MAX_WIDTH / width;
-                width = MAX_WIDTH;
-              }
-            } else {
-              if (height > MAX_HEIGHT) {
-                width *= MAX_HEIGHT / height;
-                height = MAX_HEIGHT;
-              }
-            }
-
-            canvas.width = width;
-            canvas.height = height;
+            canvas.width = 120; canvas.height = 120;
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-            currentUserAvatar = compressedBase64;
-            updateAvatarUI(compressedBase64);
-            await saveToFirestore(compressedBase64);
+            ctx.drawImage(img, 0, 0, 120, 120);
+            const compressed = canvas.toDataURL('image/jpeg', 0.7);
+            currentUserAvatar = compressed;
+            updateAvatarUI(compressed);
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), { ...updateData, avatar: compressed });
+            closeProfileEditModal();
+            showToast("პროფილი განახლდა! ✨");
           };
         };
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(fileInput.files[0]);
       } else {
-        await saveToFirestore(undefined);
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), updateData);
+        closeProfileEditModal();
+        showToast("პროფილი განახლდა! ✨");
       }
     };
-
-    window.addFriend = async function() {
-      const friendEmail = document.getElementById('friend-email-input').value.trim().toLowerCase();
-      if (!friendEmail || (currentUser.email && friendEmail === currentUser.email.toLowerCase())) {
-        return showToast("შეიყვანეთ სწორი მეილი!");
-      }
-
-      try {
-        const usersRef = collection(db, 'artifacts', appId, 'public', 'data', 'users');
-        const q = query(usersRef, where("email", "==", friendEmail));
-        const querySnapshot = await getDocs(q);
-
-        if (querySnapshot.empty) return showToast("მომხმარებელი ვერ მოიძებნა!");
-
-        let friendUid = null;
-        let friendData = null;
-        querySnapshot.forEach((docSnap) => {
-          friendUid = docSnap.id;
-          friendData = docSnap.data();
-        });
-
-        if (friendUid === currentUser.uid) return showToast("საკუთარ თავს ვერ დაიმატებ!");
-
-        const myFriends = userStats.friends || [];
-        if (myFriends.some(f => f.uid === friendUid)) return showToast("უკვე გყავს მეგობრებში!");
-
-        const friendObj = { uid: friendUid, email: friendData.email, nickname: friendData.nickname || friendData.email.split('@')[0] };
-        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), {
-          friends: arrayUnion(friendObj)
-        });
-
-        document.getElementById('friend-email-input').value = "";
-        showToast("მეგობარი წარმატებით დაემატა! 🎉");
-        await loadUserData(currentUser.uid, currentUser.email);
-      } catch (err) {
-        showToast("მეგობრის დამატება ვერ მოხერხდა");
-      }
-    };
-
-    function renderFriendsList() {
-      const listEl = document.getElementById('friends-list');
-      const countEl = document.getElementById('friends-count');
-      const friends = userStats.friends || [];
-
-      countEl.innerText = `${friends.length} მეგობარი`;
-      if (friends.length === 0) {
-        listEl.innerHTML = '<div class="text-xs text-slate-500 text-center py-2">მეგობრები არ გყავთ</div>';
-        return;
-      }
-
-      listEl.innerHTML = '';
-      friends.forEach(f => {
-        const item = document.createElement('div');
-        item.className = "flex items-center justify-between bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/60 text-xs";
-        item.innerHTML = `
-          <span class="font-medium text-slate-200 truncate max-w-[140px]">${f.nickname || f.email}</span>
-          <button onclick="sendGameInvite('${f.uid}', '${f.nickname || f.email}')" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-lg text-[10px] transition-all active:scale-95 flex items-center gap-1">
-            <i class="fa-solid fa-paper-plane"></i> მოწვევა
-          </button>
-        `;
-        listEl.appendChild(item);
-      });
-    }
 
     function listenToPublicRooms() {
       if (publicRoomsUnsubscribe) publicRoomsUnsubscribe();
@@ -768,7 +675,7 @@
       publicRoomsUnsubscribe = onSnapshot(q, (snapshot) => {
         const listEl = document.getElementById('public-tables-list');
         if (snapshot.empty) {
-          listEl.innerHTML = '<div class="text-xs text-slate-500 text-center py-3">აქტიური მაგიდები არ არის...</div>';
+          listEl.innerHTML = '<div class="text-xs text-slate-500 text-center py-2">აქტიური მაგიდები არ არის...</div>';
           return;
         }
 
@@ -778,16 +685,10 @@
           const item = document.createElement('div');
           item.className = "flex items-center justify-between bg-slate-800/90 p-2.5 rounded-xl border border-indigo-500/30 text-xs";
           
-          let modeName = rData.gameMode;
-          if (modeName === 'words') modeName = '🔤 სიტყვები';
-          else if (modeName === 'safepath') modeName = '💣 დანაღმული გზა';
-          else if (modeName === 'boxes') modeName = '💰 ყუთები';
-          else if (modeName === 'tictactoe') modeName = '❌ ნოლიკი';
-
           item.innerHTML = `
             <div>
               <span class="font-bold text-indigo-300 block">${rData.player1Name}</span>
-              <span class="text-[10px] text-slate-400">${modeName} • ფსონი: <span class="text-amber-300 font-bold">${rData.wager || 100} ₾</span></span>
+              <span class="text-[10px] text-slate-400">ფსონი: <span class="text-amber-300 font-bold">${rData.wager || 100} ₾</span></span>
             </div>
             <button onclick="joinPublicTable('${rData.code}', ${rData.wager || 100})" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-lg text-[11px] transition-all active:scale-95 shadow">
               შესვლა
@@ -800,9 +701,7 @@
 
     window.joinPublicTable = async function(code, wager) {
       if (!currentUser) return showToast("გთხოვთ გაიაროთ ავტორიზაცია");
-      if ((userStats.coins || 0) < wager) {
-        return showToast("არ გაქვთ საკმარისი ქოინები ამ მაგიდაზე სათამაშოდ! ❌");
-      }
+      if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები! ❌");
 
       roomCode = code;
       const ref = getRoomRef(roomCode);
@@ -812,6 +711,7 @@
         if (!snap.exists()) return showToast("მაგიდა აღარ არსებობს!");
 
         playerRole = 'player2';
+        await updateUserCoinsLocallyAndRemote(-wager);
         await updateDoc(ref, {
           player2Id: currentUser.uid,
           player2Name: playerName,
@@ -819,218 +719,25 @@
           status: 'playing'
         });
 
-        await updateUserCoinsLocallyAndRemote(-wager);
         listenToRoom(roomCode);
         showToast("წარმატებით შეუერთდით მაგიდას! 🎉");
       } catch (err) {
-        showToast("შეცდომა მაგიდაში შესვლისას: " + err.message);
+        showToast("შეცდომა: " + err.message);
       }
-    };
-
-    window.sendGameInvite = async function(friendUid, friendName) {
-      if (!currentUser) return showToast("გთხოვთ დაიცადოთ...");
-      const wager = parseInt(document.getElementById('table-wager-select').value) || 100;
-      if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
-
-      roomCode = generateCode();
-      playerRole = 'player1';
-
-      let initialRoomData = buildInitialRoomData(roomCode, wager);
-
-      try {
-        await updateUserCoinsLocallyAndRemote(-wager);
-        await setDoc(getRoomRef(roomCode), initialRoomData);
-        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'invites', friendUid), {
-          roomCode: roomCode,
-          fromName: playerName,
-          gameMode: initialRoomData.gameMode,
-          timestamp: Date.now()
-        });
-
-        document.getElementById('display-room-code').innerText = roomCode;
-        document.getElementById('waiting-room-wager').innerText = wager;
-        switchScreen('waiting-screen');
-        listenToRoom(roomCode);
-        showToast(`მოწვევა გაეგზავნა მეგობარს (${wager} ₾ ფსონით)`);
-      } catch (err) {
-        showToast("მოწვევის გაგზავნა ვერ მოხერხდა: " + err.message);
-      }
-    };
-
-    function listenToIncomingInvites(uid) {
-      if (invitesUnsubscribe) invitesUnsubscribe();
-      const inviteRef = doc(db, 'artifacts', appId, 'public', 'data', 'invites', uid);
-      
-      invitesUnsubscribe = onSnapshot(inviteRef, (docSnap) => {
-        if (!docSnap.exists()) return;
-        const inviteData = docSnap.data();
-        if (Date.now() - inviteData.timestamp < 30000) {
-          pendingInviteRoomCode = inviteData.roomCode;
-          document.getElementById('invite-text').innerText = `${inviteData.fromName} გიწვევს თამაშში (${inviteData.gameMode})!`;
-          document.getElementById('invite-modal').classList.remove('hidden');
-        }
-      });
-    }
-
-    window.acceptInvite = async function() {
-      document.getElementById('invite-modal').classList.add('hidden');
-      if (!pendingInviteRoomCode) return;
-
-      roomCode = pendingInviteRoomCode;
-      const ref = getRoomRef(roomCode);
-
-      try {
-        const snap = await getDoc(ref);
-        if (!snap.exists()) return showToast("ოთახი აღარ არსებობს");
-        const roomData = snap.data();
-        const wager = roomData.wager || 100;
-
-        if ((userStats.coins || 0) < wager) {
-          return showToast("არ გაქვთ საკმარისი ქოინები ამ მოწვევის მისაღებად! ❌");
-        }
-        
-        playerRole = 'player2';
-        await updateUserCoinsLocallyAndRemote(-wager);
-        await updateDoc(ref, {
-          player2Id: currentUser.uid,
-          player2Name: playerName,
-          player2Avatar: currentUserAvatar || "",
-          status: 'playing'
-        });
-
-        listenToRoom(roomCode);
-      } catch (err) {
-        showToast("ოთახში შესვლა ვერ მოხერხდა");
-      }
-    };
-
-    window.rejectInvite = function() {
-      document.getElementById('invite-modal').classList.add('hidden');
-      pendingInviteRoomCode = null;
-      showToast("მოწვევა უარყოფილია");
-    };
-
-    const ROUND_WORDS = {
-      1: [
-        { word: "მზე", category: "ბუნება" }, { word: "ვაშლი", category: "ხილი" },
-        { word: "დათვი", category: "ცხოველი" }, { word: "მგელი", category: "ცხოველი" },
-        { word: "წიგნი", category: "განათლება" }, { word: "მანქანა", category: "ტრანსპორტი" },
-        { word: "გული", category: "ორგანო" }, { word: "კატა", category: "ცხოველი" },
-        { word: "ძაღლი", category: "ცხოველი" }, { word: "პური", category: "საჭმელი" }
-      ],
-      2: [
-        { word: "ხაჭაპური", category: "საჭმელი" }, { word: "ხინკალი", category: "საჭმელი" },
-        { word: "კომპიუტერი", category: "ტექნიკა" }, { word: "თვითმფრინავი", category: "ტრანსპორტი" },
-        { word: "ვარსკვლავი", category: "კოსმოსი" }, { word: "ქუთაისი", category: "ქალაქი" },
-        { word: "თბილისი", category: "ქალაქი" }, { word: "ფეხბურთი", category: "სპორტი" },
-        { word: "ტელეფონი", category: "ტექნიკა" }, { word: "საზამთრო", category: "ხილი" }
-      ],
-      3: [
-        { word: "მყინვარწვერი", category: "ბუნება" }, { word: "ქარბორბალა", category: "კატაკლიზმა" },
-        { word: "მიწისძვრა", category: "კატაკლიზმა" }, { word: "პროგრამისტი", category: "პროფესია" },
-        { word: "ალგორითმი", category: "ტექნოლოგია" }, { word: "ინტერნეტი", category: "ტექნოლოგია" },
-        { word: "უნივერსიტეტი", category: "განათლება" }, { word: "კალათბურთი", category: "სპორტი" },
-        { word: "გალაქტიკა", category: "კოსმოსი" }, { word: "თირკმელი", category: "ორგანო" }
-      ]
     };
 
     function generateCode() {
       return Math.floor(1000 + Math.random() * 9000).toString();
     }
 
-    function maskWord(word) {
-      if (!word) return "";
-      if (word.length <= 2) return word;
-      return `${word[0]}${"*".repeat(word.length - 2)}${word[word.length - 1]}`;
-    }
-
     function getRoomRef(code) {
       return doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code);
     }
 
-    function getRoundTimeLimit(roundNum) {
-      if (roundNum === 1) return 15000;
-      if (roundNum === 2) return 20000;
-      if (roundNum === 3) return 39000;
-      return 15000;
-    }
-
     function generateSafePathMines() {
       let map = [];
-      for(let i = 0; i < 5; i++) {
-        map.push(Math.floor(Math.random() * 3));
-      }
+      for(let i = 0; i < 5; i++) map.push(Math.floor(Math.random() * 3));
       return map;
-    }
-
-    function generateBoxesForRound(roundNum) {
-      const counts = { 1: 2, 2: 6, 3: 8, 4: 10, 5: 4 };
-      const totalBoxes = counts[roundNum] || 2;
-      let boxes = [];
-      const possibleAmounts = [100, 500, 1000, 2500, 5000, 10000, 25000, 50000];
-      
-      for (let i = 0; i < totalBoxes; i++) {
-        const randomAmount = possibleAmounts[Math.floor(Math.random() * possibleAmounts.length)];
-        boxes.push({ id: i, amount: randomAmount, isOpen: false, openedBy: null });
-      }
-      return boxes;
-    }
-
-    function buildInitialRoomData(code, wager) {
-      const gameMode = document.getElementById('game-mode-select').value;
-      let initialRoomData = {
-        code: code,
-        gameMode: gameMode,
-        wager: wager,
-        player1Id: currentUser.uid,
-        player1Name: playerName,
-        player1Avatar: currentUserAvatar || "",
-        player2Id: null,
-        player2Name: null,
-        player2Avatar: "",
-        status: 'waiting',
-        createdAt: new Date().toISOString()
-      };
-
-      if (gameMode === 'words') {
-        const shuffled = [...ROUND_WORDS[1]].sort(() => 0.5 - Math.random());
-        const cards = shuffled.slice(0, 8).map((item, index) => ({
-          id: index,
-          word: item.word,
-          category: item.category,
-          masked: maskWord(item.word),
-          guessedMask: maskWord(item.word),
-          isGuessed: false,
-          guessedBy: null
-        }));
-        initialRoomData.currentTurn = 'player1';
-        initialRoomData.activeCardId = null;
-        initialRoomData.p1Score = 0;
-        initialRoomData.p2Score = 0;
-        initialRoomData.round = 1;
-        initialRoomData.turnDeadline = Date.now() + 15000;
-        initialRoomData.cards = cards;
-        initialRoomData.jheirani = { p1Choice: null, p2Choice: null, winner: null };
-      } else if (gameMode === 'safepath') {
-        initialRoomData.p1Pos = 0;
-        initialRoomData.p2Pos = 0;
-        initialRoomData.mineMap = generateSafePathMines();
-        initialRoomData.revealedMines = {};
-        initialRoomData.currentTurn = 'player1';
-      } else if (gameMode === 'boxes') {
-        initialRoomData.round = 1;
-        initialRoomData.boxes = generateBoxesForRound(1);
-        initialRoomData.p1Money = 0;
-        initialRoomData.p2Money = 0;
-        initialRoomData.showOpponentMoney = false;
-        initialRoomData.currentTurn = 'player1';
-        initialRoomData.jheirani = { p1Choice: null, p2Choice: null, winner: null };
-      } else if (gameMode === 'tictactoe') {
-        initialRoomData.board = Array(9).fill("");
-        initialRoomData.currentTurn = 'player1';
-        initialRoomData.jheirani = { p1Choice: null, p2Choice: null, winner: null };
-      }
-      return initialRoomData;
     }
 
     window.startAiGame = function() {
@@ -1042,21 +749,24 @@
       isAiMode = true;
       playerRole = 'player1';
 
-      let initialData = buildInitialRoomData('AI-ROOM', wager);
-      initialData.status = 'playing';
-      initialData.player2Name = `🤖 AI (${aiDifficulty.toUpperCase()})`;
-      initialData.player2Avatar = "";
+      gameState = {
+        code: 'AI-ROOM',
+        gameMode: 'safepath',
+        wager: wager,
+        player1Name: playerName,
+        player1Avatar: currentUserAvatar || "",
+        player2Name: `🤖 AI (${aiDifficulty.toUpperCase()})`,
+        player2Avatar: "",
+        status: 'playing',
+        currentTurn: 'player1',
+        p1Pos: 0,
+        p2Pos: 0,
+        mineMap: generateSafePathMines(),
+        revealedMines: {}
+      };
 
-      gameState = initialData;
-      if (initialData.gameMode === 'safepath') {
-        switchScreen('safepath-screen');
-      } else if (initialData.gameMode === 'boxes' || initialData.gameMode === 'tictactoe') {
-        initialData.status = 'jheirani';
-        switchScreen('jheirani-screen');
-      } else {
-        switchScreen('game-screen');
-      }
-      updateUI(gameState);
+      switchScreen('safepath-screen');
+      updateSafePathUI(gameState);
       showToast(`🤖 AI თამაში დაიწყო! (${wager} ₾ ფსონი)`);
     };
 
@@ -1067,7 +777,25 @@
 
       roomCode = generateCode();
       playerRole = 'player1';
-      let initialRoomData = buildInitialRoomData(roomCode, wager);
+
+      let initialRoomData = {
+        code: roomCode,
+        gameMode: 'safepath',
+        wager: wager,
+        player1Id: currentUser.uid,
+        player1Name: playerName,
+        player1Avatar: currentUserAvatar || "",
+        player2Id: null,
+        player2Name: null,
+        player2Avatar: "",
+        status: 'waiting',
+        p1Pos: 0,
+        p2Pos: 0,
+        mineMap: generateSafePathMines(),
+        revealedMines: {},
+        currentTurn: 'player1',
+        createdAt: new Date().toISOString()
+      };
 
       try {
         await updateUserCoinsLocallyAndRemote(-wager);
@@ -1078,17 +806,15 @@
         listenToRoom(roomCode);
         showToast("მაგიდა წარმატებით შეიქმნა და გამოქვეყნდა! 🎲");
       } catch (err) {
-        showToast("მაგიდის შექმნა ვერ მოხერხდა: " + err.message);
+        showToast("შეცდომა: " + err.message);
       }
     };
 
     window.cancelRoom = async function() {
       if (roomCode && !isAiMode) {
         const wager = gameState?.wager || 100;
-        await updateUserCoinsLocallyAndRemote(wager); // Refund wager on cancel
-        try {
-          await setDoc(getRoomRef(roomCode), { status: 'cancelled' });
-        } catch(e){}
+        await updateUserCoinsLocallyAndRemote(wager);
+        try { await setDoc(getRoomRef(roomCode), { status: 'cancelled' }); } catch(e){}
       }
       returnToLobby();
       showToast("მაგიდა გაუქმდა, ფსონი დაბრუნდა.");
@@ -1104,17 +830,13 @@
 
       try {
         const snap = await getDoc(ref);
-        if (!snap.exists()) return showToast("ოთახი ამ კოდით ვერ მოიძებნა!");
+        if (!snap.exists()) return showToast("ოთახი ვერ მოიძებნა!");
         
         const data = snap.data();
         const wager = data.wager || 100;
-        if ((userStats.coins || 0) < wager) {
-          return showToast("არ გაქვთ საკმარისი ქოინები ამ მაგიდაზე შესასვლელად! ❌");
-        }
+        if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
 
-        if (data.player2Id && data.player2Id !== currentUser.uid) {
-          return showToast("ეს ოთახი უკვე სავსეა!");
-        }
+        if (data.player2Id && data.player2Id !== currentUser.uid) return showToast("ეს ოთახი სავსეა!");
 
         playerRole = (data.player1Id === currentUser.uid) ? 'player1' : 'player2';
 
@@ -1140,13 +862,6 @@
       roomUnsubscribe = onSnapshot(getRoomRef(code), (snapshot) => {
         if (!snapshot.exists()) return;
         gameState = snapshot.data();
-        if (playerRole === 'player1') {
-          playerName = gameState.player1Name;
-          currentUserAvatar = gameState.player1Avatar || "";
-        } else if (gameState.player2Name) {
-          playerName = gameState.player2Name;
-          currentUserAvatar = gameState.player2Avatar || "";
-        }
         updateUI(gameState);
       });
     }
@@ -1167,11 +882,7 @@
 
       if (!isAiMode) {
         try {
-          await updateDoc(getRoomRef(roomCode), {
-            status: 'finished',
-            winner: winnerRole,
-            rewardsDistributed: true
-          });
+          await updateDoc(getRoomRef(roomCode), { status: 'finished', winner: winnerRole, rewardsDistributed: true });
         } catch(e){}
       }
     }
@@ -1181,137 +892,14 @@
         switchScreen('waiting-screen');
         return;
       }
-
       if (state.status === 'finished' && !state.rewardsDistributed) {
-        if (state.winner) {
-          handleGameFinish(state.winner);
-        }
+        if (state.winner) handleGameFinish(state.winner);
       }
 
-      if (state.gameMode === 'safepath') {
-        switchScreen('safepath-screen');
-        updateSafePathUI(state);
-        return;
-      }
-
-      if (state.gameMode === 'boxes') {
-        if (state.status === 'jheirani') {
-          switchScreen('jheirani-screen');
-          return;
-        }
-        switchScreen('boxes-screen');
-        updateBoxesUI(state);
-        return;
-      }
-
-      if (state.gameMode === 'tictactoe') {
-        if (state.status === 'jheirani') {
-          switchScreen('jheirani-screen');
-          return;
-        }
-        switchScreen('tictactoe-screen');
-        updateTicTacToeUI(state);
-        return;
-      }
-
-      if (state.status === 'jheirani') {
-        switchScreen('jheirani-screen');
-        return;
-      }
-
-      switchScreen('game-screen');
-      document.getElementById('p1-score').innerText = `${state.p1Score} ქულა`;
-      document.getElementById('p2-score').innerText = `${state.p2Score} ქულა`;
-      document.getElementById('p1-label').innerText = state.player1Name || "მოთამაშე 1";
-      document.getElementById('p2-label').innerText = state.player2Name || "მოწინააღმდეგე";
-      document.getElementById('round-indicator').innerText = `რაუნდი ${state.round} / 3 (ფსონი: ${state.wager || 100} ₾)`;
-
-      const p1Img = document.getElementById('game-p1-img');
-      const p1Icon = document.getElementById('game-p1-icon');
-      if (state.player1Avatar) {
-        p1Img.src = state.player1Avatar;
-        p1Img.classList.remove('hidden');
-        p1Icon.classList.add('hidden');
-      } else {
-        p1Img.classList.add('hidden');
-        p1Icon.classList.remove('hidden');
-      }
-
-      const p2Img = document.getElementById('game-p2-img');
-      const p2Icon = document.getElementById('game-p2-icon');
-      if (state.player2Avatar) {
-        p2Img.src = state.player2Avatar;
-        p2Img.classList.remove('hidden');
-        p2Icon.classList.add('hidden');
-      } else {
-        p2Img.classList.add('hidden');
-        p2Icon.classList.remove('hidden');
-      }
-
-      const isMyTurn = (state.currentTurn === playerRole);
-      const turnBanner = document.getElementById('turn-banner');
-
-      if (state.status === 'finished') {
-        turnBanner.innerText = `🏆 თამაში დასრულებულია! გამარჯვებულია: ${state.winner === playerRole ? 'თქვენ' : 'მოწინააღმდეგე'}`;
-        document.getElementById('guess-controls').classList.add('hidden');
-        clearInterval(clientTimerInterval);
-        return;
-      }
-
-      turnBanner.innerText = isMyTurn ? "შენი სვლაა!" : "მოწინააღმდეგის სვლაა...";
-      turnBanner.className = isMyTurn ? "text-sm md:text-base font-bold text-emerald-400 animate-pulse" : "text-sm md:text-base font-bold text-slate-400";
-
-      manageClientTimer(state);
-
-      const maskedDisplay = document.getElementById('masked-word-display');
-      const categoryDisplay = document.getElementById('word-category-display');
-      const guessControls = document.getElementById('guess-controls');
-
-      if (state.activeCardId !== null && state.cards[state.activeCardId]) {
-        const activeCard = state.cards[state.activeCardId];
-        maskedDisplay.innerText = activeCard.guessedMask || activeCard.masked;
-        categoryDisplay.innerText = `კატეგორია: ${activeCard.category}`;
-        if (isMyTurn && !activeCard.isGuessed) guessControls.classList.remove('hidden');
-        else guessControls.classList.add('hidden');
-      } else {
-        maskedDisplay.innerText = "აირჩიეთ ბარათი ქვემოთ";
-        categoryDisplay.innerText = "";
-        guessControls.classList.add('hidden');
-      }
-
-      const grid = document.getElementById('cards-grid');
-      grid.innerHTML = '';
-
-      state.cards.forEach((card) => {
-        const btn = document.createElement('button');
-        btn.disabled = !isMyTurn || card.isGuessed;
-        let bgColor = "bg-slate-800/90 border-slate-700 hover:border-indigo-500";
-        let statusIcon = '<i class="fa-solid fa-lock text-slate-500"></i>';
-
-        if (card.isGuessed) {
-          bgColor = card.guessedBy === playerRole ? "bg-emerald-900/40 border-emerald-500 text-emerald-300" : "bg-rose-900/40 border-rose-500 text-rose-300";
-          statusIcon = card.guessedBy === playerRole ? '<i class="fa-solid fa-circle-check text-emerald-400"></i>' : '<i class="fa-solid fa-circle-xmark text-rose-400"></i>';
-        } else if (state.activeCardId === card.id) {
-          bgColor = "bg-indigo-900/60 border-indigo-400 ring-2 ring-indigo-500";
-          statusIcon = '<i class="fa-solid fa-eye text-indigo-300"></i>';
-        }
-
-        btn.className = `card-tile p-4 rounded-2xl border flex flex-col items-center justify-center space-y-2 text-center min-h-[100px] ${bgColor}`;
-        btn.onclick = () => selectCard(card.id);
-        btn.innerHTML = `
-          <div class="text-xs uppercase tracking-wider text-slate-400 font-medium">${card.category}</div>
-          <div class="text-xl font-mono font-bold">${card.isGuessed ? card.word : (card.guessedMask || card.masked)}</div>
-          <div>${statusIcon}</div>
-        `;
-        grid.appendChild(btn);
-      });
-
-      if (isAiMode && state.currentTurn === 'player2' && state.status === 'playing') {
-        setTimeout(runAiWordTurn, 1200);
-      }
+      switchScreen('safepath-screen');
+      updateSafePathUI(state);
     }
 
-    // --- Safe Path Game Logic ---
     function updateSafePathUI(state) {
       document.getElementById('sp-p1-name').innerText = state.player1Name || "მოთამაშე 1";
       document.getElementById('sp-p2-name').innerText = state.player2Name || "მოწინააღმდეგე";
@@ -1320,35 +908,17 @@
 
       const p1Img = document.getElementById('sp-p1-img');
       const p1Icon = document.getElementById('sp-p1-icon');
-      if (state.player1Avatar) {
-        p1Img.src = state.player1Avatar;
-        p1Img.classList.remove('hidden');
-        p1Icon.classList.add('hidden');
-      } else {
-        p1Img.classList.add('hidden');
-        p1Icon.classList.remove('hidden');
-      }
+      if (state.player1Avatar) { p1Img.src = state.player1Avatar; p1Img.classList.remove('hidden'); p1Icon.classList.add('hidden'); }
 
       const p2Img = document.getElementById('sp-p2-img');
       const p2Icon = document.getElementById('sp-p2-icon');
-      if (state.player2Avatar) {
-        p2Img.src = state.player2Avatar;
-        p2Img.classList.remove('hidden');
-        p2Icon.classList.add('hidden');
-      } else {
-        p2Img.classList.add('hidden');
-        p2Icon.classList.remove('hidden');
-      }
+      if (state.player2Avatar) { p2Img.src = state.player2Avatar; p2Img.classList.remove('hidden'); p2Icon.classList.add('hidden'); }
 
       const isMyTurn = (state.currentTurn === playerRole);
       const statusEl = document.getElementById('sp-status');
 
       if (state.status === 'finished') {
-        if (state.winner === playerRole) {
-          statusEl.innerText = "🎉 შენ პირველმა მიაღწიე ფინიშს და მოიგე!";
-        } else {
-          statusEl.innerText = "😢 მოწინააღმდეგემ პირველმა მიაღწია ფინიშს!";
-        }
+        statusEl.innerText = state.winner === playerRole ? "🎉 შენ პირველმა მიაღწიე ფინიშს და მოიგე!" : "😢 მოწინააღმდეგემ პირველმა მიაღწია ფინიშს!";
         statusEl.className = "text-sm font-bold text-emerald-400 animate-pulse";
       } else {
         statusEl.innerText = isMyTurn ? `✨ შენი სვლაა (ფსონი: ${state.wager || 100} ₾)` : "⏳ მოწინააღმდეგის სვლაა...";
@@ -1402,7 +972,6 @@
 
           cellBtn.className = btnClass;
           cellBtn.onclick = () => makeSafePathMove(r, c);
-
           cellsContainer.appendChild(cellBtn);
         }
 
@@ -1410,12 +979,8 @@
 
         const indicators = document.createElement('div');
         indicators.className = "flex gap-1 w-12 justify-end";
-        if (state.p1Pos === r) {
-          indicators.innerHTML += `<span class="w-5 h-5 rounded-full bg-indigo-600 border border-indigo-300 text-[10px] font-extrabold flex items-center justify-center text-white shadow-md" title="P1">P1</span>`;
-        }
-        if (state.p2Pos === r) {
-          indicators.innerHTML += `<span class="w-5 h-5 rounded-full bg-pink-600 border border-pink-300 text-[10px] font-extrabold flex items-center justify-center text-white shadow-md" title="P2">P2</span>`;
-        }
+        if (state.p1Pos === r) indicators.innerHTML += `<span class="w-5 h-5 rounded-full bg-indigo-600 border border-indigo-300 text-[10px] font-extrabold flex items-center justify-center text-white shadow-md">P1</span>`;
+        if (state.p2Pos === r) indicators.innerHTML += `<span class="w-5 h-5 rounded-full bg-pink-600 border border-pink-300 text-[10px] font-extrabold flex items-center justify-center text-white shadow-md">P2</span>`;
         rowWrapper.appendChild(indicators);
 
         boardEl.appendChild(rowWrapper);
@@ -1436,12 +1001,10 @@
 
       const myPosKey = playerRole === 'player1' ? 'p1Pos' : 'p2Pos';
       let currentPos = gameState[myPosKey];
-
       if (row !== currentPos) return;
 
       const mineMap = gameState.mineMap;
       const isMine = (mineMap[row] === col);
-
       const nextTurn = isAiMode ? 'player2' : (playerRole === 'player1' ? 'player2' : 'player1');
       const revealedMines = gameState.revealedMines || {};
 
@@ -1481,13 +1044,12 @@
       let chosenCol = Math.floor(Math.random() * 3);
       if (aiDifficulty === 'hard' || aiDifficulty === 'medium') {
         let safeCols = [0, 1, 2].filter(c => c !== mineMap[currentPos]);
-        if (safeCols.length > 0 && Math.random() < (aiDifficulty === 'hard' ? 0.85 : 0.55)) {
+        if (safeCols.length > 0 && Math.random() < 0.8) {
           chosenCol = safeCols[Math.floor(Math.random() * safeCols.length)];
         }
       }
 
       const isMine = (mineMap[currentPos] === chosenCol);
-
       if (isMine) {
         revealedMines[`${currentPos}-${chosenCol}`] = true;
         gameState.revealedMines = revealedMines;
@@ -1509,613 +1071,12 @@
       updateUI(gameState);
     }
 
-    // --- Tic-Tac-Toe & Boxes & Words helpers ---
-    function checkTicTacToeWinner(board) {
-      const lines = [
-        [0,1,2], [3,4,5], [6,7,8],
-        [0,3,6], [1,4,7], [2,5,8],
-        [0,4,8], [2,4,6]
-      ];
-      for (let line of lines) {
-        const [a, b, c] = line;
-        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-          return { winner: board[a], line: line };
-        }
-      }
-      if (board.every(cell => cell !== "")) return { winner: "tie", line: null };
-      return { winner: null, line: null };
-    }
-
-    function updateTicTacToeUI(state) {
-      document.getElementById('ttt-p1-name').innerText = state.player1Name || "მოთამაშე 1";
-      document.getElementById('ttt-p2-name').innerText = state.player2Name || "მოწინააღმდეგე";
-
-      const p1Img = document.getElementById('ttt-p1-img');
-      const p1Icon = document.getElementById('ttt-p1-icon');
-      if (state.player1Avatar) {
-        p1Img.src = state.player1Avatar;
-        p1Img.classList.remove('hidden');
-        p1Icon.classList.add('hidden');
-      } else {
-        p1Img.classList.add('hidden');
-        p1Icon.classList.remove('hidden');
-      }
-
-      const p2Img = document.getElementById('ttt-p2-img');
-      const p2Icon = document.getElementById('ttt-p2-icon');
-      if (state.player2Avatar) {
-        p2Img.src = state.player2Avatar;
-        p2Img.classList.remove('hidden');
-        p2Icon.classList.add('hidden');
-      } else {
-        p2Img.classList.add('hidden');
-        p2Icon.classList.remove('hidden');
-      }
-
-      const isMyTurn = (state.currentTurn === playerRole);
-      const statusEl = document.getElementById('ttt-status');
-      const winResult = checkTicTacToeWinner(state.board);
-      const winningLine = winResult.line || [];
-
-      if (state.status === 'finished') {
-        if (state.winner === 'tie') {
-          statusEl.innerText = "🤝 ფრე!";
-        } else if (state.winner === playerRole) {
-          statusEl.innerText = "🎉 შენ მოიგე!";
-        } else {
-          statusEl.innerText = "😢 მოწინააღმდეგემ მოიგო!";
-        }
-        statusEl.className = "text-sm font-bold text-emerald-400";
-      } else {
-        statusEl.innerText = isMyTurn ? "შენი სვლაა!" : "მოწინააღმდეგის სვლაა...";
-        statusEl.className = isMyTurn ? "text-sm font-bold text-emerald-400 animate-pulse" : "text-sm font-bold text-slate-400";
-      }
-
-      for (let i = 0; i < 9; i++) {
-        const cellBtn = document.getElementById(`ttt-cell-${i}`);
-        const val = state.board ? state.board[i] : "";
-        cellBtn.innerText = val;
-
-        let isWinningCell = winningLine.includes(i);
-        let baseClasses = "bg-slate-800/90 border rounded-2xl text-4xl font-black flex items-center justify-center transition-all active:scale-95 min-h-[80px] shadow-sm";
-
-        if (isWinningCell) {
-          baseClasses += " bg-emerald-600/40 border-emerald-400 ring-4 ring-emerald-500/50 text-emerald-200 animate-bounce shadow-emerald-500/30 shadow-lg";
-        } else {
-          baseClasses += ` border-slate-700 hover:bg-slate-700 ${val === 'X' ? 'text-indigo-400' : 'text-pink-400'}`;
-        }
-
-        cellBtn.className = baseClasses;
-        cellBtn.disabled = !isMyTurn || val !== "" || state.status === 'finished';
-      }
-
-      if (isAiMode && state.currentTurn === 'player2' && state.status === 'playing') {
-        setTimeout(runAiTicTacToeTurn, 1000);
-      }
-    }
-
-    window.makeTttMove = async function(index) {
-      if (!gameState || gameState.currentTurn !== playerRole || gameState.status === 'finished') return;
-      if (gameState.board[index] !== "") return;
-
-      const board = [...gameState.board];
-      const mySymbol = playerRole === 'player1' ? 'X' : 'O';
-      board[index] = mySymbol;
-
-      let winResult = checkTicTacToeWinner(board);
-      let newStatus = gameState.status;
-      let winningPlayer = gameState.winner || null;
-
-      if (winResult.winner) {
-        newStatus = 'finished';
-        if (winResult.winner === 'tie') {
-          winningPlayer = 'tie';
-        } else {
-          winningPlayer = (winResult.winner === mySymbol ? playerRole : (playerRole === 'player1' ? 'player2' : 'player1'));
-          handleGameFinish(winningPlayer);
-        }
-      }
-
-      const nextTurn = isAiMode ? 'player2' : (playerRole === 'player1' ? 'player2' : 'player1');
-
-      gameState.board = board;
-      gameState.currentTurn = newStatus === 'finished' ? playerRole : nextTurn;
-      gameState.status = newStatus;
-      gameState.winner = winningPlayer;
-
-      if (!isAiMode) {
-        await updateDoc(getRoomRef(roomCode), gameState);
-      } else {
-        updateUI(gameState);
-      }
-    };
-
-    function runAiTicTacToeTurn() {
-      if (!gameState || gameState.currentTurn !== 'player2' || gameState.status === 'finished') return;
-
-      const board = [...gameState.board];
-      const emptyIndices = board.map((val, idx) => val === "" ? idx : null).filter(val => val !== null);
-      if (emptyIndices.length === 0) return;
-
-      let chosenIndex = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
-      if (aiDifficulty === 'hard' || aiDifficulty === 'medium') {
-        for (let idx of emptyIndices) {
-          let testBoard = [...board];
-          testBoard[idx] = 'O';
-          if (checkTicTacToeWinner(testBoard).winner === 'O') {
-            chosenIndex = idx;
-            break;
-          }
-        }
-      }
-
-      board[chosenIndex] = 'O';
-      let winResult = checkTicTacToeWinner(board);
-      let newStatus = gameState.status;
-      let winningPlayer = gameState.winner || null;
-
-      if (winResult.winner) {
-        newStatus = 'finished';
-        if (winResult.winner === 'tie') {
-          winningPlayer = 'tie';
-        } else {
-          winningPlayer = 'player2';
-          handleGameFinish('player2');
-        }
-      }
-
-      gameState.board = board;
-      gameState.currentTurn = newStatus === 'finished' ? 'player2' : 'player1';
-      gameState.status = newStatus;
-      gameState.winner = winningPlayer;
-
-      updateUI(gameState);
-    }
-
-    function updateBoxesUI(state) {
-      const counts = { 1: 2, 2: 6, 3: 8, 4: 10, 5: 4 };
-      document.getElementById('boxes-round-title').innerText = `რაუნდი ${state.round} / 5 (ყუთები: ${counts[state.round] || 2})`;
-      
-      const myMoney = playerRole === 'player1' ? (state.p1Money || 0) : (state.p2Money || 0);
-      const oppMoney = playerRole === 'player1' ? (state.p2Money || 0) : (state.p1Money || 0);
-
-      document.getElementById('my-box-balance').innerText = `${myMoney} ₾`;
-      
-      const oppContainer = document.getElementById('opponent-box-balance-container');
-      if (state.showOpponentMoney || state.status === 'finished') {
-        oppContainer.classList.remove('hidden');
-        document.getElementById('opponent-box-balance').innerText = `${oppMoney} ₾`;
-      } else {
-        oppContainer.classList.add('hidden');
-      }
-
-      const isMyTurn = (state.currentTurn === playerRole);
-      const turnBanner = document.getElementById('boxes-turn-banner');
-
-      if (state.status === 'finished') {
-        const p1Won = state.p1Money > state.p2Money;
-        const winnerText = p1Won ? `${state.player1Name}მ მოიგო!` : "მოწინააღმდეგემ მოიგო!";
-        turnBanner.innerText = `🏆 თამაში დასრულდა! ${winnerText}`;
-        turnBanner.className = "text-base font-bold text-emerald-400";
-      } else {
-        turnBanner.innerText = isMyTurn ? "შენი სვლაა — აირჩიე ყუთი!" : "მოწინააღმდეგის სვლაა...";
-        turnBanner.className = isMyTurn ? "text-base font-bold text-emerald-400 animate-pulse" : "text-base font-bold text-slate-400";
-      }
-
-      const grid = document.getElementById('boxes-grid');
-      grid.innerHTML = '';
-
-      if (state.boxes) {
-        state.boxes.forEach(box => {
-          const btn = document.createElement('button');
-          btn.disabled = !isMyTurn || box.isOpen || state.status === 'finished';
-          
-          let bgClass = "bg-slate-800 border-slate-700 hover:border-emerald-500 hover:bg-slate-700";
-          let content = `<i class="fa-solid fa-box-open text-3xl text-emerald-400 mb-1"></i><span class="text-xs font-bold text-slate-300">ყუთი #${box.id + 1}</span>`;
-
-          if (box.isOpen) {
-            bgClass = "bg-slate-900/50 border-slate-800 text-slate-500 opacity-70";
-            content = `<i class="fa-solid fa-box text-2xl text-slate-600 mb-1"></i><span class="text-xs font-mono font-bold text-amber-400">${box.amount} ₾</span>`;
-          }
-
-          btn.className = `p-4 rounded-2xl border flex flex-col items-center justify-center transition-all active:scale-95 min-h-[100px] ${bgClass}`;
-          btn.onclick = () => selectBox(box.id);
-          btn.innerHTML = content;
-          grid.appendChild(btn);
-        });
-      }
-
-      if (isAiMode && state.currentTurn === 'player2' && state.status === 'playing') {
-        setTimeout(runAiBoxesTurn, 1500);
-      }
-    }
-
-    window.selectBox = async function(boxId) {
-      if (!gameState || gameState.currentTurn !== playerRole || gameState.status === 'finished') return;
-      
-      const boxes = [...gameState.boxes];
-      const targetBox = boxes[boxId];
-      if (targetBox.isOpen) return;
-
-      targetBox.isOpen = true;
-      targetBox.openedBy = playerRole;
-      const earnedAmount = targetBox.amount;
-
-      let p1m = gameState.p1Money || 0;
-      let p2m = gameState.p2Money || 0;
-
-      if (playerRole === 'player1') p1m += earnedAmount;
-      else p2m += earnedAmount;
-
-      showToast(` გახსენი ყუთი #${boxId + 1} და მოიგე ${earnedAmount} ₾!`);
-
-      const allOpened = boxes.every(b => b.isOpen);
-      let nextRound = gameState.round;
-      let newStatus = gameState.status;
-      let nextBoxes = boxes;
-      let showOppMoney = false;
-      let winnerRole = null;
-
-      if (allOpened) {
-        if (gameState.round < 5) {
-          nextRound = gameState.round + 1;
-          nextBoxes = generateBoxesForRound(nextRound);
-          showOppMoney = true;
-        } else {
-          newStatus = 'finished';
-          showOppMoney = true;
-          winnerRole = p1m > p2m ? 'player1' : 'player2';
-          handleGameFinish(winnerRole);
-        }
-      }
-
-      const nextTurn = isAiMode ? 'player2' : (playerRole === 'player1' ? 'player2' : 'player1');
-
-      gameState.boxes = nextBoxes;
-      gameState.p1Money = p1m;
-      gameState.p2Money = p2m;
-      gameState.round = nextRound;
-      gameState.status = newStatus;
-      gameState.winner = winnerRole;
-      gameState.currentTurn = showOppMoney ? playerRole : nextTurn;
-      gameState.showOpponentMoney = showOppMoney;
-
-      if (!isAiMode) {
-        await updateDoc(getRoomRef(roomCode), {
-          boxes: nextBoxes,
-          p1Money: p1m,
-          p2Money: p2m,
-          round: nextRound,
-          status: newStatus,
-          winner: winnerRole,
-          currentTurn: showOppMoney ? playerRole : nextTurn,
-          showOpponentMoney: showOppMoney
-        });
-      } else {
-        updateUI(gameState);
-      }
-    };
-
-    function runAiBoxesTurn() {
-      if (!gameState || gameState.currentTurn !== 'player2' || gameState.status === 'finished') return;
-
-      const unopenedBoxes = gameState.boxes.filter(b => !b.isOpen);
-      if (unopenedBoxes.length === 0) return;
-
-      const randomBox = unopenedBoxes[Math.floor(Math.random() * unopenedBoxes.length)];
-      randomBox.isOpen = true;
-      randomBox.openedBy = 'player2';
-
-      gameState.p2Money = (gameState.p2Money || 0) + randomBox.amount;
-      showToast(`🤖 AI-მ გახსნა ყუთი და მოიგო ${randomBox.amount} ₾!`);
-
-      const allOpened = gameState.boxes.every(b => b.isOpen);
-      let showOppMoney = false;
-
-      if (allOpened) {
-        if (gameState.round < 5) {
-          gameState.round += 1;
-          gameState.boxes = generateBoxesForRound(gameState.round);
-          showOppMoney = true;
-        } else {
-          gameState.status = 'finished';
-          showOppMoney = true;
-          gameState.winner = gameState.p1Money > gameState.p2Money ? 'player1' : 'player2';
-          handleGameFinish(gameState.winner);
-        }
-      }
-
-      gameState.currentTurn = showOppMoney ? 'player2' : 'player1';
-      gameState.showOpponentMoney = showOppMoney;
-
-      updateUI(gameState);
-    }
-
-    function manageClientTimer(state) {
-      clearInterval(clientTimerInterval);
-      const timerBadge = document.getElementById('timer-badge');
-
-      if (!state.turnDeadline || state.status === 'finished') {
-        timerBadge.innerText = "⏱ --";
-        return;
-      }
-
-      const updateTimerDisplay = async () => {
-        const remaining = Math.max(0, Math.floor((state.turnDeadline - Date.now()) / 1000));
-        timerBadge.innerText = `⏱ ${remaining}წმ`;
-
-        if (remaining <= 0) {
-          clearInterval(clientTimerInterval);
-          if (state.currentTurn && state.status === 'playing') {
-            await handleTimeOut(state);
-          }
-        }
-      };
-
-      updateTimerDisplay();
-      clientTimerInterval = setInterval(updateTimerDisplay, 1000);
-    }
-
-    async function handleTimeOut(state) {
-      if (state.status === 'finished') return;
-      
-      const nextTurn = (state.currentTurn === 'player1') ? 'player2' : 'player1';
-      const timeLimit = getRoundTimeLimit(state.round);
-
-      if (isAiMode) {
-        gameState.currentTurn = nextTurn;
-        gameState.activeCardId = null;
-        gameState.turnDeadline = Date.now() + timeLimit;
-        updateUI(gameState);
-        showToast("⏱ დრო ამოიწურა! სვლა გადავიდა.");
-      } else {
-        try {
-          await updateDoc(getRoomRef(roomCode), {
-            currentTurn: nextTurn,
-            activeCardId: null,
-            turnDeadline: Date.now() + timeLimit
-          });
-          showToast("⏱ დრო ამოიწურა! სვლა გადავიდა.");
-        } catch (err) {}
-      }
-    }
-
-    function runAiWordTurn() {
-      if (!gameState || gameState.status !== 'playing' || gameState.currentTurn !== 'player2') return;
-
-      const availableCards = gameState.cards.filter(c => !c.isGuessed);
-      if (availableCards.length === 0) return;
-
-      const randomCard = availableCards[Math.floor(Math.random() * availableCards.length)];
-      gameState.activeCardId = randomCard.id;
-
-      let willGuessCorrectly = false;
-      if (aiDifficulty === 'easy') willGuessCorrectly = Math.random() < 0.3;
-      else if (aiDifficulty === 'medium') willGuessCorrectly = Math.random() < 0.6;
-      else willGuessCorrectly = Math.random() < 0.9;
-
-      setTimeout(() => {
-        const updatedCards = [...gameState.cards];
-        let p2s = gameState.p2Score;
-        let nextTurn = 'player2';
-
-        if (willGuessCorrectly) {
-          updatedCards[randomCard.id].isGuessed = true;
-          updatedCards[randomCard.id].guessedBy = 'player2';
-          updatedCards[randomCard.id].guessedMask = randomCard.word;
-          p2s += 10;
-          showToast("🤖 AI-მ სწორად გამოიცნო სიტყვა!");
-          nextTurn = 'player2';
-        } else {
-          showToast("🤖 AI-მ ვერ გამოიცნო სიტყვა. სვლა გადმოგეცა!");
-          nextTurn = 'player1';
-        }
-
-        const allGuessed = updatedCards.every(c => c.isGuessed);
-        let nextRound = gameState.round;
-        let newStatus = gameState.status;
-        let nextCards = updatedCards;
-        let winnerRole = null;
-
-        if (allGuessed) {
-          if (gameState.round < 3) {
-            nextRound = gameState.round + 1;
-            const pool = ROUND_WORDS[nextRound];
-            const shuffled = [...pool].sort(() => 0.5 - Math.random());
-            nextCards = shuffled.slice(0, 8).map((item, index) => {
-              const m = maskWord(item.word);
-              return { id: index, word: item.word, category: item.category, masked: m, guessedMask: m, isGuessed: false, guessedBy: null };
-            });
-          } else {
-            newStatus = 'finished';
-            winnerRole = gameState.p1Score > p2s ? 'player1' : 'player2';
-            handleGameFinish(winnerRole);
-          }
-        }
-
-        gameState.cards = nextCards;
-        gameState.p2Score = p2s;
-        gameState.currentTurn = nextTurn;
-        gameState.activeCardId = null;
-        gameState.round = nextRound;
-        gameState.status = newStatus;
-        gameState.winner = winnerRole;
-        gameState.turnDeadline = Date.now() + getRoundTimeLimit(nextRound);
-
-        if (!isAiMode) {
-          updateDoc(getRoomRef(roomCode), gameState);
-        } else {
-          updateUI(gameState);
-        }
-      }, 1500);
-    }
-
-    window.playJheirani = async function(choice) {
-      if (!gameState || gameState.status !== 'jheirani') return;
-      
-      if (isAiMode) {
-        const choices = ['rock', 'paper', 'scissors'];
-        const aiChoice = choices[Math.floor(Math.random() * choices.length)];
-        let winnerRole = 'player1';
-
-        if (choice === aiChoice) winnerRole = 'player1';
-        else if ((choice === 'rock' && aiChoice === 'scissors') || (choice === 'scissors' && aiChoice === 'paper') || (choice === 'paper' && aiChoice === 'rock')) {
-          winnerRole = 'player1';
-        } else {
-          winnerRole = 'player2';
-        }
-
-        gameState.status = 'playing';
-        gameState.currentTurn = winnerRole;
-        gameState.turnDeadline = Date.now() + getRoundTimeLimit(1);
-        gameState.jheirani = { p1Choice: choice, p2Choice: aiChoice, winner: winnerRole };
-        updateUI(gameState);
-        showToast(`ჯეირანი: AI-მ აირჩია ${aiChoice}. დაიწყო ${winnerRole === 'player1' ? 'თქვენი' : 'AI-ს'} სვლით!`);
-        return;
-      }
-
-      const updatePayload = {};
-      if (playerRole === 'player1') updatePayload["jheirani.p1Choice"] = choice;
-      if (playerRole === 'player2') updatePayload["jheirani.p2Choice"] = choice;
-
-      await updateDoc(getRoomRef(roomCode), updatePayload);
-      
-      setTimeout(async () => {
-        const snap = await getDoc(getRoomRef(roomCode));
-        if (!snap.exists()) return;
-        const d = snap.data();
-        const j = d.jheirani;
-
-        if (j.p1Choice && j.p2Choice && d.status === 'jheirani') {
-          let winnerRole = 'player1';
-          if (j.p1Choice === j.p2Choice) {
-            winnerRole = 'player1';
-          } else if (
-            (j.p1Choice === 'rock' && j.p2Choice === 'scissors') ||
-            (j.p1Choice === 'scissors' && j.p2Choice === 'paper') ||
-            (j.p1Choice === 'paper' && j.p2Choice === 'rock')
-          ) {
-            winnerRole = 'player1';
-          } else {
-            winnerRole = 'player2';
-          }
-
-          await updateDoc(getRoomRef(roomCode), {
-            status: 'playing',
-            currentTurn: winnerRole,
-            turnDeadline: Date.now() + getRoundTimeLimit(1),
-            "jheirani.winner": winnerRole
-          });
-        }
-      }, 1000);
-    };
-
-    window.selectCard = async function(cardId) {
-      if (!gameState || gameState.currentTurn !== playerRole) return;
-      if (gameState.cards[cardId].isGuessed) return;
-      
-      gameState.activeCardId = cardId;
-      if (!isAiMode) {
-        await updateDoc(getRoomRef(roomCode), { activeCardId: cardId });
-      } else {
-        updateUI(gameState);
-      }
-    };
-
-    window.submitGuess = async function() {
-      if (!gameState || gameState.currentTurn !== playerRole) {
-        showToast("ახლა თქვენი სვლა არ არის!");
-        return;
-      }
-      if (gameState.activeCardId === null) return;
-
-      const input = document.getElementById('guess-input');
-      const guess = input.value.trim().toLowerCase();
-      input.value = '';
-      if (!guess) return showToast("ჩაწერეთ სიტყვა!");
-
-      const activeCard = gameState.cards[gameState.activeCardId];
-      const targetWord = activeCard.word.toLowerCase();
-      const isCorrect = (guess === targetWord);
-
-      const updatedCards = [...gameState.cards];
-      let p1s = gameState.p1Score, p2s = gameState.p2Score;
-      let nextTurn = playerRole;
-
-      if (isCorrect) {
-        updatedCards[gameState.activeCardId].isGuessed = true;
-        updatedCards[gameState.activeCardId].guessedBy = playerRole;
-        updatedCards[gameState.activeCardId].guessedMask = activeCard.word;
-        if (playerRole === 'player1') p1s += 10; else p2s += 10;
-        showToast("სწორია! +10 ქულა 🎉");
-        nextTurn = playerRole; 
-      } else {
-        let maskArr = (activeCard.guessedMask || activeCard.masked).split("");
-        for (let i = 0; i < targetWord.length; i++) {
-          if (i < guess.length && guess[i] === targetWord[i]) maskArr[i] = targetWord[i];
-        }
-        updatedCards[gameState.activeCardId].guessedMask = maskArr.join("");
-        showToast("არასწორია! სვლა გადადის ❌");
-        nextTurn = isAiMode ? 'player2' : ((playerRole === 'player1') ? 'player2' : 'player1');
-      }
-
-      const allGuessed = updatedCards.every(c => c.isGuessed);
-      let nextRound = gameState.round;
-      let newStatus = gameState.status;
-      let nextCards = updatedCards;
-      let winnerRole = null;
-
-      if (allGuessed) {
-        if (gameState.round < 3) {
-          nextRound = gameState.round + 1;
-          const pool = ROUND_WORDS[nextRound];
-          const shuffled = [...pool].sort(() => 0.5 - Math.random());
-          nextCards = shuffled.slice(0, 8).map((item, index) => {
-            const m = maskWord(item.word);
-            return { id: index, word: item.word, category: item.category, masked: m, guessedMask: m, isGuessed: false, guessedBy: null };
-          });
-        } else {
-          newStatus = 'finished';
-          winnerRole = p1s > p2s ? 'player1' : 'player2';
-          handleGameFinish(winnerRole);
-        }
-      }
-
-      const timeLimit = getRoundTimeLimit(nextRound);
-
-      gameState.cards = nextCards;
-      gameState.p1Score = p1s;
-      gameState.p2Score = p2s;
-      gameState.currentTurn = nextTurn;
-      gameState.activeCardId = null;
-      gameState.round = nextRound;
-      gameState.status = newStatus;
-      gameState.winner = winnerRole;
-      gameState.turnDeadline = Date.now() + timeLimit;
-
-      if (!isAiMode) {
-        await updateDoc(getRoomRef(roomCode), gameState);
-      } else {
-        updateUI(gameState);
-      }
-    };
-
-    window.copyRoomCode = function() {
-      if (!roomCode) return;
-      navigator.clipboard.writeText(roomCode);
-      showToast("კოდი დაკოპირებულია!");
-    };
-
     window.returnToLobby = function() {
-      if (roomUnsubscribe) {
-        roomUnsubscribe();
-        roomUnsubscribe = null;
-      }
+      if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
       roomCode = null;
       playerRole = null;
       gameState = null;
       isAiMode = false;
-      if (clientTimerInterval) clearInterval(clientTimerInterval);
       switchScreen('lobby-screen');
     };
 
@@ -2123,12 +1084,7 @@
       document.getElementById('auth-screen').classList.add('hidden');
       document.getElementById('lobby-screen').classList.add('hidden');
       document.getElementById('waiting-screen').classList.add('hidden');
-      document.getElementById('jheirani-screen').classList.add('hidden');
-      document.getElementById('game-screen').classList.add('hidden');
       document.getElementById('safepath-screen').classList.add('hidden');
-      document.getElementById('boxes-screen').classList.add('hidden');
-      document.getElementById('tictactoe-screen').classList.add('hidden');
-      document.getElementById('invite-modal').classList.add('hidden');
       document.getElementById(screenId).classList.remove('hidden');
     }
   </script>
