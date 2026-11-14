@@ -197,7 +197,7 @@
         </div>
       </div>
       <div class="pt-4 border-t border-slate-800/80 text-center">
-        <span class="text-[10px] text-slate-500 font-mono">Arcade Hub v2.9.3</span>
+        <span class="text-[10px] text-slate-500 font-mono">Arcade Hub v2.9.6</span>
       </div>
     </div>
 
@@ -669,6 +669,7 @@
     let isAiMode = false;
     let isSoundMuted = false;
     let wordTimerInterval = null;
+    let lastWordTurn = null;
     let timeLeft = 15;
     let pendingGameData = null;
     let incomingInviteData = null;
@@ -1023,7 +1024,7 @@
       let currentFriends = userStats.friends || [];
       if (currentFriends.includes(targetUid)) return showToast("ეს მომხმარებელი უკვე შენი მეგობარია!");
 
-      // Mutual Friendship Update (Both users get each other in friends)
+      // Mutual Friendship Update
       currentFriends.push(targetUid);
       userStats.friends = currentFriends;
       await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), {
@@ -1075,11 +1076,10 @@
       }
     }
 
-    // Open Friend Game & Wager Picker Modal & Close Friends Modal
     window.openFriendGameInviteModal = function(friendUid, friendName) {
       targetFriendForInvite = { uid: friendUid, name: friendName || 'მეგობარი' };
       document.getElementById('invite-friend-title').innerText = `მოიწვიე ${targetFriendForInvite.name} თამაშში`;
-      closeFriendsModal(); // Automatically close friends modal so picker opens cleanly
+      closeFriendsModal();
       document.getElementById('friend-game-invite-modal').classList.remove('hidden');
     };
 
@@ -1088,7 +1088,6 @@
       targetFriendForInvite = null;
     };
 
-    // Confirm and Send Game Invite to Friend
     window.confirmAndSendInvite = async function() {
       if (!targetFriendForInvite) {
         showToast("მეგობარი არ არის მითითებული!");
@@ -1290,6 +1289,7 @@
         const shuffled = [...ROUND_WORDS[1]].sort(() => 0.5 - Math.random());
         initialData.cards = shuffled.slice(0, 8).map((item, i) => ({ id: i, word: item.word, category: item.category, masked: maskWord(item.word), guessedMask: maskWord(item.word), isGuessed: false }));
         initialData.p1Score = 0; initialData.p2Score = 0; initialData.round = 1; initialData.activeCardId = null;
+        lastWordTurn = null;
       } else if (gameMode === 'boxes') {
         initialData.p1Money = 0; initialData.p2Money = 0; initialData.round = 1;
         initialData.boxes = [ {id:0, amount:500, isOpen:false}, {id:1, amount:1000, isOpen:false}, {id:2, amount:5000, isOpen:false}, {id:3, amount:10000, isOpen:false} ];
@@ -1465,25 +1465,65 @@
       const isMyTurn = (state.currentTurn === playerRole);
       document.getElementById('turn-banner').innerText = isMyTurn ? "შენი სვლაა!" : "მოწინააღმდეგის სვლაა...";
 
-      if (wordTimerInterval) clearInterval(wordTimerInterval);
-      timeLeft = 15;
-
       const timerEl = document.getElementById('word-timer');
-      timerEl.innerText = `⏱️ ${timeLeft} წმ`;
 
+      // Robust timer management for turns
       if (isMyTurn && state.status !== 'finished') {
-        wordTimerInterval = setInterval(() => {
-          timeLeft--;
+        if (lastWordTurn !== state.currentTurn) {
+          lastWordTurn = state.currentTurn;
+          if (wordTimerInterval) clearInterval(wordTimerInterval);
+          timeLeft = 15;
           timerEl.innerText = `⏱️ ${timeLeft} წმ`;
-          if (timeLeft <= 0) {
-            clearInterval(wordTimerInterval);
-            showToast("⏱️ დრო ამოიწურა! სვლა გადავიდა მოწინააღმდეგეზე.");
-            gameState.currentTurn = playerRole === 'player1' ? 'player2' : 'player1';
-            gameState.activeCardId = null;
-            if (!isAiMode && roomCode) updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
-            else updateWordGameUI(gameState);
+
+          wordTimerInterval = setInterval(() => {
+            timeLeft--;
+            timerEl.innerText = `⏱️ ${timeLeft} წმ`;
+            if (timeLeft <= 0) {
+              clearInterval(wordTimerInterval);
+              wordTimerInterval = null;
+              showToast("⏱️ დრო ამოიწურა! სვლა გადავიდა მოწინააღმდეგეზე.");
+              gameState.currentTurn = (gameState.currentTurn === 'player1') ? 'player2' : 'player1';
+              gameState.activeCardId = null;
+              lastWordTurn = gameState.currentTurn;
+              if (!isAiMode && roomCode) {
+                updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
+              } else {
+                updateWordGameUI(gameState);
+              }
+            }
+          }, 1000);
+        } else {
+          // If it's still our turn (e.g. after selecting a card), make sure interval runs if not active
+          if (!wordTimerInterval) {
+            timerEl.innerText = `⏱️ ${timeLeft} წმ`;
+            wordTimerInterval = setInterval(() => {
+              timeLeft--;
+              timerEl.innerText = `⏱️ ${timeLeft} წმ`;
+              if (timeLeft <= 0) {
+                clearInterval(wordTimerInterval);
+                wordTimerInterval = null;
+                showToast("⏱️ დრო ამოიწურა! სვლა გადავიდა მოწინააღმდეგეზე.");
+                gameState.currentTurn = (gameState.currentTurn === 'player1') ? 'player2' : 'player1';
+                gameState.activeCardId = null;
+                lastWordTurn = gameState.currentTurn;
+                if (!isAiMode && roomCode) {
+                  updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode), gameState);
+                } else {
+                  updateWordGameUI(gameState);
+                }
+              }
+            }, 1000);
+          } else {
+            timerEl.innerText = `⏱️ ${timeLeft} წმ`;
           }
-        }, 1000);
+        }
+      } else {
+        if (wordTimerInterval) {
+          clearInterval(wordTimerInterval);
+          wordTimerInterval = null;
+        }
+        lastWordTurn = state.currentTurn;
+        timerEl.innerText = `⏱️ 15 წმ`;
       }
 
       const maskedDisplay = document.getElementById('masked-word-display');
@@ -1512,7 +1552,7 @@
 
       if (isAiMode && state.currentTurn === 'player2' && state.status !== 'finished') {
         setTimeout(() => {
-          if (wordTimerInterval) clearInterval(wordTimerInterval);
+          if (wordTimerInterval) { clearInterval(wordTimerInterval); wordTimerInterval = null; }
           const unguesses = state.cards.filter(c => !c.isGuessed);
           if (unguesses.length > 0) {
             const aiCard = unguesses[Math.floor(Math.random() * unguesses.length)];
@@ -1536,6 +1576,7 @@
           }
 
           state.currentTurn = 'player1';
+          lastWordTurn = state.currentTurn;
           updateWordGameUI(state);
         }, 1500);
       }
@@ -1553,7 +1594,7 @@
       const guess = input.value.trim().toLowerCase();
       input.value = '';
       if (!guess) return;
-      if (wordTimerInterval) clearInterval(wordTimerInterval);
+      if (wordTimerInterval) { clearInterval(wordTimerInterval); wordTimerInterval = null; }
 
       const activeCard = gameState.cards[gameState.activeCardId];
       if (guess === activeCard.word.toLowerCase()) {
@@ -1562,8 +1603,10 @@
         showToast("სწორია! +10 ქულა 🎉");
       } else {
         showToast("არასწორია!");
-        gameState.currentTurn = playerRole === 'player1' ? 'player2' : 'player1';
       }
+      
+      gameState.currentTurn = (gameState.currentTurn === 'player1') ? 'player2' : 'player1';
+      lastWordTurn = gameState.currentTurn;
       gameState.activeCardId = null;
       
       if (gameState.cards.every(c => c.isGuessed)) {
@@ -1775,7 +1818,8 @@
 
     window.returnToLobby = function() {
       if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
-      if (wordTimerInterval) clearInterval(wordTimerInterval);
+      if (wordTimerInterval) { clearInterval(wordTimerInterval); wordTimerInterval = null; }
+      lastWordTurn = null;
       if (aviatorInterval) clearInterval(aviatorInterval);
       roomCode = null; playerRole = null; gameState = null; isAiMode = false;
       switchGameMode(activeGameMode);
