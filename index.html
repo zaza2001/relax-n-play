@@ -186,14 +186,6 @@
               <div id="txt-desc-ttt" class="text-[10px] text-slate-400">კლასიკური თამაში</div>
             </div>
           </button>
-
-          <button onclick="switchGameMode('aviator'); toggleSidebar(false);" class="w-full p-3.5 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 rounded-2xl flex items-center gap-3.5 transition-all text-left group">
-            <div class="w-10 h-10 rounded-xl bg-sky-500/15 text-sky-400 flex items-center justify-center text-base group-hover:scale-110 transition-transform"><i class="fa-solid fa-jet-fighter"></i></div>
-            <div>
-              <div id="txt-game-aviator" class="text-xs font-bold text-white">Aviator (ჯეტი)</div>
-              <div id="txt-desc-aviator" class="text-[10px] text-slate-400">არკადული კრეში თამაში</div>
-            </div>
-          </button>
         </div>
       </div>
       <div class="pt-4 border-t border-slate-800/80 text-center">
@@ -258,9 +250,6 @@
         </button>
         <button onclick="switchGameModeModal('tictactoe')" class="w-full py-3 px-4 bg-slate-800/80 hover:bg-slate-800 rounded-2xl text-xs font-semibold text-left flex items-center gap-3 transition-all border border-slate-700/40">
           <i class="fa-solid fa-xmark text-pink-400 text-sm"></i> <span id="txt-gs-ttt">იქსიკი და ნოლიკი</span>
-        </button>
-        <button onclick="switchGameModeModal('aviator')" class="w-full py-3 px-4 bg-slate-800/80 hover:bg-slate-800 rounded-2xl text-xs font-semibold text-left flex items-center gap-3 transition-all border border-slate-700/40">
-          <i class="fa-solid fa-jet-fighter text-sky-400 text-sm"></i> <span id="txt-gs-aviator">Aviator (ჯეტი)</span>
         </button>
       </div>
     </div>
@@ -608,35 +597,6 @@
       </div>
     </div>
 
-    <!-- 5. Aviator Screen -->
-    <div id="aviator-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-3.5">
-      <div class="glass-card p-4 rounded-2xl flex justify-between items-center border border-sky-500/30">
-        <div>
-          <div class="text-[11px] text-slate-400"><span id="txt-game-lbl2">თამაში</span>: <span class="text-sky-400 font-bold">Aviator</span></div>
-          <div class="text-xs font-bold text-slate-200 mt-0.5"><span id="txt-balance-lbl2">ბალანსი</span>: <span id="aviator-balance" class="text-amber-400 font-bold">1000</span> ₾</div>
-        </div>
-        <div id="aviator-status" class="text-[11px] font-bold px-3 py-1.5 bg-sky-600/20 border border-sky-500/40 rounded-xl text-sky-300">მზადება აფრენისთვის</div>
-      </div>
-
-      <div class="glass-card p-6 rounded-3xl text-center relative overflow-hidden h-48 flex flex-col items-center justify-center border border-sky-500/30 shadow-2xl">
-        <div id="jet-multiplier" class="text-5xl font-mono font-black text-amber-300 tracking-wider">1.00x</div>
-        <div id="jet-visual" class="mt-3 text-3xl text-sky-400 transition-all duration-100">
-          <i class="fa-solid fa-jet-fighter animate-pulse"></i>
-        </div>
-      </div>
-
-      <div class="glass-card p-4 rounded-3xl space-y-3 shadow-xl border border-slate-700/50">
-        <div class="flex gap-2.5">
-          <input type="number" id="aviator-bet-input" value="100" min="10" class="w-1/2 px-3 py-3 glass-input rounded-xl text-amber-300 font-bold text-center text-sm focus:outline-none" placeholder="ფსონი">
-          <button id="aviator-action-btn" onclick="handleAviatorAction()" class="w-1/2 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-all shadow-lg active:scale-95">ფსონის დადება</button>
-        </div>
-      </div>
-
-      <div class="text-center pt-1">
-        <button id="txt-back-lobby-btn5" onclick="returnToLobby()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">მთავარ მენიუში დაბრუნება</button>
-      </div>
-    </div>
-
   </div>
 
   <!-- Footer Info -->
@@ -686,11 +646,14 @@
     let activeGameMode = 'safepath';
     let currentLang = 'ka';
 
-    let aviatorState = 'idle';
-    let aviatorMultiplier = 1.00;
-    let aviatorCrashPoint = 1.00;
-    let aviatorBet = 0;
-    let aviatorInterval = null;
+    let aiTimeout = null;
+    let finishHandled = false;
+    function scheduleAi(fn) {
+      if (aiTimeout) return;
+      aiTimeout = setTimeout(() => { aiTimeout = null; fn(); }, 1500);
+    }
+    function decideWinner(a, b) { return a > b ? 'player1' : (a < b ? 'player2' : 'tie'); }
+    function generateMineMap() { return Array.from({ length: 5 }, () => Math.floor(Math.random() * 3)); }
 
     const TRANSLATIONS = {
       ka: {
@@ -717,8 +680,6 @@
         descBoxes: "იღბლიანი ყუთები",
         gTtt: "იქსიკი და ნოლიკი",
         descTtt: "კლასიკური თამაში",
-        gAviator: "Aviator (ჯეტი)",
-        descAviator: "არკადული კრეში თამაში",
         myCodeLbl: "შენი მეგობრის კოდი (ზიარებისთვის):",
         copyBtn: "კოპირება",
         addFriendLbl: "მეგობრის დამატება:",
@@ -765,12 +726,6 @@
         guessBtn: "გამოცნობა",
         gameLblShort: "თამაში",
         myBalance: "შენი ბალანსი",
-        balanceLbl: "ბალანსი",
-        betPlaceholder: "ფსონი",
-        placeBet: "ფსონის დადება",
-        cashout: "გატანა (Cashout)",
-        newBet: "ახალი ფსონი",
-        preparing: "მზადება აფრენისთვის",
         finishLine: "ფინიშის ხაზი (დონე 5)",
         chooseBoxPrompt: "აირჩიეთ ყუთი!",
         boxLabel: "ყუთი",
@@ -805,8 +760,6 @@
         descBoxes: "Lucky Boxes",
         gTtt: "Tic-Tac-Toe",
         descTtt: "Classic Game",
-        gAviator: "Aviator (Jet)",
-        descAviator: "Arcade Crash Game",
         myCodeLbl: "Your Friend Code (for sharing):",
         copyBtn: "Copy",
         addFriendLbl: "Add Friend:",
@@ -853,12 +806,6 @@
         guessBtn: "Guess",
         gameLblShort: "Game",
         myBalance: "Your Balance",
-        balanceLbl: "Balance",
-        betPlaceholder: "Bet",
-        placeBet: "Place Bet",
-        cashout: "Cashout",
-        newBet: "New Bet",
-        preparing: "Preparing for takeoff",
         finishLine: "Finish Line (Level 5)",
         chooseBoxPrompt: "Choose a box!",
         boxLabel: "Box",
@@ -893,8 +840,6 @@
         descBoxes: "Счастливые ящики",
         gTtt: "Крестики-нолики",
         descTtt: "Классическая игра",
-        gAviator: "Aviator (Джет)",
-        descAviator: "Аркадная краш-игра",
         myCodeLbl: "Ваш код друга (для обмена):",
         copyBtn: "Копировать",
         addFriendLbl: "Добавить друга:",
@@ -941,12 +886,6 @@
         guessBtn: "Угадать",
         gameLblShort: "Игра",
         myBalance: "Ваш баланс",
-        balanceLbl: "Баланс",
-        betPlaceholder: "Ставка",
-        placeBet: "Сделать ставку",
-        cashout: "Забрать",
-        newBet: "Новая ставка",
-        preparing: "Подготовка к взлету",
         finishLine: "Финиш (Уровень 5)",
         chooseBoxPrompt: "Выберите ящик!",
         boxLabel: "Ящик",
@@ -1059,8 +998,6 @@
       document.getElementById('txt-desc-boxes').innerText = t.descBoxes;
       document.getElementById('txt-game-ttt').innerText = t.gTtt;
       document.getElementById('txt-desc-ttt').innerText = t.descTtt;
-      document.getElementById('txt-game-aviator').innerText = t.gAviator;
-      document.getElementById('txt-desc-aviator').innerText = t.descAviator;
 
       document.getElementById('txt-friends-modal-title').innerText = t.friends;
       document.getElementById('txt-my-code-lbl').innerText = t.myCodeLbl;
@@ -1076,7 +1013,6 @@
       document.getElementById('txt-gs-words').innerText = t.gWords;
       document.getElementById('txt-gs-boxes').innerText = t.gBoxes;
       document.getElementById('txt-gs-ttt').innerText = t.gTtt;
-      document.getElementById('txt-gs-aviator').innerText = t.gAviator;
 
       document.getElementById('txt-admin-title').innerText = t.adminTitle;
       document.getElementById('txt-admin-subtitle').innerText = t.adminSub;
@@ -1133,10 +1069,6 @@
 
       document.getElementById('txt-back-lobby-btn4').innerText = t.backLobby;
 
-      document.getElementById('txt-game-lbl2').innerText = t.gameLblShort;
-      document.getElementById('txt-balance-lbl2').innerText = t.balanceLbl;
-      document.getElementById('aviator-bet-input').placeholder = t.betPlaceholder;
-      document.getElementById('txt-back-lobby-btn5').innerText = t.backLobby;
 
       switchGameMode(activeGameMode);
     };
@@ -1215,7 +1147,7 @@
       document.getElementById('user-coins').innerText = userStats.coins || 1000;
       document.getElementById('user-display-id').innerText = uid.substring(0, 4).toUpperCase();
       document.getElementById('my-friend-code').innerText = userStats.friendCode;
-      if (userStats.isAdmin || (email && email.includes('admin'))) document.getElementById('admin-panel-fab').classList.remove('hidden');
+      if (userStats.isAdmin === true) document.getElementById('admin-panel-fab').classList.remove('hidden');
       updateAvatarUI(currentUserAvatar);
       switchGameMode('safepath');
     }
@@ -1274,8 +1206,6 @@
     async function updateUserCoinsLocallyAndRemote(delta) {
       userStats.coins = (userStats.coins || 1000) + delta;
       document.getElementById('user-coins').innerText = userStats.coins;
-      const aviatorBal = document.getElementById('aviator-balance');
-      if (aviatorBal) aviatorBal.innerText = userStats.coins;
       if (currentUser) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid), { coins: userStats.coins });
     }
 
@@ -1355,21 +1285,18 @@
         words: t.gWords,
         boxes: t.gBoxes,
         tictactoe: t.gTtt,
-        aviator: t.gAviator
       };
       const icons = {
         safepath: "fa-bomb text-amber-400",
         words: "fa-font text-indigo-400",
         boxes: "fa-box-open text-emerald-400",
         tictactoe: "fa-xmark text-pink-400",
-        aviator: "fa-jet-fighter text-sky-400"
       };
       const descs = {
         safepath: t.descSafepath,
         words: t.descWords,
         boxes: t.descBoxes,
         tictactoe: t.descTtt,
-        aviator: t.descAviator
       };
 
       document.getElementById('header-game-name').innerText = names[gameMode];
@@ -1378,12 +1305,7 @@
       document.getElementById('active-game-desc').innerText = descs[gameMode];
       document.getElementById('active-game-icon-box').innerHTML = `<i class="fa-solid ${icons[gameMode]}"></i>`;
 
-      const aiControls = document.getElementById('ai-controls-box');
-      if (gameMode === 'aviator') {
-        aiControls.classList.add('hidden');
-      } else {
-        aiControls.classList.remove('hidden');
-      }
+      document.getElementById('ai-controls-box').classList.remove('hidden');
 
       switchScreen('lobby-screen');
     };
@@ -1405,7 +1327,6 @@
       if (mode === 'words') return t.gWords;
       if (mode === 'boxes') return t.gBoxes;
       if (mode === 'tictactoe') return t.gTtt;
-      if (mode === 'aviator') return t.gAviator;
       return mode;
     }
 
@@ -1544,7 +1465,7 @@
         code: roomCode, gameMode: selectedGameMode, wager: wager,
         player1Id: currentUser.uid, player1Name: playerName, status: 'waiting',
         currentTurn: 'player1',
-        p1Pos: 0, p2Pos: 0, mineMap: [0, 1, 2, 0, 1], revealedMines: {}
+        p1Pos: 0, p2Pos: 0, mineMap: generateMineMap(), revealedMines: {}
       };
 
       await updateUserCoinsLocallyAndRemote(-wager);
@@ -1604,14 +1525,6 @@
     window.startAiGame = function() {
       const wager = parseInt(document.getElementById('table-wager-select').value) || 100;
       
-      if (activeGameMode === 'aviator') {
-        if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
-        switchScreen('aviator-screen');
-        document.getElementById('aviator-balance').innerText = userStats.coins;
-        resetAviatorGame();
-        return;
-      }
-
       if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
       updateUserCoinsLocallyAndRemote(-wager);
       isAiMode = true;
@@ -1625,11 +1538,6 @@
     window.createRoom = async function() {
       const wager = parseInt(document.getElementById('table-wager-select').value) || 100;
 
-      if (activeGameMode === 'aviator') {
-        startAiGame();
-        return;
-      }
-
       if ((userStats.coins || 0) < wager) return showToast("არ გაქვთ საკმარისი ქოინები!");
       
       roomCode = Math.floor(1000 + Math.random() * 9000).toString();
@@ -1640,7 +1548,7 @@
         code: roomCode, gameMode: activeGameMode, wager: wager,
         player1Id: currentUser.uid, player1Name: playerName, status: 'waiting',
         currentTurn: 'player1',
-        p1Pos: 0, p2Pos: 0, mineMap: [0, 1, 2, 0, 1], revealedMines: {}
+        p1Pos: 0, p2Pos: 0, mineMap: generateMineMap(), revealedMines: {}
       };
 
       await updateUserCoinsLocallyAndRemote(-wager);
@@ -1716,17 +1624,18 @@
     };
 
     function initializeGameDataAndStart(firstTurn, gameMode, wager) {
+      finishHandled = false;
       let initialData = {
         currentTurn: firstTurn,
         status: 'playing',
-        p1Pos: 0, p2Pos: 0, mineMap: [0, 1, 2, 0, 1], revealedMines: {}
+        p1Pos: 0, p2Pos: 0, mineMap: generateMineMap(), revealedMines: {}
       };
 
       if (gameMode === 'words') {
         const wordList = ROUND_WORDS[1][currentLang] || ROUND_WORDS[1]['ka'];
         const shuffled = [...wordList].sort(() => 0.5 - Math.random());
         initialData.cards = shuffled.slice(0, 8).map((item, i) => ({ id: i, word: item.word, category: item.category, masked: maskWord(item.word), guessedMask: maskWord(item.word), isGuessed: false }));
-        initialData.p1Score = 0; initialData.p2Score = 0; initialData.round = 1; initialData.activeCardId = null;
+        initialData.lang = currentLang; initialData.p1Score = 0; initialData.p2Score = 0; initialData.round = 1; initialData.activeCardId = null;
         lastWordTurn = null;
       } else if (gameMode === 'boxes') {
         initialData.p1Money = 0; initialData.p2Money = 0; initialData.round = 1;
@@ -1765,14 +1674,19 @@
     };
 
     async function handleGameFinish(winnerRole) {
-      if (gameState.rewardsDistributed) return;
-      gameState.rewardsDistributed = true;
-      if (wordTimerInterval) clearInterval(wordTimerInterval);
-      const pot = (gameState.wager || 100) * 2;
-      if (winnerRole === playerRole) {
-        await updateUserCoinsLocallyAndRemote(pot);
-        showToast(`🎉 თქვენ მოიგეთ ${pot} ₾!`);
-      } else { showToast("😢 თქვენ წააგეთ."); }
+      if (finishHandled) return;
+      finishHandled = true;
+      if (wordTimerInterval) { clearInterval(wordTimerInterval); wordTimerInterval = null; }
+      const wager = (gameState && gameState.wager) || 100;
+      if (winnerRole === 'tie') {
+        await updateUserCoinsLocallyAndRemote(wager);
+        showToast(currentLang === 'ka' ? '🤝 ფრე! ფსონი დაგიბრუნდათ.' : (currentLang === 'eng' ? '🤝 Tie! Wager refunded.' : '🤝 Ничья! Ставка возвращена.'));
+      } else if (winnerRole === playerRole) {
+        await updateUserCoinsLocallyAndRemote(wager * 2);
+        showToast(`🎉 +${wager * 2} ₾`);
+      } else {
+        showToast(currentLang === 'ka' ? '😢 თქვენ წააგეთ.' : (currentLang === 'eng' ? '😢 You lost.' : '😢 Вы проиграли.'));
+      }
     }
 
     function updateUI(state) {
@@ -1782,6 +1696,7 @@
       }
       
       if (state.status === 'jeirani') {
+        finishHandled = false;
         switchScreen('jeirani-screen');
         document.getElementById('jeirani-result').innerText = TRANSLATIONS[currentLang].jeiraniDesc;
         
@@ -1807,7 +1722,7 @@
         return;
       }
 
-      if (state.status === 'finished' && !state.rewardsDistributed && state.winner) handleGameFinish(state.winner);
+      if (state.status === 'finished' && state.winner && !finishHandled) handleGameFinish(state.winner);
 
       enterGameScreen(state.gameMode, state);
     }
@@ -1852,13 +1767,13 @@
       }
 
       if (isAiMode && state.currentTurn === 'player2' && state.status !== 'finished') {
-        setTimeout(async () => {
+        scheduleAi(() => {
           const aiRow = state.p2Pos;
           const aiCol = Math.floor(Math.random() * 3);
           const isMine = (state.mineMap[aiRow] === aiCol);
           if (isMine) {
             state.p2Pos = 0;
-            showToast(currentLang==='ka'?"🤖 AI-მ ნაღმზე აბიჯა და საწყისზე დაბრუნდა!":(currentLang==='eng'?"🤖 AI hit a mine and returned to start!":"🤖 AI наступил на міну и вернулся на старт!"));
+            showToast(currentLang==='ka'?"🤖 AI-მ ნაღმზე აბიჯა და საწყისზე დაბრუნდა!":(currentLang==='eng'?"🤖 AI hit a mine and returned to start!":"🤖 AI наступил на мину и вернулся на старт!"));
           } else {
             state.p2Pos += 1;
             showToast(currentLang==='ka'?"🤖 AI-მ წარმატებით გადადგა ნაბიჯი!":(currentLang==='eng'?"🤖 AI successfully took a step!":"🤖 AI успешно сделал шаг!"));
@@ -1870,7 +1785,7 @@
           }
           state.currentTurn = 'player1';
           updateSafePathUI(state);
-        }, 1500);
+        });
       }
     }
 
@@ -1989,7 +1904,7 @@
       });
 
       if (isAiMode && state.currentTurn === 'player2' && state.status !== 'finished') {
-        setTimeout(() => {
+        scheduleAi(() => {
           if (wordTimerInterval) { clearInterval(wordTimerInterval); wordTimerInterval = null; }
           const unguesses = state.cards.filter(c => !c.isGuessed);
           if (unguesses.length > 0) {
@@ -2003,13 +1918,13 @@
             if (state.round < 3) {
               state.round += 1;
               showToast(currentLang==='ka'?`🎉 რაუნდი დასრულდა! გადავდივართ რაუნდზე ${state.round}`:(currentLang==='eng'?`🎉 Round over! Moving to round ${state.round}`:`🎉 Раунд завершен! Переходим к раунду ${state.round}`));
-              const wordList = ROUND_WORDS[state.round][currentLang] || ROUND_WORDS[state.round]['ka'];
+              const wordList = ROUND_WORDS[state.round][state.lang || currentLang] || ROUND_WORDS[state.round]['ka'];
               const nextWords = [...wordList].sort(() => 0.5 - Math.random());
               state.cards = nextWords.slice(0, 8).map((item, i) => ({ id: i, word: item.word, category: item.category, masked: maskWord(item.word), guessedMask: maskWord(item.word), isGuessed: false }));
               state.activeCardId = null;
             } else {
               state.status = 'finished';
-              state.winner = (state.p1Score > state.p2Score) ? 'player1' : 'player2';
+              state.winner = decideWinner(state.p1Score, state.p2Score);
               handleGameFinish(state.winner);
             }
           }
@@ -2017,7 +1932,7 @@
           state.currentTurn = 'player1';
           lastWordTurn = state.currentTurn;
           updateWordGameUI(state);
-        }, 1500);
+        });
       }
     }
 
@@ -2052,14 +1967,14 @@
         if (gameState.round < 3) {
           gameState.round += 1;
           showToast(currentLang==='ka'?`🎉 რაუნდი დასრულდა! გადავდივართ რაუნდზე ${gameState.round}`:(currentLang==='eng'?`🎉 Round over! Moving to round ${gameState.round}`:`🎉 Раунд завершен! Переходим к раунду ${gameState.round}`));
-          const wordList = ROUND_WORDS[gameState.round][currentLang] || ROUND_WORDS[gameState.round]['ka'];
+          const wordList = ROUND_WORDS[gameState.round][gameState.lang || currentLang] || ROUND_WORDS[gameState.round]['ka'];
           const nextWords = [...wordList].sort(() => 0.5 - Math.random());
           gameState.cards = nextWords.slice(0, 8).map((item, i) => ({ id: i, word: item.word, category: item.category, masked: maskWord(item.word), guessedMask: maskWord(item.word), isGuessed: false }));
           gameState.activeCardId = null;
         } else {
           gameState.status = 'finished';
-          gameState.winner = (state.p1Score > state.p2Score) ? 'player1' : 'player2';
-          handleGameFinish(state.winner);
+          gameState.winner = decideWinner(gameState.p1Score, gameState.p2Score);
+          handleGameFinish(gameState.winner);
         }
       }
 
@@ -2088,7 +2003,7 @@
       }
 
       if (isAiMode && state.currentTurn === 'player2' && state.status !== 'finished') {
-        setTimeout(() => {
+        scheduleAi(() => {
           const unopened = state.boxes.filter(b => !b.isOpen);
           if (unopened.length > 0) {
             const aiBox = unopened[Math.floor(Math.random() * unopened.length)];
@@ -2099,13 +2014,13 @@
             state.round = (state.round || 1) + 1;
             if (state.round > 5 || state.boxes.every(b => b.isOpen)) {
               state.status = 'finished';
-              state.winner = (state.p1Money >= state.p2Money) ? 'player1' : 'player2';
+              state.winner = decideWinner(state.p1Money, state.p2Money);
               handleGameFinish(state.winner);
             }
           }
           state.currentTurn = 'player1';
           updateBoxesUI(state);
-        }, 1500);
+        });
       }
     }
 
@@ -2123,7 +2038,7 @@
 
       if (gameState.round > 5 || gameState.boxes.every(b => b.isOpen)) {
         gameState.status = 'finished';
-        gameState.winner = (gameState.p1Money >= gameState.p2Money) ? 'player1' : 'player2';
+        gameState.winner = decideWinner(gameState.p1Money, gameState.p2Money);
         handleGameFinish(gameState.winner);
       }
 
@@ -2163,7 +2078,7 @@
       }
 
       if (isAiMode && state.currentTurn === 'player2' && !winner && state.status !== 'finished') {
-        setTimeout(() => {
+        scheduleAi(() => {
           const emptyCells = [];
           state.board.forEach((val, idx) => { if (val === "") emptyCells.push(idx); });
           if (emptyCells.length > 0) {
@@ -2174,13 +2089,13 @@
             const aiWinner = checkTicTacToeWinner(state.board);
             if (aiWinner) {
               state.status = 'finished';
-              state.winner = (aiSymbol === (playerRole === 'player1' ? 'X' : 'O')) ? playerRole : (playerRole === 'player1' ? 'player2' : 'player1');
+              state.winner = aiWinner === 'tie' ? 'tie' : (playerRole === 'player1' ? 'player2' : 'player1');
               handleGameFinish(state.winner);
             }
           }
           state.currentTurn = 'player1';
           updateTicTacToeUI(state);
-        }, 1500);
+        });
       }
     }
 
@@ -2190,10 +2105,10 @@
       gameState.board[index] = symbol;
 
       const winner = checkTicTacToeWinner(gameState.board);
-      if (winner && winner !== "tie") {
+      if (winner) {
         gameState.status = 'finished';
-        gameState.winner = playerRole;
-        handleGameFinish(playerRole);
+        gameState.winner = winner === 'tie' ? 'tie' : playerRole;
+        handleGameFinish(gameState.winner);
       }
 
       gameState.currentTurn = playerRole === 'player1' ? 'player2' : 'player1';
@@ -2201,75 +2116,20 @@
       else updateTicTacToeUI(gameState);
     };
 
-    function resetAviatorGame() {
-      aviatorState = 'idle';
-      aviatorMultiplier = 1.00;
-      document.getElementById('jet-multiplier').innerText = "1.00x";
-      document.getElementById('aviator-status').innerText = TRANSLATIONS[currentLang].preparing;
-      const btn = document.getElementById('aviator-action-btn');
-      btn.innerText = TRANSLATIONS[currentLang].placeBet;
-      btn.className = "w-1/2 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-all shadow-lg active:scale-95";
-    }
 
-    window.handleAviatorAction = async function() {
-      const betInput = parseInt(document.getElementById('aviator-bet-input').value) || 100;
-      const btn = document.getElementById('aviator-action-btn');
-      const t = TRANSLATIONS[currentLang];
-
-      if (aviatorState === 'idle') {
-        if ((userStats.coins || 0) < betInput) return showToast("არ გაქვთ საკმარისი ქოინები!");
-        await updateUserCoinsLocallyAndRemote(-betInput);
-        aviatorBet = betInput;
-        aviatorState = 'flying';
-        aviatorMultiplier = 1.00;
-        
-        aviatorCrashPoint = parseFloat((1.1 + Math.random() * 3.9).toFixed(2));
-        
-        btn.innerText = t.cashout;
-        btn.className = "w-1/2 py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs transition-all shadow-lg active:scale-95";
-        document.getElementById('aviator-status').innerText = currentLang==='ka'?"ჯეტი მიფრინავს... ✈️":(currentLang==='eng'?"Jet is flying... ✈️":"Самолет летит... ✈️");
-
-        if (aviatorInterval) clearInterval(aviatorInterval);
-        aviatorInterval = setInterval(() => {
-          aviatorMultiplier = parseFloat((aviatorMultiplier + 0.03).toFixed(2));
-          document.getElementById('jet-multiplier').innerText = aviatorMultiplier.toFixed(2) + "x";
-
-          if (aviatorMultiplier >= aviatorCrashPoint) {
-            clearInterval(aviatorInterval);
-            aviatorState = 'crashed';
-            document.getElementById('jet-multiplier').innerText = "CRASHED (" + aviatorCrashPoint.toFixed(2) + "x)";
-            document.getElementById('aviator-status').innerText = currentLang==='ka'?"ჯეტი გაფრინდა! 💥":(currentLang==='eng'?"Jet crashed! 💥":"Самолет улетел! 💥");
-            btn.innerText = t.newBet;
-            btn.className = "w-1/2 py-3 bg-slate-700 text-slate-400 font-bold rounded-xl text-xs cursor-not-allowed";
-            showToast(currentLang==='ka'?"💥 ჯეტი გაფრინდა! თქვენ წააგეთ ფსონი.":(currentLang==='eng'?"💥 Jet crashed! You lost the bet.":"💥 Самолет улетел! Вы проиграли ставку."));
-            setTimeout(() => { resetAviatorGame(); }, 3000);
-          }
-        }, 80);
-
-      } else if (aviatorState === 'flying') {
-        clearInterval(aviatorInterval);
-        aviatorState = 'crashed';
-        const winAmount = Math.floor(aviatorBet * aviatorMultiplier);
-        await updateUserCoinsLocallyAndRemote(winAmount);
-        document.getElementById('aviator-status').innerText = currentLang==='ka'?`მოიგეთ ${winAmount} ₾! 🎉`:(currentLang==='eng'?`Won ${winAmount} ₾! 🎉`:`Выиграно ${winAmount} ₾! 🎉`);
-        btn.innerText = t.newBet;
-        btn.className = "w-1/2 py-3 bg-slate-700 text-slate-400 font-bold rounded-xl text-xs cursor-not-allowed";
-        showToast(currentLang==='ka'?`🎉 წარმატებული გატანა! მოიგეთ +${winAmount} ₾`:(currentLang==='eng'?`🎉 Successful cashout! Won +${winAmount} ₾`:`🎉 Успешный кэшаут! Выиграно +${winAmount} ₾`));
-        setTimeout(() => { resetAviatorGame(); }, 3000);
-      }
-    };
 
     window.returnToLobby = function() {
       if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
       if (wordTimerInterval) { clearInterval(wordTimerInterval); wordTimerInterval = null; }
       lastWordTurn = null;
-      if (aviatorInterval) clearInterval(aviatorInterval);
       roomCode = null; playerRole = null; gameState = null; isAiMode = false;
+      finishHandled = false;
+      if (aiTimeout) { clearTimeout(aiTimeout); aiTimeout = null; }
       switchGameMode(activeGameMode);
     };
 
     function switchScreen(screenId) {
-      ['auth-screen', 'lobby-screen', 'waiting-screen', 'jeirani-screen', 'safepath-screen', 'game-screen', 'boxes-screen', 'tictactoe-screen', 'aviator-screen'].forEach(id => {
+      ['auth-screen', 'lobby-screen', 'waiting-screen', 'jeirani-screen', 'safepath-screen', 'game-screen', 'boxes-screen', 'tictactoe-screen'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
       });
       document.getElementById(screenId).classList.remove('hidden');
