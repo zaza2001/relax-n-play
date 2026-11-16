@@ -71,6 +71,9 @@
     .play-btn:active {
       transform: scale(0.97);
     }
+    .grid-cols-15 {
+      grid-template-columns: repeat(15, minmax(0, 1fr));
+    }
     /* Touch-friendly minimum target */
     .tap { min-height: 44px; }
     /* Overlays: safe-area aware and scrollable on short screens */
@@ -145,6 +148,7 @@
             <label for="invite-modal-game" class="text-[10px] text-slate-400 font-semibold ml-1" data-i18n="gameLbl">არჩეული თამაში:</label>
             <select id="invite-modal-game" class="tap w-full mt-1 px-3 py-2.5 glass-input rounded-xl text-white font-medium focus:outline-none text-xs">
               <option value="safepath" data-prefix="💣 " data-i18n="gSafepath">💣 დანაღმული გზა</option>
+              <option value="battleship" data-prefix="🚢 " data-i18n="gBattleship">🚢 ჩაძირობანა</option>
               <option value="words" data-prefix="🔤 " data-i18n="gWords">🔤 სიტყვები</option>
               <option value="boxes" data-prefix="💰 " data-i18n="gBoxes">💰 ყუთები</option>
               <option value="tictactoe" data-prefix="❌ " data-i18n="gTtt">❌ იქსიკი და ნოლიკი</option>
@@ -220,6 +224,14 @@
           <div class="min-w-0">
             <div class="text-xs font-bold text-white" data-i18n="gSafepath">დანაღმული გზა</div>
             <div class="text-[10px] text-slate-400" data-i18n="descSafepath">არკადული მულტიფლეიერი</div>
+          </div>
+        </button>
+
+        <button onclick="switchGameMode('battleship'); toggleSidebar(false);" class="tap w-full p-3.5 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/50 rounded-2xl flex items-center gap-3.5 transition-all text-left group">
+          <div class="w-10 h-10 shrink-0 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center text-base group-hover:scale-110 transition-transform"><i class="fa-solid fa-ship"></i></div>
+          <div class="min-w-0">
+            <div class="text-xs font-bold text-white" data-i18n="gBattleship">ჩაძირობანა</div>
+            <div class="text-[10px] text-slate-400" data-i18n="descBattleship">საზღვაო ბრძოლა 15x15</div>
           </div>
         </button>
 
@@ -321,6 +333,9 @@
         <h3 class="text-sm font-bold text-indigo-300 mb-3 tracking-wide" data-i18n="selectGameTitle">აირჩიეთ აქტიური თამაში</h3>
         <button onclick="switchGameModeModal('safepath')" class="tap w-full py-3 px-4 bg-slate-800/80 hover:bg-slate-800 rounded-2xl text-xs font-semibold text-left flex items-center gap-3 transition-all border border-slate-700/40">
           <i class="fa-solid fa-bomb text-amber-400 text-sm w-5 text-center"></i> <span data-i18n="gSafepath">დანაღმული გზა</span>
+        </button>
+        <button onclick="switchGameModeModal('battleship')" class="tap w-full py-3 px-4 bg-slate-800/80 hover:bg-slate-800 rounded-2xl text-xs font-semibold text-left flex items-center gap-3 transition-all border border-slate-700/40">
+          <i class="fa-solid fa-ship text-cyan-400 text-sm w-5 text-center"></i> <span data-i18n="gBattleship">ჩაძირობანა</span>
         </button>
         <button onclick="switchGameModeModal('words')" class="tap w-full py-3 px-4 bg-slate-800/80 hover:bg-slate-800 rounded-2xl text-xs font-semibold text-left flex items-center gap-3 transition-all border border-slate-700/40">
           <i class="fa-solid fa-font text-indigo-400 text-sm w-5 text-center"></i> <span data-i18n="gWords">სიტყვების გამოცნობა</span>
@@ -646,6 +661,88 @@
       </div>
     </div>
 
+    <!-- 5. Battleship Setup Screen (15x15 Fleet Placement) -->
+    <div id="battleship-setup-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-2.5">
+      <div class="glass-card p-3 rounded-2xl text-center border border-cyan-500/30">
+        <h3 class="text-sm font-bold text-cyan-300" data-i18n="bsSetupTitle">ფლოტის განლაგება (15x15)</h3>
+        <p class="text-[10px] text-slate-400 mt-0.5" data-i18n="bsSetupDesc">აირჩიე გემი და დააკლიკე რუკაზე (გემებს შორის 1 უჯრა დაშორებაა)</p>
+      </div>
+
+      <!-- Ship Selector Pills -->
+      <div id="bs-ship-selector" class="flex flex-wrap justify-center gap-1.5 px-1"></div>
+
+      <!-- Controls: Rotate, Auto-place, Clear -->
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="toggleBsOrientation()" id="bs-rotate-btn" class="tap py-2 px-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-[11px] font-bold text-amber-300 flex items-center justify-center gap-1.5 transition-all">
+          <i class="fa-solid fa-rotate"></i> <span id="txt-bs-orient">ჰორიზონტ.</span>
+        </button>
+        <button onclick="autoPlaceMyShips()" class="tap py-2 px-2 bg-indigo-600/80 hover:bg-indigo-600 border border-indigo-500/40 rounded-xl text-[11px] font-bold text-white flex items-center justify-center gap-1.5 transition-all">
+          <i class="fa-solid fa-shuffle"></i> <span data-i18n="bsRandom">ავტო</span>
+        </button>
+        <button onclick="clearMyBsSetup()" class="tap py-2 px-2 bg-slate-800 hover:bg-rose-950/60 border border-slate-700 rounded-xl text-[11px] font-bold text-rose-300 flex items-center justify-center gap-1.5 transition-all">
+          <i class="fa-solid fa-trash-can"></i> <span data-i18n="bsClear">გასუფთავება</span>
+        </button>
+      </div>
+
+      <!-- 15x15 Setup Grid -->
+      <div class="glass-card p-2.5 rounded-2xl border border-cyan-500/20 shadow-xl">
+        <div id="bs-setup-grid" class="grid grid-cols-15 gap-[2px] w-full aspect-square"></div>
+      </div>
+
+      <div class="flex gap-2 pt-1">
+        <button onclick="leaveBattleshipSetup()" class="tap w-1/3 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold" data-i18n="cancel">გაუქმება</button>
+        <button onclick="confirmBsFleetSetup()" id="bs-ready-btn" disabled class="tap w-2/3 py-3 bg-slate-700 text-slate-400 font-extrabold rounded-xl text-xs transition-all shadow-lg cursor-not-allowed">
+          <i class="fa-solid fa-check mr-1"></i> <span id="txt-bs-ready">მზად ვარ (0/10)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 6. Battleship Battle Screen (15x15) -->
+    <div id="battleship-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-2.5">
+      <div class="grid grid-cols-2 gap-2">
+        <div class="glass-card p-2.5 rounded-2xl flex items-center justify-between border-l-4 border-cyan-500 min-w-0">
+          <div class="truncate">
+            <div id="bs-p1-name" class="text-[11px] font-bold text-slate-100 truncate">მოთამაშე 1</div>
+            <div class="text-[10px] text-cyan-300 font-bold"><span data-i18n="bsHits">გარტყმა</span>: <span id="bs-p1-hits">0</span> / 20</div>
+          </div>
+          <i class="fa-solid fa-ship text-cyan-400 text-sm shrink-0"></i>
+        </div>
+        <div class="glass-card p-2.5 rounded-2xl flex items-center justify-between border-l-4 border-rose-500 min-w-0">
+          <div class="truncate">
+            <div id="bs-p2-name" class="text-[11px] font-bold text-slate-100 truncate">მოწინააღმდეგე</div>
+            <div class="text-[10px] text-rose-300 font-bold"><span data-i18n="bsHits">გარტყმა</span>: <span id="bs-p2-hits">0</span> / 20</div>
+          </div>
+          <i class="fa-solid fa-crosshairs text-rose-400 text-sm shrink-0"></i>
+        </div>
+      </div>
+
+      <div class="glass-card p-2 rounded-2xl text-center border border-cyan-500/20 bg-slate-900/80">
+        <div id="bs-status" class="text-xs font-bold text-amber-300">...</div>
+      </div>
+
+      <!-- Enemy 15x15 Grid (Target) -->
+      <div class="glass-card p-2.5 rounded-2xl border border-cyan-500/20 shadow-xl space-y-1.5">
+        <div class="flex justify-between items-center px-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-300" data-i18n="bsEnemyBoard">მოწინააღმდეგის ზღვა 15x15 (დაარტყი)</span>
+          <span class="text-[9px] text-slate-400">10 გემი (20 უჯრა)</span>
+        </div>
+        <div id="bs-enemy-grid" class="grid grid-cols-15 gap-[2px] w-full aspect-square"></div>
+      </div>
+
+      <!-- Own Fleet 15x15 Mini Grid -->
+      <div class="glass-card p-2.5 rounded-2xl border border-slate-700/50 space-y-1">
+        <div class="flex justify-between items-center px-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400" data-i18n="bsMyBoard">შენი ფლოტი (15x15)</span>
+          <span class="text-[9px] text-slate-500">🟦 გემი • 🟥 დაზიანება</span>
+        </div>
+        <div id="bs-my-grid" class="grid grid-cols-15 gap-[1px] max-w-[220px] mx-auto w-full aspect-square"></div>
+      </div>
+
+      <div class="text-center pt-1">
+        <button onclick="leaveGame()" class="tap px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold" data-i18n="backLobby">მთავარ მენიუში დაბრუნება</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- Footer Info -->
@@ -754,6 +851,28 @@
     let toastTimer = null;
     let confirmResolver = null;
 
+    /* Battleship 15x15 State */
+    const BS_GRID_SIZE = 15;
+    const BS_FLEET_TEMPLATE = [
+      { id: 0, len: 4, placed: false },
+      { id: 1, len: 3, placed: false },
+      { id: 2, len: 3, placed: false },
+      { id: 3, len: 2, placed: false },
+      { id: 4, len: 2, placed: false },
+      { id: 5, len: 2, placed: false },
+      { id: 6, len: 1, placed: false },
+      { id: 7, len: 1, placed: false },
+      { id: 8, len: 1, placed: false },
+      { id: 9, len: 1, placed: false }
+    ]; // 10 ships, 20 cells total
+    const BS_TOTAL_TARGET_CELLS = 20;
+
+    let bsSetupBoard = Array(225).fill(0);
+    let bsSetupFleet = [];
+    let bsSelectedShipId = 0;
+    let bsIsHorizontal = true;
+    let bsSetupSubmitted = false;
+
     const ROUND_COUNT = 3;
     const AI_WORD_SKILL = { easy: 0.35, medium: 0.6, hard: 0.85 };
 
@@ -779,6 +898,7 @@
         menuTitle: "თამაშების მენიუ", menuSub: "არკადული სივრცე", social: "სოციალური",
         friends: "მეგობრები", friendsDesc: "დამატება და მოწვევა", catalog: "კატალოგი",
         gSafepath: "დანაღმული გზა", descSafepath: "არკადული მულტიფლეიერი",
+        gBattleship: "ჩაძირობანა", descBattleship: "საზღვაო ბრძოლა 15x15",
         gWords: "სიტყვების გამოცნობა", descWords: "ინტელექტუალური დუელი",
         gBoxes: "თანხის ყუთები", descBoxes: "იღბლიანი ყუთები",
         gTtt: "იქსიკი და ნოლიკი", descTtt: "კლასიკური თამაში",
@@ -831,7 +951,14 @@
         aiBox: "🤖 AI-მ გახსნა ყუთი და მოიგო {n} ₾!", boxWon: "მოიგე {n} ₾!",
         offline: "📡 ინტერნეტი გაითიშა", online: "✅ კავშირი აღდგა",
         leaveConfirm: "თამაშიდან გასვლისას ფსონი დაიკარგება. გავიდეთ?", opponentLeftRefund: "მოწინააღმდეგე გავიდა. ფსონი დაგიბრუნდათ.",
-        exitHint: "გასასვლელად კიდევ ერთხელ დააჭირეთ „უკან“", coinsAdded: "ქოინები წარმატებით დაემატა!"
+        exitHint: "გასასვლელად კიდევ ერთხელ დააჭირეთ „უკან“", coinsAdded: "ქოინები წარმატებით დაემატა!",
+        bsHits: "გარტყმა", bsEnemyBoard: "მოწინააღმდეგის ზღვა 15x15 (დაარტყი)", bsMyBoard: "შენი ფლოტი (15x15)",
+        bsHitToast: "💥 ზუსტი გარტყმა! კიდევ ერთი სვლა შენია!", bsMissToast: "🌊 აცდა! წყალში ჩავარდა.",
+        bsAiHitToast: "💥 AI-მ შენს გემს გაარტყა!",
+        bsSetupTitle: "ფლოტის განლაგება (15x15)", bsSetupDesc: "აირჩიე გემი და დააკლიკე რუკაზე (გემებს შორის 1 უჯრა დაშორებაა)",
+        bsHoriz: "ჰორიზონტ.", bsVert: "ვერტიკალ.", bsRandom: "ავტო", bsClear: "გასუფთავება",
+        bsReady: "მზად ვარ", bsWaitingOpponentFleet: "⏳ ველით მოწინააღმდეგის ფლოტის განლაგებას...",
+        bsInvalidSpot: "⚠️ აქ გემის დაყენება არ შეიძლება!"
       },
       eng: {
         inviteTitle: "Game Invitation", inviteDesc: "Choose game and wager for your friend",
@@ -840,6 +967,7 @@
         menuTitle: "Games Menu", menuSub: "Arcade Space", social: "Social",
         friends: "Friends", friendsDesc: "Add and invite", catalog: "Catalog",
         gSafepath: "Safe Path", descSafepath: "Arcade Multiplayer",
+        gBattleship: "Battleship", descBattleship: "Naval Combat 15x15",
         gWords: "Word Guessing", descWords: "Intellectual Duel",
         gBoxes: "Cash Boxes", descBoxes: "Lucky Boxes",
         gTtt: "Tic-Tac-Toe", descTtt: "Classic Game",
@@ -892,7 +1020,14 @@
         aiBox: "🤖 AI opened a box and won {n} ₾!", boxWon: "You won {n} ₾!",
         offline: "📡 You are offline", online: "✅ Back online",
         leaveConfirm: "If you leave now, your wager is lost. Leave anyway?", opponentLeftRefund: "Opponent left. Your wager was refunded.",
-        exitHint: "Press back again to exit", coinsAdded: "Coins added successfully!"
+        exitHint: "Press back again to exit", coinsAdded: "Coins added successfully!",
+        bsHits: "Hits", bsEnemyBoard: "Enemy Waters 15x15 (Attack)", bsMyBoard: "Your Fleet (15x15)",
+        bsHitToast: "💥 Direct hit! Bonus turn!", bsMissToast: "🌊 Splash! Missed.",
+        bsAiHitToast: "💥 AI hit your ship!",
+        bsSetupTitle: "Deploy Your Fleet (15x15)", bsSetupDesc: "Select a ship and tap the grid (1-cell buffer between ships)",
+        bsHoriz: "Horizontal", bsVert: "Vertical", bsRandom: "Auto", bsClear: "Clear",
+        bsReady: "Ready", bsWaitingOpponentFleet: "⏳ Waiting for opponent to deploy fleet...",
+        bsInvalidSpot: "⚠️ Cannot place ship here!"
       },
       ru: {
         inviteTitle: "Приглашение в игру", inviteDesc: "Выберите игру и ставку для друга",
@@ -901,6 +1036,7 @@
         menuTitle: "Меню игр", menuSub: "Аркадное пространство", social: "Социальные",
         friends: "Друзья", friendsDesc: "Добавление и приглашение", catalog: "Каталог",
         gSafepath: "Безопасный путь", descSafepath: "Аркадный мультиплеер",
+        gBattleship: "Морской бой", descBattleship: "Морская битва 15x15",
         gWords: "Угадай слова", descWords: "Интеллектуальная дуэль",
         gBoxes: "Денежные ящики", descBoxes: "Счастливые ящики",
         gTtt: "Крестики-нолики", descTtt: "Классическая игра",
@@ -953,7 +1089,14 @@
         aiBox: "🤖 AI открыл ящик и выиграл {n} ₾!", boxWon: "Вы выиграли {n} ₾!",
         offline: "📡 Нет подключения к интернету", online: "✅ Соединение восстановлено",
         leaveConfirm: "Если выйдете сейчас, ставка будет потеряна. Выйти?", opponentLeftRefund: "Противник вышел. Ставка возвращена.",
-        exitHint: "Нажмите «Назад» ещё раз для выхода", coinsAdded: "Монеты успешно добавлены!"
+        exitHint: "Нажмите «Назад» ещё раз для выхода", coinsAdded: "Монеты успешно добавлены!",
+        bsHits: "Попадания", bsEnemyBoard: "Море противника 15x15 (Атака)", bsMyBoard: "Ваш флот (15x15)",
+        bsHitToast: "💥 Точное попадание! Дополнительный ход!", bsMissToast: "🌊 Мимо!",
+        bsAiHitToast: "💥 AI попал в ваш корабль!",
+        bsSetupTitle: "Расстановка флота (15x15)", bsSetupDesc: "Выберите корабль и нажмите на поле (между кораблями 1 клетка)",
+        bsHoriz: "Горизонт.", bsVert: "Вертикал.", bsRandom: "Авто", bsClear: "Очистить",
+        bsReady: "Готов", bsWaitingOpponentFleet: "⏳ Ожидание расстановки флота противника...",
+        bsInvalidSpot: "⚠️ Сюда нельзя поставить корабль!"
       }
     };
 
@@ -1037,6 +1180,7 @@
 
     const GAME_META = {
       safepath: { icon: "fa-bomb text-amber-400", nameKey: "gSafepath", descKey: "descSafepath" },
+      battleship: { icon: "fa-ship text-cyan-400", nameKey: "gBattleship", descKey: "descBattleship" },
       words: { icon: "fa-font text-indigo-400", nameKey: "gWords", descKey: "descWords" },
       boxes: { icon: "fa-box-open text-emerald-400", nameKey: "gBoxes", descKey: "descBoxes" },
       tictactoe: { icon: "fa-xmark text-pink-400", nameKey: "gTtt", descKey: "descTtt" }
@@ -1079,11 +1223,13 @@
         node.title = v; node.setAttribute('aria-label', v);
       });
 
+      $('txt-bs-orient').textContent = bsIsHorizontal ? t('bsHoriz') : t('bsVert');
+      if (currentScreen === 'battleship-setup-screen') renderBsSetupUI();
+
       renderAuthMode();
       applyGameLabels();
       if (currentUser) { $('user-display-name').textContent = playerName || t('guest'); }
       else { $('user-display-name').textContent = t('guest'); }
-      if (gameState && roomCode === null && isAiMode) { /* AI game keeps labels dynamic on next render */ }
       if (gameState) { try { updateUI(gameState); } catch (e) { /* ignore */ } }
     };
 
@@ -1625,6 +1771,238 @@
     };
 
     /* ------------------------------------------------------------------ */
+    /* Battleship 15x15 Helpers & Fleet Setup                              */
+    /* ------------------------------------------------------------------ */
+    function canPlaceShipOn15x15(board, r, c, len, isHorizontal) {
+      for (let i = 0; i < len; i++) {
+        const nr = isHorizontal ? r : r + i;
+        const nc = isHorizontal ? c + i : c;
+        if (nr < 0 || nr >= BS_GRID_SIZE || nc < 0 || nc >= BS_GRID_SIZE) return false;
+
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const cr = nr + dr;
+            const cc = nc + dc;
+            if (cr >= 0 && cr < BS_GRID_SIZE && cc >= 0 && cc < BS_GRID_SIZE) {
+              if (board[cr * BS_GRID_SIZE + cc] !== 0) return false;
+            }
+          }
+        }
+      }
+      return true;
+    }
+
+    function generateRandom15x15Board() {
+      const board = Array(BS_GRID_SIZE * BS_GRID_SIZE).fill(0);
+      const lengths = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
+      for (const len of lengths) {
+        let placed = false;
+        let attempts = 0;
+        while (!placed && attempts < 500) {
+          attempts++;
+          const horiz = Math.random() < 0.5;
+          const r = Math.floor(Math.random() * BS_GRID_SIZE);
+          const c = Math.floor(Math.random() * BS_GRID_SIZE);
+          if (canPlaceShipOn15x15(board, r, c, len, horiz)) {
+            for (let i = 0; i < len; i++) {
+              const idx = horiz ? r * BS_GRID_SIZE + (c + i) : (r + i) * BS_GRID_SIZE + c;
+              board[idx] = 1;
+            }
+            placed = true;
+          }
+        }
+      }
+      return board;
+    }
+
+    function initBsSetupScreen() {
+      bsSetupBoard = Array(BS_GRID_SIZE * BS_GRID_SIZE).fill(0);
+      bsSetupFleet = BS_FLEET_TEMPLATE.map(s => ({ ...s, placed: false, cells: [] }));
+      bsSelectedShipId = 0;
+      bsIsHorizontal = true;
+      bsSetupSubmitted = false;
+      $('txt-bs-orient').textContent = t('bsHoriz');
+      switchScreen('battleship-setup-screen');
+      renderBsSetupUI();
+    }
+
+    window.toggleBsOrientation = function () {
+      bsIsHorizontal = !bsIsHorizontal;
+      $('txt-bs-orient').textContent = bsIsHorizontal ? t('bsHoriz') : t('bsVert');
+    };
+
+    window.selectBsSetupShip = function (shipId) {
+      if (bsSetupSubmitted) return;
+      const ship = bsSetupFleet.find(s => s.id === shipId);
+      if (!ship) return;
+      if (ship.placed) {
+        ship.cells.forEach(idx => { bsSetupBoard[idx] = 0; });
+        ship.cells = [];
+        ship.placed = false;
+      }
+      bsSelectedShipId = shipId;
+      renderBsSetupUI();
+    };
+
+    window.autoPlaceMyShips = function () {
+      if (bsSetupSubmitted) return;
+      bsSetupBoard = Array(BS_GRID_SIZE * BS_GRID_SIZE).fill(0);
+      bsSetupFleet = BS_FLEET_TEMPLATE.map(s => ({ ...s, placed: false, cells: [] }));
+
+      for (const ship of bsSetupFleet) {
+        let placed = false;
+        let attempts = 0;
+        while (!placed && attempts < 500) {
+          attempts++;
+          const horiz = Math.random() < 0.5;
+          const r = Math.floor(Math.random() * BS_GRID_SIZE);
+          const c = Math.floor(Math.random() * BS_GRID_SIZE);
+          if (canPlaceShipOn15x15(bsSetupBoard, r, c, ship.len, horiz)) {
+            const cells = [];
+            for (let i = 0; i < ship.len; i++) {
+              const idx = horiz ? r * BS_GRID_SIZE + (c + i) : (r + i) * BS_GRID_SIZE + c;
+              bsSetupBoard[idx] = 1;
+              cells.push(idx);
+            }
+            ship.cells = cells;
+            ship.placed = true;
+            placed = true;
+          }
+        }
+      }
+      bsSelectedShipId = null;
+      renderBsSetupUI();
+    };
+
+    window.clearMyBsSetup = function () {
+      if (bsSetupSubmitted) return;
+      bsSetupBoard = Array(BS_GRID_SIZE * BS_GRID_SIZE).fill(0);
+      bsSetupFleet = BS_FLEET_TEMPLATE.map(s => ({ ...s, placed: false, cells: [] }));
+      bsSelectedShipId = 0;
+      renderBsSetupUI();
+    };
+
+    function handleBsSetupCellClick(idx) {
+      if (bsSetupSubmitted) return;
+
+      if (bsSetupBoard[idx] === 1) {
+        const existingShip = bsSetupFleet.find(s => s.cells.includes(idx));
+        if (existingShip) {
+          existingShip.cells.forEach(cIdx => { bsSetupBoard[cIdx] = 0; });
+          existingShip.cells = [];
+          existingShip.placed = false;
+          bsSelectedShipId = existingShip.id;
+          renderBsSetupUI();
+        }
+        return;
+      }
+
+      if (bsSelectedShipId === null) return;
+      const ship = bsSetupFleet.find(s => s.id === bsSelectedShipId);
+      if (!ship || ship.placed) return;
+
+      const r = Math.floor(idx / BS_GRID_SIZE);
+      const c = idx % BS_GRID_SIZE;
+
+      if (!canPlaceShipOn15x15(bsSetupBoard, r, c, ship.len, bsIsHorizontal)) {
+        showToast(t('bsInvalidSpot'));
+        return;
+      }
+
+      const cells = [];
+      for (let i = 0; i < ship.len; i++) {
+        const cellIdx = bsIsHorizontal ? r * BS_GRID_SIZE + (c + i) : (r + i) * BS_GRID_SIZE + c;
+        bsSetupBoard[cellIdx] = 1;
+        cells.push(cellIdx);
+      }
+      ship.cells = cells;
+      ship.placed = true;
+
+      const nextShip = bsSetupFleet.find(s => !s.placed);
+      bsSelectedShipId = nextShip ? nextShip.id : null;
+      renderBsSetupUI();
+    }
+
+    function renderBsSetupUI() {
+      const selectorFrag = document.createDocumentFragment();
+      bsSetupFleet.forEach(ship => {
+        const isSelected = (ship.id === bsSelectedShipId);
+        let style = "bg-slate-800 border-slate-700 text-slate-300";
+        if (ship.placed) style = "bg-emerald-950/60 border-emerald-500/50 text-emerald-300";
+        if (isSelected) style = "bg-cyan-600 border-cyan-300 text-white shadow-md scale-105";
+
+        const btn = el('button', `px-2 py-1 rounded-lg border text-[10px] font-bold transition-all ${style}`, `${"■".repeat(ship.len)} (${ship.len})`);
+        btn.disabled = bsSetupSubmitted;
+        btn.addEventListener('click', () => selectBsSetupShip(ship.id));
+        selectorFrag.appendChild(btn);
+      });
+      $('bs-ship-selector').replaceChildren(selectorFrag);
+
+      const gridFrag = document.createDocumentFragment();
+      for (let i = 0; i < BS_GRID_SIZE * BS_GRID_SIZE; i++) {
+        const hasShip = bsSetupBoard[i] === 1;
+        const cell = el('button', `rounded-[2px] border transition-colors ${hasShip ? 'bg-cyan-500 border-cyan-300 shadow-inner' : 'bg-slate-900/90 border-slate-800/80 hover:bg-cyan-950/60'}`);
+        cell.disabled = bsSetupSubmitted;
+        cell.addEventListener('click', () => handleBsSetupCellClick(i));
+        gridFrag.appendChild(cell);
+      }
+      $('bs-setup-grid').replaceChildren(gridFrag);
+
+      const placedCount = bsSetupFleet.filter(s => s.placed).length;
+      const readyBtn = $('bs-ready-btn');
+      if (bsSetupSubmitted) {
+        readyBtn.disabled = true;
+        readyBtn.className = "tap w-2/3 py-3 bg-amber-600/30 border border-amber-500/40 text-amber-300 font-bold rounded-xl text-xs cursor-wait";
+        readyBtn.textContent = t('bsWaitingOpponentFleet');
+      } else if (placedCount === BS_FLEET_TEMPLATE.length) {
+        readyBtn.disabled = false;
+        readyBtn.className = "tap w-2/3 py-3 play-btn text-white font-extrabold rounded-xl text-xs transition-all shadow-lg cursor-pointer";
+        readyBtn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> ${t('bsReady')} (10/10)`;
+      } else {
+        readyBtn.disabled = true;
+        readyBtn.className = "tap w-2/3 py-3 bg-slate-700 text-slate-400 font-extrabold rounded-xl text-xs cursor-not-allowed";
+        readyBtn.textContent = `${t('bsReady')} (${placedCount}/10)`;
+      }
+    }
+
+    window.confirmBsFleetSetup = safe(async function () {
+      const placedCount = bsSetupFleet.filter(s => s.placed).length;
+      if (placedCount < BS_FLEET_TEMPLATE.length) return;
+
+      bsSetupSubmitted = true;
+      renderBsSetupUI();
+
+      if (isAiMode) {
+        gameState.bsP1Board = [...bsSetupBoard];
+        gameState.bsP2Board = generateRandom15x15Board();
+        gameState.bsP1Hits = 0;
+        gameState.bsP2Hits = 0;
+        gameState.status = 'playing';
+        enterGameScreen('battleship', gameState);
+      } else if (roomCode) {
+        const updateObj = {};
+        if (playerRole === 'player1') {
+          updateObj.bsP1Board = [...bsSetupBoard];
+          updateObj.bsP1Ready = true;
+        } else {
+          updateObj.bsP2Board = [...bsSetupBoard];
+          updateObj.bsP2Ready = true;
+        }
+        await updateDoc(roomRef(roomCode), updateObj);
+      }
+    });
+
+    window.leaveBattleshipSetup = safe(async function () {
+      const yes = await askConfirm(t('leaveConfirm'));
+      if (!yes) return;
+      if (!isAiMode && roomCode) {
+        finishHandled = true;
+        await updateDoc(roomRef(roomCode), { status: 'finished', winner: otherRole(playerRole) });
+      }
+      returnToLobby();
+    });
+
+    /* ------------------------------------------------------------------ */
     /* Lobby actions: AI game / create / join                              */
     /* ------------------------------------------------------------------ */
     function maskWord(word) {
@@ -1743,7 +2121,8 @@
     function initializeGameDataAndStart(firstTurn, gameMode, wager) {
       finishHandled = false;
       const initialData = {
-        currentTurn: firstTurn, status: 'playing',
+        currentTurn: firstTurn,
+        status: gameMode === 'battleship' ? 'battleship_setup' : 'playing',
         p1Pos: 0, p2Pos: 0, mineMap: generateMineMap()
       };
 
@@ -1757,11 +2136,17 @@
         initialData.boxes = shuffle([500, 1000, 5000, 10000]).map((amount, id) => ({ id, amount, isOpen: false }));
       } else if (gameMode === 'tictactoe') {
         initialData.board = Array(9).fill("");
+      } else if (gameMode === 'battleship') {
+        initialData.bsP1Hits = 0;
+        initialData.bsP2Hits = 0;
+        initialData.bsP1Ready = false;
+        initialData.bsP2Ready = false;
       }
 
       if (isAiMode) {
         gameState = Object.assign({ gameMode, wager, player1Name: playerName, player2Name: "🤖 AI" }, initialData);
-        enterGameScreen(gameMode, gameState);
+        if (gameMode === 'battleship') initBsSetupScreen();
+        else enterGameScreen(gameMode, gameState);
       } else if (playerRole === 'player1') {
         updateDoc(roomRef(roomCode), initialData).catch(e => { console.error(e); showToast(t('errNetwork')); });
       }
@@ -1771,6 +2156,7 @@
       if (mode === 'words') { switchScreen('game-screen'); updateWordGameUI(state); }
       else if (mode === 'boxes') { switchScreen('boxes-screen'); updateBoxesUI(state); }
       else if (mode === 'tictactoe') { switchScreen('tictactoe-screen'); updateTicTacToeUI(state); }
+      else if (mode === 'battleship') { switchScreen('battleship-screen'); updateBattleshipUI(state); }
       else { switchScreen('safepath-screen'); updateSafePathUI(state); }
     }
 
@@ -1842,9 +2228,138 @@
         return;
       }
 
+      if (state.status === 'battleship_setup') {
+        if (currentScreen !== 'battleship-setup-screen') {
+          initBsSetupScreen();
+        }
+        if (!isAiMode && state.bsP1Ready && state.bsP2Ready && playerRole === 'player1') {
+          updateDoc(roomRef(roomCode), { status: 'playing' }).catch(e => console.error(e));
+        }
+        return;
+      }
+
       if (state.status === 'finished' && state.winner && !finishHandled) handleGameFinish(state.winner);
       enterGameScreen(state.gameMode, state);
     }
+
+    /* ------------------------------------------------------------------ */
+    /* 0. Battleship 15x15 Battle Logic                                    */
+    /* ------------------------------------------------------------------ */
+    function updateBattleshipUI(state) {
+      $('bs-p1-name').textContent = state.player1Name || t('player1');
+      $('bs-p2-name').textContent = state.player2Name || t('opponent');
+      $('bs-p1-hits').textContent = state.bsP1Hits || 0;
+      $('bs-p2-hits').textContent = state.bsP2Hits || 0;
+
+      const isMyTurn = state.currentTurn === playerRole;
+      const finished = state.status === 'finished';
+      $('bs-status').textContent = finished ? (resultText(state) || '') : (isMyTurn ? t('myTurn') : t('opponentTurn'));
+
+      const myBoard = playerRole === 'player1' ? state.bsP1Board : state.bsP2Board;
+      const enemyBoard = playerRole === 'player1' ? state.bsP2Board : state.bsP1Board;
+
+      const enemyFrag = document.createDocumentFragment();
+      enemyBoard.forEach((cellVal, idx) => {
+        const alreadyShot = (cellVal === 2 || cellVal === 3);
+        let cellStyle = "bg-slate-800/90 hover:bg-cyan-900/70 border-slate-700/60";
+        if (cellVal === 2) cellStyle = "bg-slate-950/90 border-slate-800/80";
+        else if (cellVal === 3) cellStyle = "bg-rose-600 border-rose-300 shadow-inner";
+
+        const btn = el('button', `aspect-square rounded-[2px] border flex items-center justify-center transition-colors ${cellStyle}`);
+        btn.disabled = !isMyTurn || alreadyShot || finished;
+        if (cellVal === 2) btn.appendChild(el('span', 'w-1.5 h-1.5 rounded-full bg-sky-400/70 block'));
+        else if (cellVal === 3) btn.appendChild(el('i', 'fa-solid fa-xmark text-[9px] text-white'));
+
+        btn.addEventListener('click', () => makeBattleshipMove(idx));
+        enemyFrag.appendChild(btn);
+      });
+      $('bs-enemy-grid').replaceChildren(enemyFrag);
+
+      const myFrag = document.createDocumentFragment();
+      myBoard.forEach((cellVal) => {
+        let cellStyle = "bg-slate-900/80 border-slate-800/60";
+        if (cellVal === 1) cellStyle = "bg-cyan-500/80 border-cyan-300/60";
+        else if (cellVal === 2) cellStyle = "bg-slate-950 border-slate-800";
+        else if (cellVal === 3) cellStyle = "bg-rose-600 border-rose-300";
+
+        const div = el('div', `aspect-square rounded-[1px] border flex items-center justify-center ${cellStyle}`);
+        if (cellVal === 2) div.appendChild(el('span', 'w-1 h-1 rounded-full bg-slate-500 block'));
+        else if (cellVal === 3) div.appendChild(el('i', 'fa-solid fa-xmark text-[7px] text-white'));
+        myFrag.appendChild(div);
+      });
+      $('bs-my-grid').replaceChildren(myFrag);
+
+      if (isAiMode && state.currentTurn === 'player2' && !finished) {
+        scheduleAi(() => {
+          if (!isAiMode || gameState !== state || state.status === 'finished') return;
+          const validTargets = [];
+          const priorityTargets = [];
+          state.bsP1Board.forEach((val, idx) => {
+            if (val === 0 || val === 1) {
+              validTargets.push(idx);
+              if (aiLevel !== 'easy') {
+                const r = Math.floor(idx / BS_GRID_SIZE);
+                const c = idx % BS_GRID_SIZE;
+                const neighbors = [
+                  r > 0 ? (r - 1) * BS_GRID_SIZE + c : -1,
+                  r < BS_GRID_SIZE - 1 ? (r + 1) * BS_GRID_SIZE + c : -1,
+                  c > 0 ? r * BS_GRID_SIZE + (c - 1) : -1,
+                  c < BS_GRID_SIZE - 1 ? r * BS_GRID_SIZE + (c + 1) : -1
+                ];
+                if (neighbors.some(n => n >= 0 && state.bsP1Board[n] === 3)) priorityTargets.push(idx);
+              }
+            }
+          });
+
+          const pool = priorityTargets.length > 0 ? priorityTargets : validTargets;
+          if (pool.length > 0) {
+            const targetIdx = pool[Math.floor(Math.random() * pool.length)];
+            if (state.bsP1Board[targetIdx] === 1) {
+              state.bsP1Board[targetIdx] = 3;
+              state.bsP2Hits = (state.bsP2Hits || 0) + 1;
+              showToast(t('bsAiHitToast'));
+              if (state.bsP2Hits >= BS_TOTAL_TARGET_CELLS) {
+                state.status = 'finished';
+                state.winner = 'player2';
+                handleGameFinish('player2');
+              }
+              updateBattleshipUI(state);
+              return;
+            } else {
+              state.bsP1Board[targetIdx] = 2;
+            }
+          }
+          state.currentTurn = 'player1';
+          updateBattleshipUI(state);
+        });
+      }
+    }
+
+    window.makeBattleshipMove = safe(async function (idx) {
+      if (!gameState || gameState.status === 'finished' || gameState.currentTurn !== playerRole) return;
+      const enemyBoardKey = playerRole === 'player1' ? 'bsP2Board' : 'bsP1Board';
+      const myHitsKey = playerRole === 'player1' ? 'bsP1Hits' : 'bsP2Hits';
+      const board = gameState[enemyBoardKey];
+
+      if (board[idx] === 2 || board[idx] === 3) return;
+
+      if (board[idx] === 1) {
+        board[idx] = 3;
+        gameState[myHitsKey] = (gameState[myHitsKey] || 0) + 1;
+        showToast(t('bsHitToast'));
+        if (gameState[myHitsKey] >= BS_TOTAL_TARGET_CELLS) {
+          gameState.status = 'finished';
+          gameState.winner = playerRole;
+          handleGameFinish(playerRole);
+        }
+      } else {
+        board[idx] = 2;
+        showToast(t('bsMissToast'));
+        gameState.currentTurn = otherRole(playerRole);
+      }
+
+      await commit(updateBattleshipUI);
+    });
 
     /* ------------------------------------------------------------------ */
     /* 1. Safe Path                                                        */
@@ -2310,7 +2825,7 @@
     }
     window.returnToLobby = returnToLobby;
 
-    const SCREENS = ['auth-screen', 'lobby-screen', 'waiting-screen', 'jeirani-screen', 'safepath-screen', 'game-screen', 'boxes-screen', 'tictactoe-screen'];
+    const SCREENS = ['auth-screen', 'lobby-screen', 'waiting-screen', 'jeirani-screen', 'safepath-screen', 'game-screen', 'boxes-screen', 'tictactoe-screen', 'battleship-setup-screen', 'battleship-screen'];
     function switchScreen(screenId) {
       if (screenId !== currentScreen) window.scrollTo(0, 0);
       currentScreen = screenId;
@@ -2335,7 +2850,8 @@
       for (const id in closers) {
         if (!$(id).classList.contains('hidden')) { closers[id](); return true; }
       }
-      if (['safepath-screen', 'game-screen', 'boxes-screen', 'tictactoe-screen'].includes(currentScreen)) { leaveGame(); return true; }
+      if (['safepath-screen', 'game-screen', 'boxes-screen', 'tictactoe-screen', 'battleship-screen'].includes(currentScreen)) { leaveGame(); return true; }
+      if (currentScreen === 'battleship-setup-screen') { leaveBattleshipSetup(); return true; }
       if (currentScreen === 'waiting-screen') { cancelRoom(); return true; }
       if (currentScreen === 'jeirani-screen') { leaveJeirani(); return true; }
       return false;
