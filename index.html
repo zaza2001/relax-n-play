@@ -74,9 +74,7 @@
     .grid-cols-15 {
       grid-template-columns: repeat(15, minmax(0, 1fr));
     }
-    /* Touch-friendly minimum target */
     .tap { min-height: 44px; }
-    /* Overlays: safe-area aware and scrollable on short screens */
     .modal-overlay {
       padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
       overflow-y: auto;
@@ -91,6 +89,24 @@
     }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .animate-fade-in { animation: fadeIn 0.2s ease-out; }
+    @keyframes popIn { 0% { transform: scale(0.75); opacity: 0.4; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+    .animate-pop { animation: popIn 0.22s ease-out; }
+    @keyframes shakeAnim {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+    .animate-shake { animation: shakeAnim 0.38s ease-in-out; }
+    .bs-zoom-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .bs-zoom-active {
+      width: 520px !important;
+      max-width: none !important;
+    }
     @media (prefers-reduced-motion: reduce) {
       * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
@@ -105,17 +121,18 @@
       background: rgba(99, 102, 241, 0.5);
       border-radius: 4px;
     }
-    /* Very small phones */
     @media (max-width: 359px) {
       #app { padding-left: 0.5rem; padding-right: 0.5rem; }
     }
-    /* Short landscape screens */
     @media (max-height: 480px) and (orientation: landscape) {
       #app { justify-content: flex-start; }
     }
   </style>
 </head>
 <body class="flex flex-col justify-between">
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-[80] hidden"></canvas>
 
   <div id="app" class="flex-grow flex flex-col justify-center items-center p-3 sm:p-4 max-w-md md:max-w-2xl mx-auto w-full relative">
 
@@ -158,8 +175,8 @@
             <label for="invite-modal-bs-size" class="text-[10px] text-slate-400 font-semibold ml-1" data-i18n="bsSizeLbl">ველის ზომა:</label>
             <select id="invite-modal-bs-size" class="tap w-full mt-1 px-3 py-2.5 glass-input rounded-xl text-cyan-300 font-bold focus:outline-none text-xs">
               <option value="5">5 × 5</option>
-              <option value="10">10 × 10</option>
-              <option value="15" selected>15 × 15</option>
+              <option value="10" selected>10 × 10</option>
+              <option value="15">15 × 15</option>
             </select>
           </div>
           <div>
@@ -443,10 +460,15 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 bg-slate-900/90 border border-amber-500/30 py-2 px-3 rounded-2xl shadow-inner">
-          <i class="fa-solid fa-coins text-amber-400 text-sm"></i>
-          <span id="user-coins" class="text-base font-black text-amber-300 tracking-wide">1000</span>
-          <span class="text-[10px] text-amber-500 font-bold">₾</span>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button id="free-topup-btn" onclick="claimFreeTopup()" class="hidden tap px-2.5 py-2 bg-emerald-600/90 hover:bg-emerald-500 border border-emerald-400/50 rounded-2xl text-[10px] font-extrabold text-white shadow-lg animate-pulse flex items-center gap-1">
+            <i class="fa-solid fa-gift"></i> <span>+500 ₾</span>
+          </button>
+          <div class="flex items-center gap-1.5 sm:gap-2 bg-slate-900/90 border border-amber-500/30 py-2 px-3 rounded-2xl shadow-inner">
+            <i class="fa-solid fa-coins text-amber-400 text-sm"></i>
+            <span id="user-coins" class="text-base font-black text-amber-300 tracking-wide">1000</span>
+            <span class="text-[10px] text-amber-500 font-bold">₾</span>
+          </div>
         </div>
       </div>
 
@@ -476,8 +498,8 @@
             <label for="bs-size-select" class="text-[10px] text-slate-400 font-semibold ml-1 block text-left" data-i18n="bsSizeLbl">ველის ზომა:</label>
             <select id="bs-size-select" class="tap w-full mt-1 px-3 py-2.5 glass-input rounded-xl text-cyan-300 font-bold focus:outline-none text-xs">
               <option value="5">5 × 5</option>
-              <option value="10">10 × 10</option>
-              <option value="15" selected>15 × 15</option>
+              <option value="10" selected>10 × 10</option>
+              <option value="15">15 × 15</option>
             </select>
           </div>
 
@@ -594,13 +616,20 @@
         </div>
       </div>
 
-      <div class="glass-card p-3 rounded-2xl text-center border border-indigo-500/20 shadow-inner bg-slate-900/80">
+      <div class="glass-card p-3 rounded-2xl text-center border border-indigo-500/20 shadow-inner bg-slate-900/80 space-y-1.5">
         <div id="sp-status" class="text-xs font-bold text-amber-300 tracking-wide">...</div>
+        <div id="sp-afk-bar" class="hidden flex items-center justify-center gap-2 text-[11px]">
+          <span id="sp-afk-timer" class="font-mono text-slate-400">⏱️ 25 წმ</span>
+          <button id="sp-claim-afk" onclick="claimAfkWin()" class="hidden px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-[10px]" data-i18n="claimWinBtn">მოგების მოთხოვნა</button>
+        </div>
       </div>
 
       <div id="safepath-board" class="glass-card p-3 sm:p-4 rounded-3xl flex flex-col space-y-2.5 max-w-[350px] mx-auto w-full shadow-2xl border border-indigo-500/20"></div>
 
-      <div class="text-center pt-1">
+      <div class="flex justify-center gap-2 pt-1">
+        <button id="sp-rematch-btn" onclick="playAgain()" class="hidden tap px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow">
+          <i class="fa-solid fa-rotate-right mr-1"></i> <span data-i18n="playAgainBtn">თავიდან თამაში</span>
+        </button>
         <button onclick="leaveGame()" class="tap px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all shadow border border-slate-700/50" data-i18n="backLobby">მთავარ მენიუში დაბრუნება</button>
       </div>
     </div>
@@ -621,9 +650,13 @@
           </div>
         </div>
         <div class="glass-card p-3 rounded-2xl flex flex-col justify-center border-l-4 border-amber-500 text-center col-span-2 sm:col-span-1">
-          <span class="text-[10px] text-slate-400 font-semibold" id="round-indicator">რაუნდი 1 / 3</span>
+          <div class="flex items-center justify-center gap-1.5">
+            <span class="text-[10px] text-slate-400 font-semibold" id="round-indicator">რაუნდი 1 / 3</span>
+            <span id="word-lang-badge" class="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold">🇬🇪 KA</span>
+          </div>
           <span id="word-timer" class="text-xs font-mono font-bold text-amber-400 mt-0.5">⏱️ 15 წმ</span>
           <span id="turn-banner" class="text-[10px] font-bold text-indigo-300 mt-0.5">...</span>
+          <button id="word-claim-afk" onclick="claimAfkWin()" class="hidden mt-1 mx-auto px-2 py-0.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded text-[10px]" data-i18n="claimWinBtn">მოგების მოთხოვნა</button>
         </div>
       </div>
 
@@ -642,7 +675,10 @@
 
       <div id="cards-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 py-1"></div>
 
-      <div class="text-center pt-1">
+      <div class="flex justify-center gap-2 pt-1">
+        <button id="word-rematch-btn" onclick="playAgain()" class="hidden tap px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow">
+          <i class="fa-solid fa-rotate-right mr-1"></i> <span data-i18n="playAgainBtn">თავიდან თამაში</span>
+        </button>
         <button onclick="leaveGame()" class="tap px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold" data-i18n="backLobby">მთავარ მენიუში დაბრუნება</button>
       </div>
     </div>
@@ -658,27 +694,41 @@
           <span data-i18n="myBalance">შენი ბალანსი</span>: <span id="my-box-balance" class="text-emerald-400 font-bold ml-1">0 ₾</span>
         </div>
       </div>
-      <div class="glass-card p-3 rounded-2xl text-center border border-slate-700/50">
+      <div class="glass-card p-3 rounded-2xl text-center border border-slate-700/50 space-y-1.5">
         <div id="boxes-turn-banner" class="text-sm font-bold text-amber-300">...</div>
+        <div id="boxes-afk-bar" class="hidden flex items-center justify-center gap-2 text-[11px]">
+          <span id="boxes-afk-timer" class="font-mono text-slate-400">⏱️ 25 წმ</span>
+          <button id="boxes-claim-afk" onclick="claimAfkWin()" class="hidden px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-[10px]" data-i18n="claimWinBtn">მოგების მოთხოვნა</button>
+        </div>
       </div>
       <div id="boxes-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 py-1"></div>
-      <div class="text-center pt-1">
+      <div class="flex justify-center gap-2 pt-1">
+        <button id="boxes-rematch-btn" onclick="playAgain()" class="hidden tap px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow">
+          <i class="fa-solid fa-rotate-right mr-1"></i> <span data-i18n="playAgainBtn">თავიდან თამაში</span>
+        </button>
         <button onclick="leaveGame()" class="tap px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold" data-i18n="backLobby">მთავარ მენიუში დაბრუნება</button>
       </div>
     </div>
 
     <!-- 4. Tic-Tac-Toe Screen -->
     <div id="tictactoe-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-3.5">
-      <div class="glass-card p-3 rounded-2xl text-center border border-slate-700/50">
+      <div class="glass-card p-3 rounded-2xl text-center border border-slate-700/50 space-y-1.5">
         <div id="ttt-status" class="text-xs font-bold text-amber-300">...</div>
+        <div id="ttt-afk-bar" class="hidden flex items-center justify-center gap-2 text-[11px]">
+          <span id="ttt-afk-timer" class="font-mono text-slate-400">⏱️ 25 წმ</span>
+          <button id="ttt-claim-afk" onclick="claimAfkWin()" class="hidden px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-[10px]" data-i18n="claimWinBtn">მოგების მოთხოვნა</button>
+        </div>
       </div>
       <div id="ttt-grid" class="glass-card p-4 sm:p-5 rounded-3xl grid grid-cols-3 gap-2.5 sm:gap-3 aspect-square max-w-[300px] mx-auto w-full shadow-2xl border border-slate-700/50"></div>
-      <div class="text-center pt-1">
+      <div class="flex justify-center gap-2 pt-1">
+        <button id="ttt-rematch-btn" onclick="playAgain()" class="hidden tap px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow">
+          <i class="fa-solid fa-rotate-right mr-1"></i> <span data-i18n="playAgainBtn">თავიდან თამაში</span>
+        </button>
         <button onclick="leaveGame()" class="tap px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold" data-i18n="backLobby">მთავარ მენიუში დაბრუნება</button>
       </div>
     </div>
 
-    <!-- 5. Battleship Setup Screen (15x15 Fleet Placement) -->
+    <!-- 5. Battleship Setup Screen -->
     <div id="battleship-setup-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-2.5">
       <div class="glass-card p-3 rounded-2xl text-center border border-cyan-500/30">
         <h3 class="text-sm font-bold text-cyan-300" data-i18n="bsSetupTitle">ფლოტის განლაგება (15x15)</h3>
@@ -701,9 +751,18 @@
         </button>
       </div>
 
-      <!-- 15x15 Setup Grid -->
-      <div class="glass-card p-2.5 rounded-2xl border border-cyan-500/20 shadow-xl">
-        <div id="bs-setup-grid" class="grid grid-cols-15 gap-[2px] w-full aspect-square"></div>
+      <!-- Zoom toggle for 15x15 -->
+      <div id="bs-setup-zoom-bar" class="hidden flex justify-end">
+        <button type="button" onclick="toggleBsZoom('setup')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-[10px] text-cyan-300 font-bold flex items-center gap-1">
+          <i class="fa-solid fa-magnifying-glass-plus"></i> <span data-i18n="zoomBtn">გადიდება</span>
+        </button>
+      </div>
+
+      <!-- Setup Grid -->
+      <div class="glass-card p-2.5 rounded-2xl border border-cyan-500/20 shadow-xl bs-zoom-scroll">
+        <div id="bs-setup-grid-wrap" class="w-full mx-auto transition-all">
+          <div id="bs-setup-grid" class="grid grid-cols-15 gap-[2px] w-full aspect-square"></div>
+        </div>
       </div>
 
       <div class="flex gap-2 pt-1">
@@ -714,48 +773,64 @@
       </div>
     </div>
 
-    <!-- 6. Battleship Battle Screen (15x15) -->
+    <!-- 6. Battleship Battle Screen -->
     <div id="battleship-screen" class="hidden w-full max-w-md mx-auto flex flex-col space-y-2.5">
       <div class="grid grid-cols-2 gap-2">
         <div class="glass-card p-2.5 rounded-2xl flex items-center justify-between border-l-4 border-cyan-500 min-w-0">
           <div class="truncate">
             <div id="bs-p1-name" class="text-[11px] font-bold text-slate-100 truncate">მოთამაშე 1</div>
-            <div class="text-[10px] text-cyan-300 font-bold"><span data-i18n="bsHits">გარტყმა</span>: <span id="bs-p1-hits">0</span> / 20</div>
+            <div class="text-[10px] text-cyan-300 font-bold"><span data-i18n="bsHits">გარტყმა</span>: <span id="bs-p1-hits">0</span> / <span id="bs-p1-total">20</span></div>
           </div>
           <i class="fa-solid fa-ship text-cyan-400 text-sm shrink-0"></i>
         </div>
         <div class="glass-card p-2.5 rounded-2xl flex items-center justify-between border-l-4 border-rose-500 min-w-0">
           <div class="truncate">
             <div id="bs-p2-name" class="text-[11px] font-bold text-slate-100 truncate">მოწინააღმდეგე</div>
-            <div class="text-[10px] text-rose-300 font-bold"><span data-i18n="bsHits">გარტყმა</span>: <span id="bs-p2-hits">0</span> / 20</div>
+            <div class="text-[10px] text-rose-300 font-bold"><span data-i18n="bsHits">გარტყმა</span>: <span id="bs-p2-hits">0</span> / <span id="bs-p2-total">20</span></div>
           </div>
           <i class="fa-solid fa-crosshairs text-rose-400 text-sm shrink-0"></i>
         </div>
       </div>
 
-      <div class="glass-card p-2 rounded-2xl text-center border border-cyan-500/20 bg-slate-900/80">
+      <div class="glass-card p-2 rounded-2xl text-center border border-cyan-500/20 bg-slate-900/80 space-y-1">
         <div id="bs-status" class="text-xs font-bold text-amber-300">...</div>
+        <div id="bs-afk-bar" class="hidden flex items-center justify-center gap-2 text-[11px]">
+          <span id="bs-afk-timer" class="font-mono text-slate-400">⏱️ 25 წმ</span>
+          <button id="bs-claim-afk" onclick="claimAfkWin()" class="hidden px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-[10px]" data-i18n="claimWinBtn">მოგების მოთხოვნა</button>
+        </div>
       </div>
 
-      <!-- Enemy 15x15 Grid (Target) -->
+      <!-- Enemy Grid (Target) -->
       <div class="glass-card p-2.5 rounded-2xl border border-cyan-500/20 shadow-xl space-y-1.5">
         <div class="flex justify-between items-center px-1">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-300" data-i18n="bsEnemyBoard">მოწინააღმდეგის ზღვა 15x15 (დაარტყი)</span>
-          <span class="text-[9px] text-slate-400">10 გემი (20 უჯრა)</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-cyan-300" data-i18n="bsEnemyBoard">მოწინააღმდეგის ზღვა (დაარტყი)</span>
+          <button id="bs-enemy-zoom-btn" type="button" onclick="toggleBsZoom('enemy')" class="hidden px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-[9px] text-cyan-300 font-bold">
+            <i class="fa-solid fa-magnifying-glass-plus mr-0.5"></i> <span data-i18n="zoomBtn">გადიდება</span>
+          </button>
         </div>
-        <div id="bs-enemy-grid" class="grid grid-cols-15 gap-[2px] w-full aspect-square"></div>
+        <div class="bs-zoom-scroll">
+          <div id="bs-enemy-grid-wrap" class="w-full mx-auto transition-all">
+            <div id="bs-enemy-grid" class="grid grid-cols-15 gap-[2px] w-full aspect-square"></div>
+          </div>
+        </div>
       </div>
 
-      <!-- Own Fleet 15x15 Mini Grid -->
+      <!-- Own Fleet Mini Grid -->
       <div class="glass-card p-2.5 rounded-2xl border border-slate-700/50 space-y-1">
         <div class="flex justify-between items-center px-1">
-          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400" data-i18n="bsMyBoard">შენი ფლოტი (15x15)</span>
-          <span class="text-[9px] text-slate-500">🟦 გემი • 🟥 დაზიანება</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400" data-i18n="bsMyBoard">შენი ფლოტი</span>
+          <span class="text-[9px] text-slate-400 flex items-center gap-1.5">
+            <span><i class="fa-solid fa-ship text-cyan-400"></i> გემი</span> •
+            <span><i class="fa-solid fa-fire text-rose-400"></i> დაზიანება</span>
+          </span>
         </div>
         <div id="bs-my-grid" class="grid grid-cols-15 gap-[1px] max-w-[220px] mx-auto w-full aspect-square"></div>
       </div>
 
-      <div class="text-center pt-1">
+      <div class="flex justify-center gap-2 pt-1">
+        <button id="bs-rematch-btn" onclick="playAgain()" class="hidden tap px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow">
+          <i class="fa-solid fa-rotate-right mr-1"></i> <span data-i18n="playAgainBtn">თავიდან თამაში</span>
+        </button>
         <button onclick="leaveGame()" class="tap px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold" data-i18n="backLobby">მთავარ მენიუში დაბრუნება</button>
       </div>
     </div>
@@ -787,6 +862,95 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+
+    /* ------------------------------------------------------------------ */
+    /* Web Audio Sound Synthesizer (Zero external files needed)            */
+    /* ------------------------------------------------------------------ */
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (Ctx) audioCtx = new Ctx();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+      return audioCtx;
+    }
+
+    function playTone(freq, type, duration, vol = 0.12, delay = 0) {
+      if (isSoundMuted) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      try {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+        gain.gain.setValueAtTime(vol, ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + duration);
+      } catch (e) { /* ignore */ }
+    }
+
+    const SFX = {
+      click: () => playTone(520, 'sine', 0.06, 0.08),
+      step: () => { playTone(440, 'triangle', 0.09, 0.12); playTone(660, 'triangle', 0.11, 0.1, 0.06); },
+      hit: () => { playTone(180, 'sawtooth', 0.18, 0.16); playTone(110, 'square', 0.22, 0.14, 0.05); },
+      miss: () => playTone(260, 'sine', 0.14, 0.08),
+      boom: () => { playTone(95, 'sawtooth', 0.35, 0.22); playTone(60, 'square', 0.4, 0.2, 0.05); if (navigator.vibrate) navigator.vibrate([120, 40, 120]); },
+      coin: () => { playTone(987, 'sine', 0.1, 0.12); playTone(1318, 'sine', 0.2, 0.14, 0.08); },
+      win: () => { [523, 659, 784, 1046].forEach((f, i) => playTone(f, 'triangle', 0.22, 0.14, i * 0.09)); },
+      lose: () => { [340, 290, 220].forEach((f, i) => playTone(f, 'sawtooth', 0.22, 0.1, i * 0.12)); }
+    };
+
+    /* ------------------------------------------------------------------ */
+    /* Confetti & Shake Visual Effects                                     */
+    /* ------------------------------------------------------------------ */
+    function triggerShake(elId) {
+      const target = $(elId);
+      if (!target) return;
+      target.classList.remove('animate-shake');
+      void target.offsetWidth;
+      target.classList.add('animate-shake');
+    }
+
+    function launchConfetti() {
+      const canvas = $('confetti-canvas');
+      if (!canvas) return;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      canvas.classList.remove('hidden');
+      const ctx = canvas.getContext('2d');
+      const colors = ['#fbbf24', '#10b981', '#6366f1', '#ec4899', '#38bdf8'];
+      const pieces = Array.from({ length: 75 }, () => ({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * 200,
+        r: 4 + Math.random() * 5,
+        c: colors[Math.floor(Math.random() * colors.length)],
+        vx: (Math.random() - 0.5) * 4,
+        vy: 3 + Math.random() * 4,
+        rot: Math.random() * 360
+      }));
+      let frame = 0;
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pieces.forEach(p => {
+          p.x += p.vx; p.y += p.vy; p.rot += 5;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rot * Math.PI) / 180);
+          ctx.fillStyle = p.c;
+          ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r);
+          ctx.restore();
+        });
+        frame++;
+        if (frame < 130) requestAnimationFrame(draw);
+        else canvas.classList.add('hidden');
+      }
+      requestAnimationFrame(draw);
+    }
 
     /* ------------------------------------------------------------------ */
     /* Helpers                                                             */
@@ -846,6 +1010,8 @@
     let pendingAvatar = "";
     let roomUnsubscribe = null;
     let userUnsubscribe = null;
+    let heartbeatInterval = null;
+    let afkCheckInterval = null;
     let gameState = null;
     let isRegisterMode = false;
     let authBusy = false;
@@ -868,20 +1034,23 @@
     let toastTimer = null;
     let confirmResolver = null;
 
-    /* Battleship 15x15 State */
-    const BS_FLEETS = { 5: [2, 2, 1, 1], 10: [4, 3, 3, 2, 2, 2, 1, 1, 1, 1], 15: [4, 3, 3, 2, 2, 2, 1, 1, 1, 1] };
-    let BS_GRID_SIZE = 15;
-    let BS_FLEET_TEMPLATE = BS_FLEETS[15].map((len, id) => ({ id, len, placed: false }));
+    /* Battleship State */
+    const BS_FLEETS = { 5: [2, 1, 1], 10: [4, 3, 3, 2, 2, 2, 1, 1, 1, 1], 15: [4, 3, 3, 2, 2, 2, 1, 1, 1, 1] };
+    let BS_GRID_SIZE = 10;
+    let BS_FLEET_TEMPLATE = BS_FLEETS[10].map((len, id) => ({ id, len, placed: false }));
     let BS_TOTAL_TARGET_CELLS = 20;
 
-    let bsSetupBoard = Array(225).fill(0);
+    let bsSetupBoard = Array(100).fill(0);
     let bsSetupFleet = [];
     let bsSelectedShipId = 0;
     let bsIsHorizontal = true;
     let bsSetupSubmitted = false;
+    let bsSetupZoomed = false;
+    let bsEnemyZoomed = false;
 
     const ROUND_COUNT = 3;
     const AI_WORD_SKILL = { easy: 0.35, medium: 0.6, hard: 0.85 };
+    const AFK_TIMEOUT_MS = 25000;
 
     function scheduleAi(fn) {
       if (aiTimeout) return;
@@ -915,7 +1084,7 @@
         noFriends: "მეგობრები არ გყავთ...", closeBtn: "დახურვა", selectGameTitle: "აირჩიეთ აქტიური თამაში",
         adminTitle: "ადმინ პანელი", adminSub: "მომხმარებელთა და ბალანსის მართვა", loadingUsers: "იტვირთება მომხმარებლები...",
         authTitle: "სისტემაში შესვლა", authRegTitle: "რეგისტრაცია",
-        authDesc: "შედით თქვენს ანგარიშით ან გააგრძელეთ სტუმრად",
+        authDesc: "შედით თქვენს ანგარიშში ან გააგრძელეთ სტუმრად",
         authBtn: "შესვლა", regBtn: "რეგისტრაცია",
         authToggleReg: "არ გაქვს ანგარიში? დარეგისტრირდი", authToggleLog: "უკვე გაქვს ანგარიში? შედი",
         guestBtn: "გაგრძელება სტუმრის რეჟიმში",
@@ -926,7 +1095,7 @@
         tableReady: "მაგიდა მზადაა!", wagerLabelWait: "ფსონი", waitingOpponent: "ველით მოწინააღმდეგეს...",
         jeiraniTitle: "ჯეირანი (ვინ იწყებს?)", jeiraniDesc: "აირჩიეთ ფიგურა, რომ დადგინდეს ვინ იწყებს პირველ სვლას:",
         rock: "✊ ქვა", paper: "✋ ქაღალდი", scissors: "✌️ მაკრატელი",
-        levelLbl: "დონე", backLobby: "მთავარ მენიუში დაბრუნება",
+        levelLbl: "დონე", backLobby: "მთავარ მენიუში დაბრუნება", playAgainBtn: "თავიდან თამაში",
         selectedCardLbl: "არჩეული ბარათი", chooseCardBelow: "აირჩიეთ ბარათი ქვემოთ", guessPh: "ჩაწერეთ სიტყვა...", guessBtn: "გამოცნობა",
         gameLblShort: "თამაში", myBalance: "შენი ბალანსი", finishLine: "ფინიშის ხაზი (დონე 5)",
         chooseBoxPrompt: "აირჩიეთ ყუთი!", boxLabel: "ყუთი",
@@ -959,13 +1128,17 @@
         offline: "📡 ინტერნეტი გაითიშა", online: "✅ კავშირი აღდგა",
         leaveConfirm: "თამაშიდან გასვლისას ფსონი დაიკარგება. გავიდეთ?", opponentLeftRefund: "მოწინააღმდეგე გავიდა. ფსონი დაგიბრუნდათ.",
         exitHint: "გასასვლელად კიდევ ერთხელ დააჭირეთ „უკან“", coinsAdded: "ქოინები წარმატებით დაემატა!",
-        bsHits: "გარტყმა", bsEnemyBoard: "მოწინააღმდეგის ზღვა 15x15 (დაარტყი)", bsMyBoard: "შენი ფლოტი (15x15)",
+        bsHits: "გარტყმა", bsEnemyBoard: "მოწინააღმდეგის ზღვა (დაარტყი)", bsMyBoard: "შენი ფლოტი",
         bsHitToast: "💥 ზუსტი გარტყმა! კიდევ ერთი სვლა შენია!", bsMissToast: "🌊 აცდა! წყალში ჩავარდა.",
         bsAiHitToast: "💥 AI-მ შენს გემს გაარტყა!",
         bsSizeLbl: "ველის ზომა:", bsSetupTitle: "ფლოტის განლაგება (15x15)", bsSetupDesc: "აირჩიე გემი და დააკლიკე რუკაზე (გემებს შორის 1 უჯრა დაშორებაა)",
         bsHoriz: "ჰორიზონტ.", bsVert: "ვერტიკალ.", bsRandom: "ავტო", bsClear: "გასუფთავება",
         bsReady: "მზად ვარ", bsWaitingOpponentFleet: "⏳ ველით მოწინააღმდეგის ფლოტის განლაგებას...",
-        bsInvalidSpot: "⚠️ აქ გემის დაყენება არ შეიძლება!"
+        bsInvalidSpot: "⚠️ აქ გემის დაყენება არ შეიძლება!",
+        zoomBtn: "გადიდება", zoomOutBtn: "დაპატარავება",
+        claimWinBtn: "მოგების მოთხოვნა", afkWonToast: "🏆 მოწინააღმდეგემ დრო ამოწურა! მოიგე!",
+        freeTopupTitle: "უფასო შევსება", freeTopupOk: "🎁 ბალანსი შეივსო +500 ₾!", freeTopupWait: "⏳ შემდეგი შევსება {m} წუთში!",
+        onlineLbl: "ონლაინ", offlineLbl: "ოფლაინ", rematchSent: "🔄 ახალი რაუნდი დაიწყო!"
       },
       eng: {
         inviteTitle: "Game Invitation", inviteDesc: "Choose game and wager for your friend",
@@ -995,7 +1168,7 @@
         tableReady: "Table is Ready!", wagerLabelWait: "Wager", waitingOpponent: "Waiting for opponent...",
         jeiraniTitle: "Rock-Paper-Scissors (Who starts?)", jeiraniDesc: "Choose a sign to determine who makes the first move:",
         rock: "✊ Rock", paper: "✋ Paper", scissors: "✌️ Scissors",
-        levelLbl: "Level", backLobby: "Return to Main Menu",
+        levelLbl: "Level", backLobby: "Return to Main Menu", playAgainBtn: "Play Again",
         selectedCardLbl: "Selected Card", chooseCardBelow: "Choose card below", guessPh: "Type a word...", guessBtn: "Guess",
         gameLblShort: "Game", myBalance: "Your Balance", finishLine: "Finish Line (Level 5)",
         chooseBoxPrompt: "Choose a box!", boxLabel: "Box",
@@ -1028,13 +1201,17 @@
         offline: "📡 You are offline", online: "✅ Back online",
         leaveConfirm: "If you leave now, your wager is lost. Leave anyway?", opponentLeftRefund: "Opponent left. Your wager was refunded.",
         exitHint: "Press back again to exit", coinsAdded: "Coins added successfully!",
-        bsHits: "Hits", bsEnemyBoard: "Enemy Waters 15x15 (Attack)", bsMyBoard: "Your Fleet (15x15)",
+        bsHits: "Hits", bsEnemyBoard: "Enemy Waters (Attack)", bsMyBoard: "Your Fleet",
         bsHitToast: "💥 Direct hit! Bonus turn!", bsMissToast: "🌊 Splash! Missed.",
         bsAiHitToast: "💥 AI hit your ship!",
         bsSizeLbl: "Board size:", bsSetupTitle: "Deploy Your Fleet (15x15)", bsSetupDesc: "Select a ship and tap the grid (1-cell buffer between ships)",
         bsHoriz: "Horizontal", bsVert: "Vertical", bsRandom: "Auto", bsClear: "Clear",
         bsReady: "Ready", bsWaitingOpponentFleet: "⏳ Waiting for opponent to deploy fleet...",
-        bsInvalidSpot: "⚠️ Cannot place ship here!"
+        bsInvalidSpot: "⚠️ Cannot place ship here!",
+        zoomBtn: "Zoom In", zoomOutBtn: "Zoom Out",
+        claimWinBtn: "Claim AFK Win", afkWonToast: "🏆 Opponent timed out! You win!",
+        freeTopupTitle: "Free Top-up", freeTopupOk: "🎁 +500 ₾ added to balance!", freeTopupWait: "⏳ Next top-up in {m} min!",
+        onlineLbl: "Online", offlineLbl: "Offline", rematchSent: "🔄 New round started!"
       },
       ru: {
         inviteTitle: "Приглашение в игру", inviteDesc: "Выберите игру и ставку для друга",
@@ -1064,7 +1241,7 @@
         tableReady: "Стол готов!", wagerLabelWait: "Ставка", waitingOpponent: "Ожидание противника...",
         jeiraniTitle: "Камень-ножницы-бумага (Кто первый?)", jeiraniDesc: "Выберите фигуру, чтобы определить, кто делает первый ход:",
         rock: "✊ Камень", paper: "✋ Бумага", scissors: "✌️ Ножницы",
-        levelLbl: "Уровень", backLobby: "Вернуться в главное меню",
+        levelLbl: "Уровень", backLobby: "Вернуться в главное меню", playAgainBtn: "Играть снова",
         selectedCardLbl: "Выбранная карта", chooseCardBelow: "Выберите карту ниже", guessPh: "Введите слово...", guessBtn: "Угадать",
         gameLblShort: "Игра", myBalance: "Ваш баланс", finishLine: "Финиш (Уровень 5)",
         chooseBoxPrompt: "Выберите ящик!", boxLabel: "Ящик",
@@ -1097,13 +1274,17 @@
         offline: "📡 Нет подключения к интернету", online: "✅ Соединение восстановлено",
         leaveConfirm: "Если выйдете сейчас, ставка будет потеряна. Выйти?", opponentLeftRefund: "Противник вышел. Ставка возвращена.",
         exitHint: "Нажмите «Назад» ещё раз для выхода", coinsAdded: "Монеты успешно добавлены!",
-        bsHits: "Попадания", bsEnemyBoard: "Море противника 15x15 (Атака)", bsMyBoard: "Ваш флот (15x15)",
+        bsHits: "Попадания", bsEnemyBoard: "Море противника (Атака)", bsMyBoard: "Ваш флот",
         bsHitToast: "💥 Точное попадание! Дополнительный ход!", bsMissToast: "🌊 Мимо!",
         bsAiHitToast: "💥 AI попал в ваш корабль!",
         bsSizeLbl: "Размер поля:", bsSetupTitle: "Расстановка флота (15x15)", bsSetupDesc: "Выберите корабль и нажмите на поле (между кораблями 1 клетка)",
         bsHoriz: "Горизонт.", bsVert: "Вертикал.", bsRandom: "Авто", bsClear: "Очистить",
         bsReady: "Готов", bsWaitingOpponentFleet: "⏳ Ожидание расстановки флота противника...",
-        bsInvalidSpot: "⚠️ Сюда нельзя поставить корабль!"
+        bsInvalidSpot: "⚠️ Сюда нельзя поставить корабль!",
+        zoomBtn: "Увеличить", zoomOutBtn: "Уменьшить",
+        claimWinBtn: "Забрать победу", afkWonToast: "🏆 Противник неактивен! Вы победили!",
+        freeTopupTitle: "Бесплатное пополнение", freeTopupOk: "🎁 +500 ₾ начислено!", freeTopupWait: "⏳ Следующее пополнение через {m} мин!",
+        onlineLbl: "Онлайн", offlineLbl: "Офлайн", rematchSent: "🔄 Новый раунд начался!"
       }
     };
 
@@ -1267,11 +1448,20 @@
     }
 
     /* ------------------------------------------------------------------ */
-    /* Auth                                                                */
+    /* Auth & Presence Heartbeat                                           */
     /* ------------------------------------------------------------------ */
+    function startHeartbeat(uid) {
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
+      const ping = () => updateDoc(userRef(uid), { lastSeen: Date.now() }).catch(() => {});
+      ping();
+      heartbeatInterval = setInterval(ping, 30000);
+    }
+
     function resetSession() {
       if (userUnsubscribe) { userUnsubscribe(); userUnsubscribe = null; }
       if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
+      if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; }
+      if (afkCheckInterval) { clearInterval(afkCheckInterval); afkCheckInterval = null; }
       if (wordTimerInterval) { clearInterval(wordTimerInterval); wordTimerInterval = null; }
       if (aiTimeout) { clearTimeout(aiTimeout); aiTimeout = null; }
       if (jeiraniTimeout) { clearTimeout(jeiraniTimeout); jeiraniTimeout = null; }
@@ -1290,7 +1480,10 @@
         currentUser = user;
         try {
           const ok = await loadUserData(user.uid, user.email);
-          if (ok) listenToUserDoc(user.uid);
+          if (ok) {
+            listenToUserDoc(user.uid);
+            startHeartbeat(user.uid);
+          }
         } catch (e) {
           console.error(e);
           showToast(t('errNetwork'));
@@ -1304,6 +1497,7 @@
     });
 
     window.toggleAuthMode = function () {
+      SFX.click();
       isRegisterMode = !isRegisterMode;
       renderAuthMode();
     };
@@ -1343,10 +1537,12 @@
     };
 
     window.continueAnonymously = async () => {
+      SFX.click();
       try { await signInAnonymously(auth); }
       catch (e) { console.error(e); showToast(t('errNetwork')); }
     };
     window.logoutUser = async () => {
+      SFX.click();
       try { await signOut(auth); } catch (e) { console.error(e); }
     };
 
@@ -1365,7 +1561,7 @@
       } else {
         userStats = {
           email: email ? email.toLowerCase() : 'anonymous', nickname: defaultName, wins: 0, losses: 0,
-          coins: 1000, friendCode: genCode(), friends: [], isAdmin: false, isBanned: false, incomingInvite: null
+          coins: 1000, friendCode: genCode(), friends: [], isAdmin: false, isBanned: false, incomingInvite: null, lastSeen: Date.now()
         };
         await setDoc(ref, userStats);
       }
@@ -1382,7 +1578,26 @@
       return true;
     }
 
-    function renderCoins() { $('user-coins').textContent = userStats.coins ?? 0; }
+    function renderCoins() {
+      const c = userStats.coins ?? 0;
+      $('user-coins').textContent = c;
+      $('free-topup-btn').classList.toggle('hidden', c >= 50);
+    }
+
+    window.claimFreeTopup = safe(async function () {
+      if (!currentUser || (userStats.coins ?? 0) >= 50) return;
+      const now = Date.now();
+      const last = userStats.lastTopupAt || 0;
+      const cooldown = 5 * 60 * 1000;
+      if (now - last < cooldown) {
+        const mins = Math.ceil((cooldown - (now - last)) / 60000);
+        return showToast(t('freeTopupWait', { m: mins }));
+      }
+      userStats.lastTopupAt = now;
+      await updateDoc(userRef(currentUser.uid), { coins: increment(500), lastTopupAt: now });
+      SFX.coin();
+      showToast(t('freeTopupOk'));
+    });
 
     function listenToUserDoc(uid) {
       if (userUnsubscribe) userUnsubscribe();
@@ -1449,8 +1664,8 @@
         if (!code) throw new Error('no-free-room-code');
         await setDoc(roomRef(code), {
           code, gameMode, wager, player1Id: currentUser.uid, player1Name: playerName,
-          status: 'waiting', currentTurn: 'player1', createdAt: Date.now(),
-          ...(gameMode === 'battleship' ? { bsSize: [5, 10, 15].includes(bsSize) ? bsSize : 15 } : {})
+          status: 'waiting', currentTurn: 'player1', createdAt: Date.now(), turnStartedAt: Date.now(),
+          ...(gameMode === 'battleship' ? { bsSize: [5, 10, 15].includes(bsSize) ? bsSize : 10 } : {})
         });
         roomCode = code; playerRole = 'player1'; isAiMode = false; finishHandled = false; roomWager = wager;
         return code;
@@ -1470,9 +1685,98 @@
     }
 
     async function commit(renderFn) {
+      gameState.turnStartedAt = Date.now();
       if (!isAiMode && roomCode) await updateDoc(roomRef(roomCode), gameState);
       else renderFn(gameState);
     }
+
+    /* ------------------------------------------------------------------ */
+    /* AFK Turn Watchdog & Claim Win                                       */
+    /* ------------------------------------------------------------------ */
+    function startAfkWatchdog() {
+      if (afkCheckInterval) clearInterval(afkCheckInterval);
+      afkCheckInterval = setInterval(() => {
+        if (!gameState || isAiMode || gameState.status !== 'playing' || finishHandled) {
+          ['sp-afk-bar', 'boxes-afk-bar', 'ttt-afk-bar', 'bs-afk-bar'].forEach(id => { const b = $(id); if (b) b.classList.add('hidden'); });
+          return;
+        }
+        const isOppTurn = gameState.currentTurn !== playerRole;
+        const started = gameState.turnStartedAt || Date.now();
+        const elapsed = Date.now() - started;
+        const rem = Math.max(0, Math.ceil((AFK_TIMEOUT_MS - elapsed) / 1000));
+        const canClaim = isOppTurn && elapsed >= AFK_TIMEOUT_MS;
+
+        const map = {
+          safepath: ['sp-afk-bar', 'sp-afk-timer', 'sp-claim-afk'],
+          boxes: ['boxes-afk-bar', 'boxes-afk-timer', 'boxes-claim-afk'],
+          tictactoe: ['ttt-afk-bar', 'ttt-afk-timer', 'ttt-claim-afk'],
+          battleship: ['bs-afk-bar', 'bs-afk-timer', 'bs-claim-afk']
+        };
+        const ids = map[gameState.gameMode];
+        if (ids) {
+          const [barId, timerId, btnId] = ids;
+          $(barId).classList.toggle('hidden', !isOppTurn);
+          $(timerId).textContent = `⏱️ ${rem} ${t('sec')}`;
+          $(btnId).classList.toggle('hidden', !canClaim);
+        }
+        const wordBtn = $('word-claim-afk');
+        if (wordBtn) {
+          wordBtn.classList.toggle('hidden', !(gameState.gameMode === 'words' && isOppTurn && elapsed >= 25000));
+        }
+      }, 1000);
+    }
+
+    window.claimAfkWin = safe(async function () {
+      if (!gameState || isAiMode || !roomCode || gameState.status !== 'playing') return;
+      if (gameState.currentTurn === playerRole) return;
+      const elapsed = Date.now() - (gameState.turnStartedAt || 0);
+      if (elapsed < 24000) return;
+
+      gameState.status = 'finished';
+      gameState.winner = playerRole;
+      showToast(t('afkWonToast'));
+      await updateDoc(roomRef(roomCode), { status: 'finished', winner: playerRole });
+    });
+
+    /* ------------------------------------------------------------------ */
+    /* Play Again (Rematch)                                                */
+    /* ------------------------------------------------------------------ */
+    function updateRematchButtons(state) {
+      const show = state.status === 'finished';
+      ['sp-rematch-btn', 'word-rematch-btn', 'boxes-rematch-btn', 'ttt-rematch-btn', 'bs-rematch-btn'].forEach(id => {
+        const b = $(id);
+        if (b) b.classList.toggle('hidden', !show);
+      });
+    }
+
+    window.playAgain = safe(async function () {
+      if (!gameState || gameState.status !== 'finished') return;
+      const wager = gameState.wager || 100;
+      if ((userStats.coins ?? 0) < wager) return showToast(t('noCoins'));
+
+      SFX.click();
+      if (isAiMode) {
+        await updateUserCoins(-wager);
+        finishHandled = false;
+        pendingGameData = { gameMode: gameState.gameMode, wager, bsSize: gameState.bsSize || 10 };
+        resetJeiraniUI();
+        switchScreen('jeirani-screen');
+      } else if (roomCode) {
+        await updateUserCoins(-wager);
+        finishHandled = false;
+        await updateDoc(roomRef(roomCode), {
+          status: 'jeirani',
+          winner: null,
+          p1Jeirani: null,
+          p2Jeirani: null,
+          jeiraniProcessed: false,
+          bsP1Ready: false,
+          bsP2Ready: false,
+          turnStartedAt: Date.now()
+        });
+        showToast(t('rematchSent'));
+      }
+    });
 
     /* ------------------------------------------------------------------ */
     /* Invites                                                             */
@@ -1483,6 +1787,7 @@
     }
 
     window.acceptGameInvite = safe(async function () {
+      SFX.click();
       const inv = incomingInviteData;
       $('invite-modal').classList.add('hidden');
       if (!inv) return;
@@ -1512,6 +1817,7 @@
     });
 
     window.rejectGameInvite = safe(async function () {
+      SFX.click();
       const inv = incomingInviteData;
       $('invite-modal').classList.add('hidden');
       incomingInviteData = null;
@@ -1520,6 +1826,7 @@
     });
 
     window.openFriendGameInviteModal = function (friendUid, friendName) {
+      SFX.click();
       targetFriendForInvite = { uid: friendUid, name: friendName || t('friends') };
       closeFriendsModal();
       $('friend-game-invite-modal').classList.remove('hidden');
@@ -1534,6 +1841,7 @@
     };
 
     window.confirmAndSendInvite = safe(async function () {
+      SFX.click();
       if (!targetFriendForInvite) return showToast(t('friendNotSet'));
       if (roomCode || isAiMode) return showToast(t('busyNow'));
       const target = targetFriendForInvite;
@@ -1603,6 +1911,7 @@
     };
 
     window.saveProfileSettings = safe(async function () {
+      SFX.click();
       if (!currentUser) return;
       const nick = $('nickname-input').value.trim().slice(0, 20);
       const updateData = {};
@@ -1616,6 +1925,7 @@
     });
 
     window.openProfileEditModal = () => {
+      SFX.click();
       pendingAvatar = "";
       $('nickname-input').value = playerName || "";
       updateAvatarUI(currentUserAvatar, currentUserAvatar);
@@ -1631,6 +1941,7 @@
     /* Navigation: sidebar, game switcher, sound                           */
     /* ------------------------------------------------------------------ */
     window.toggleSidebar = (open) => {
+      if (open) SFX.click();
       const drawer = $('sidebar-drawer');
       const overlay = $('sidebar-overlay');
       if (open) {
@@ -1654,10 +1965,12 @@
     };
 
     window.toggleGameSwitcher = (open) => {
+      if (open) SFX.click();
       $('game-switcher-modal').classList.toggle('hidden', !open);
     };
 
     window.switchGameModeModal = (gameMode) => {
+      SFX.click();
       switchGameMode(gameMode);
       toggleGameSwitcher(false);
       showToast(t('selectedToast', { name: getGameName(gameMode) }));
@@ -1671,6 +1984,7 @@
       isSoundMuted = !isSoundMuted;
       safeStore('ah_muted', isSoundMuted ? '1' : '0');
       renderSoundIcon();
+      if (!isSoundMuted) SFX.coin();
       showToast(isSoundMuted ? t('soundOff') : t('soundOn'));
     };
 
@@ -1678,17 +1992,20 @@
     /* Friends                                                             */
     /* ------------------------------------------------------------------ */
     window.openFriendsModal = safe(async function () {
+      SFX.click();
       $('friends-modal').classList.remove('hidden');
       await renderFriendsList();
     });
     window.closeFriendsModal = () => $('friends-modal').classList.add('hidden');
 
     window.copyMyFriendCode = async function () {
+      SFX.click();
       const ok = await copyText(userStats.friendCode || "");
       showToast(ok ? t('codeCopied') : t('copyFail'));
     };
 
     window.addFriend = safe(async function () {
+      SFX.click();
       const val = $('friend-search-input').value.trim();
       if (!val) return showToast(t('enterFriend'));
 
@@ -1724,23 +2041,29 @@
       }
 
       const snaps = await Promise.all(friends.map(id => getDoc(userRef(id)).catch(() => null)));
+      const now = Date.now();
       snaps.forEach((fSnap) => {
         if (!fSnap || !fSnap.exists()) return;
         const fUid = fSnap.id, fData = fSnap.data();
         const label = fData.nickname || fData.email || '?';
+        const isOnline = typeof fData.lastSeen === 'number' && (now - fData.lastSeen) < 90000;
 
         const row = el('div', 'bg-slate-900/90 p-3 rounded-2xl border border-slate-700/60 text-xs flex justify-between items-center gap-2 shadow');
         const left = el('div', 'flex items-center gap-2.5 min-w-0');
-        const av = el('div', 'w-9 h-9 rounded-full overflow-hidden bg-purple-900/50 border border-purple-500/40 flex items-center justify-center text-purple-300 font-bold shrink-0');
+        const avWrap = el('div', 'relative shrink-0');
+        const av = el('div', 'w-9 h-9 rounded-full overflow-hidden bg-purple-900/50 border border-purple-500/40 flex items-center justify-center text-purple-300 font-bold');
         if (typeof fData.avatar === 'string' && fData.avatar.startsWith('data:image/')) {
           const im = el('img', 'w-full h-full object-cover'); im.alt = ''; im.src = fData.avatar; av.appendChild(im);
         } else {
           av.appendChild(el('i', 'fa-solid fa-user text-xs'));
         }
+        const dot = el('span', `absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-slate-900 ${isOnline ? 'bg-emerald-500' : 'bg-slate-500'}`);
+        avWrap.append(av, dot);
+
         const info = el('div', 'min-w-0');
         info.appendChild(el('div', 'font-bold text-white truncate', label));
-        info.appendChild(el('div', 'text-[10px] text-amber-300 font-mono', `${t('balanceLbl')}: ${fData.coins ?? 0} ₾`));
-        left.append(av, info);
+        info.appendChild(el('div', 'text-[10px] text-amber-300 font-mono', `${t('balanceLbl')}: ${fData.coins ?? 0} ₾ • ${isOnline ? t('onlineLbl') : t('offlineLbl')}`));
+        left.append(avWrap, info);
 
         const btn = el('button', 'tap px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-[11px] transition-all shadow shrink-0', t('inviteBtn'));
         btn.addEventListener('click', () => openFriendGameInviteModal(fUid, label));
@@ -1779,28 +2102,45 @@
     });
 
     window.copyRoomCode = async function () {
+      SFX.click();
       if (!roomCode) return;
       const ok = await copyText(roomCode);
       showToast(ok ? t('roomCopied') : t('copyFail'));
     };
 
     /* ------------------------------------------------------------------ */
-    /* Battleship 15x15 Helpers & Fleet Setup                              */
+    /* Battleship Helpers, Ship Icons, Zoom & Fleet Setup                  */
     /* ------------------------------------------------------------------ */
+    window.toggleBsZoom = function (which) {
+      SFX.click();
+      if (which === 'setup') {
+        bsSetupZoomed = !bsSetupZoomed;
+        $('bs-setup-grid-wrap').classList.toggle('bs-zoom-active', bsSetupZoomed);
+      } else {
+        bsEnemyZoomed = !bsEnemyZoomed;
+        $('bs-enemy-grid-wrap').classList.toggle('bs-zoom-active', bsEnemyZoomed);
+      }
+    };
+
     function applyBsSizeText() {
       ['bsSetupTitle', 'bsEnemyBoard', 'bsMyBoard'].forEach(key => {
         document.querySelectorAll('[data-i18n="' + key + '"]').forEach(node => {
           node.textContent = t(key).replace(/15x15/g, BS_GRID_SIZE + 'x' + BS_GRID_SIZE);
         });
       });
+      const showZoom = BS_GRID_SIZE === 15;
+      $('bs-setup-zoom-bar').classList.toggle('hidden', !showZoom);
+      $('bs-enemy-zoom-btn').classList.toggle('hidden', !showZoom);
     }
 
     function setBsSize(n) {
       n = parseInt(n, 10);
-      if (!BS_FLEETS[n]) n = 15;
+      if (!BS_FLEETS[n]) n = 10;
       BS_GRID_SIZE = n;
       BS_FLEET_TEMPLATE = BS_FLEETS[n].map((len, id) => ({ id, len, placed: false }));
       BS_TOTAL_TARGET_CELLS = BS_FLEETS[n].reduce((a, b) => a + b, 0);
+      $('bs-p1-total').textContent = BS_TOTAL_TARGET_CELLS;
+      $('bs-p2-total').textContent = BS_TOTAL_TARGET_CELLS;
       ['bs-setup-grid', 'bs-enemy-grid', 'bs-my-grid'].forEach(id => {
         $(id).style.gridTemplateColumns = 'repeat(' + n + ', minmax(0, 1fr))';
       });
@@ -1810,7 +2150,7 @@
     function randomFleetLayout() {
       const lens = BS_FLEETS[BS_GRID_SIZE];
       let last = null;
-      for (let attempt = 0; attempt < 100; attempt++) {
+      for (let attempt = 0; attempt < 2500; attempt++) {
         const board = Array(BS_GRID_SIZE * BS_GRID_SIZE).fill(0);
         const ships = [];
         let ok = true;
@@ -1867,18 +2207,24 @@
       bsSelectedShipId = 0;
       bsIsHorizontal = true;
       bsSetupSubmitted = false;
+      bsSetupZoomed = false;
+      bsEnemyZoomed = false;
+      $('bs-setup-grid-wrap').classList.remove('bs-zoom-active');
+      $('bs-enemy-grid-wrap').classList.remove('bs-zoom-active');
       $('txt-bs-orient').textContent = t('bsHoriz');
       switchScreen('battleship-setup-screen');
       renderBsSetupUI();
     }
 
     window.toggleBsOrientation = function () {
+      SFX.click();
       bsIsHorizontal = !bsIsHorizontal;
       $('txt-bs-orient').textContent = bsIsHorizontal ? t('bsHoriz') : t('bsVert');
     };
 
     window.selectBsSetupShip = function (shipId) {
       if (bsSetupSubmitted) return;
+      SFX.click();
       const ship = bsSetupFleet.find(s => s.id === shipId);
       if (!ship) return;
       if (ship.placed) {
@@ -1892,6 +2238,7 @@
 
     window.autoPlaceMyShips = function () {
       if (bsSetupSubmitted) return;
+      SFX.click();
       const layout = randomFleetLayout();
       bsSetupBoard = layout.board;
       bsSetupFleet = BS_FLEET_TEMPLATE.map((s, i) => ({ ...s, placed: !!layout.ships[i], cells: layout.ships[i] || [] }));
@@ -1901,6 +2248,7 @@
 
     window.clearMyBsSetup = function () {
       if (bsSetupSubmitted) return;
+      SFX.click();
       bsSetupBoard = Array(BS_GRID_SIZE * BS_GRID_SIZE).fill(0);
       bsSetupFleet = BS_FLEET_TEMPLATE.map(s => ({ ...s, placed: false, cells: [] }));
       bsSelectedShipId = 0;
@@ -1913,6 +2261,7 @@
       if (bsSetupBoard[idx] === 1) {
         const existingShip = bsSetupFleet.find(s => s.cells.includes(idx));
         if (existingShip) {
+          SFX.click();
           existingShip.cells.forEach(cIdx => { bsSetupBoard[cIdx] = 0; });
           existingShip.cells = [];
           existingShip.placed = false;
@@ -1930,10 +2279,12 @@
       const c = idx % BS_GRID_SIZE;
 
       if (!canPlaceShipOn15x15(bsSetupBoard, r, c, ship.len, bsIsHorizontal)) {
+        SFX.miss();
         showToast(t('bsInvalidSpot'));
         return;
       }
 
+      SFX.step();
       const cells = [];
       for (let i = 0; i < ship.len; i++) {
         const cellIdx = bsIsHorizontal ? r * BS_GRID_SIZE + (c + i) : (r + i) * BS_GRID_SIZE + c;
@@ -1956,8 +2307,15 @@
         if (ship.placed) style = "bg-emerald-950/60 border-emerald-500/50 text-emerald-300";
         if (isSelected) style = "bg-cyan-600 border-cyan-300 text-white shadow-md scale-105";
 
-        const btn = el('button', `px-2 py-1 rounded-lg border text-[10px] font-bold transition-all ${style}`, `${"■".repeat(ship.len)} (${ship.len})`);
+        const btn = el('button', `px-2.5 py-1.5 rounded-lg border text-[10px] font-bold transition-all flex items-center gap-1 ${style}`);
         btn.disabled = bsSetupSubmitted;
+
+        const iconClass = ship.len >= 3 ? 'fa-ship' : 'fa-sailboat';
+        for (let k = 0; k < ship.len; k++) {
+          btn.appendChild(el('i', `fa-solid ${iconClass} text-[10px]`));
+        }
+        btn.appendChild(el('span', 'ml-0.5', `(${ship.len})`));
+
         btn.addEventListener('click', () => selectBsSetupShip(ship.id));
         selectorFrag.appendChild(btn);
       });
@@ -1966,8 +2324,12 @@
       const gridFrag = document.createDocumentFragment();
       for (let i = 0; i < BS_GRID_SIZE * BS_GRID_SIZE; i++) {
         const hasShip = bsSetupBoard[i] === 1;
-        const cell = el('button', `rounded-[2px] border transition-colors ${hasShip ? 'bg-cyan-500 border-cyan-300 shadow-inner' : 'bg-slate-900/90 border-slate-800/80 hover:bg-cyan-950/60'}`);
+        const cell = el('button', `rounded-[2px] border flex items-center justify-center overflow-hidden transition-colors ${hasShip ? 'bg-cyan-600 border-cyan-300 shadow-inner text-white animate-pop' : 'bg-slate-900/90 border-slate-800/80 hover:bg-cyan-950/60'}`);
         cell.disabled = bsSetupSubmitted;
+        if (hasShip) {
+          const iconSize = BS_GRID_SIZE <= 5 ? 'text-sm' : (BS_GRID_SIZE <= 10 ? 'text-[10px]' : 'text-[8px]');
+          cell.appendChild(el('i', `fa-solid fa-ship ${iconSize} drop-shadow`));
+        }
         cell.addEventListener('click', () => handleBsSetupCellClick(i));
         gridFrag.appendChild(cell);
       }
@@ -1994,6 +2356,7 @@
       const placedCount = bsSetupFleet.filter(s => s.placed).length;
       if (placedCount < BS_FLEET_TEMPLATE.length) return;
 
+      SFX.click();
       bsSetupSubmitted = true;
       renderBsSetupUI();
 
@@ -2003,9 +2366,10 @@
         gameState.bsP1Hits = 0;
         gameState.bsP2Hits = 0;
         gameState.status = 'playing';
+        gameState.turnStartedAt = Date.now();
         enterGameScreen('battleship', gameState);
       } else if (roomCode) {
-        const updateObj = {};
+        const updateObj = { turnStartedAt: Date.now() };
         if (playerRole === 'player1') {
           updateObj.bsP1Board = [...bsSetupBoard];
           updateObj.bsP1Ready = true;
@@ -2043,6 +2407,7 @@
     }
 
     window.startAiGame = safe(async function () {
+      SFX.click();
       if (roomCode || isAiMode) return;
       const wager = parseInt($('table-wager-select').value, 10) || 100;
       if ((userStats.coins ?? 0) < wager) return showToast(t('noCoins'));
@@ -2052,12 +2417,13 @@
       aiLevel = $('ai-difficulty').value || 'medium';
       playerRole = 'player1';
       finishHandled = false;
-      pendingGameData = { gameMode: activeGameMode, wager, bsSize: parseInt($('bs-size-select').value, 10) || 15 };
+      pendingGameData = { gameMode: activeGameMode, wager, bsSize: parseInt($('bs-size-select').value, 10) || 10 };
       resetJeiraniUI();
       switchScreen('jeirani-screen');
     });
 
     window.createRoom = safe(async function () {
+      SFX.click();
       if (roomCode || isAiMode) return;
       const wager = parseInt($('table-wager-select').value, 10) || 100;
       if ((userStats.coins ?? 0) < wager) return showToast(t('noCoins'));
@@ -2070,6 +2436,7 @@
     });
 
     window.joinRoom = safe(async function () {
+      SFX.click();
       if (roomCode || isAiMode) return;
       const code = $('room-code-input').value.trim();
       if (!/^\d{4}$/.test(code)) return showToast(t('enter4'));
@@ -2086,9 +2453,10 @@
     });
 
     window.cancelRoom = safe(async function () {
+      SFX.click();
       if (roomCode && !isAiMode) {
         const ok = await cancelWaitingRoom(roomCode, 'player1');
-        if (!ok) return; // opponent already joined: the room snapshot takes over
+        if (!ok) return;
         await updateUserCoins(roomWager);
       }
       returnToLobby();
@@ -2105,6 +2473,7 @@
 
     window.playJeirani = safe(async function (myChoice) {
       if (jeiraniLocked) return;
+      SFX.click();
       jeiraniLocked = true;
       document.querySelectorAll('#jeirani-btns button').forEach(b => { b.disabled = true; });
 
@@ -2120,7 +2489,7 @@
           jeiraniTimeout = null;
           if (!isAiMode || !data) return;
           initializeGameDataAndStart(winner, data.gameMode, data.wager, data.bsSize);
-        }, 1500);
+        }, 1200);
       } else {
         $('jeirani-result').textContent = t('jeiWait', { me: names[myChoice] });
         await updateDoc(roomRef(roomCode), { [playerRole === 'player1' ? 'p1Jeirani' : 'p2Jeirani']: myChoice });
@@ -2128,6 +2497,7 @@
     });
 
     window.leaveJeirani = safe(async function () {
+      SFX.click();
       if (isAiMode) {
         if (jeiraniTimeout) { clearTimeout(jeiraniTimeout); jeiraniTimeout = null; }
         const w = pendingGameData ? pendingGameData.wager : 0;
@@ -2147,8 +2517,9 @@
       finishHandled = false;
       const initialData = {
         currentTurn: firstTurn,
+        turnStartedAt: Date.now(),
         status: gameMode === 'battleship' ? 'battleship_setup' : 'playing',
-        p1Pos: 0, p2Pos: 0, mineMap: generateMineMap()
+        p1Pos: 0, p2Pos: 0, p1Marks: {}, p2Marks: {}, mineMap: generateMineMap()
       };
 
       if (gameMode === 'words') {
@@ -2169,7 +2540,7 @@
       }
 
       if (isAiMode) {
-        gameState = Object.assign({ gameMode, wager, bsSize: bsSize || 15, player1Name: playerName, player2Name: "🤖 AI" }, initialData);
+        gameState = Object.assign({ gameMode, wager, bsSize: bsSize || 10, player1Name: playerName, player2Name: "🤖 AI" }, initialData);
         if (gameMode === 'battleship') initBsSetupScreen();
         else enterGameScreen(gameMode, gameState);
       } else if (playerRole === 'player1') {
@@ -2178,6 +2549,7 @@
     }
 
     function enterGameScreen(mode, state) {
+      startAfkWatchdog();
       if (mode === 'words') { switchScreen('game-screen'); updateWordGameUI(state); }
       else if (mode === 'boxes') { switchScreen('boxes-screen'); updateBoxesUI(state); }
       else if (mode === 'tictactoe') { switchScreen('tictactoe-screen'); updateTicTacToeUI(state); }
@@ -2196,11 +2568,15 @@
       try {
         if (winnerRole === 'tie') {
           await updateUserCoins(wager);
+          SFX.coin();
           showToast(t('tieRefund'));
         } else if (winnerRole === playerRole) {
           await updateUserCoins(wager * 2);
+          SFX.win();
+          launchConfetti();
           showToast(t('won', { n: wager * 2 }));
         } else {
+          SFX.lose();
           showToast(t('youLost'));
         }
       } catch (e) { console.error(e); showToast(t('errNetwork')); }
@@ -2244,10 +2620,10 @@
 
         if (!isAiMode && state.p1Jeirani && state.p2Jeirani && playerRole === 'player1' && !state.jeiraniProcessed) {
           const winner = rpsWinner(state.p1Jeirani, state.p2Jeirani);
-          const code = roomCode, gm = state.gameMode, wg = state.wager;
+          const code = roomCode, gm = state.gameMode, wg = state.wager, bs = state.bsSize;
           updateDoc(roomRef(code), { jeiraniProcessed: true }).catch(e => console.error(e));
           setTimeout(() => {
-            if (roomCode === code) initializeGameDataAndStart(winner, gm, wg);
+            if (roomCode === code) initializeGameDataAndStart(winner, gm, wg, bs);
           }, 1000);
         }
         return;
@@ -2258,20 +2634,21 @@
           initBsSetupScreen();
         }
         if (!isAiMode && state.bsP1Ready && state.bsP2Ready && playerRole === 'player1') {
-          updateDoc(roomRef(roomCode), { status: 'playing' }).catch(e => console.error(e));
+          updateDoc(roomRef(roomCode), { status: 'playing', turnStartedAt: Date.now() }).catch(e => console.error(e));
         }
         return;
       }
 
       if (state.status === 'finished' && state.winner && !finishHandled) handleGameFinish(state.winner);
       enterGameScreen(state.gameMode, state);
+      updateRematchButtons(state);
     }
 
     /* ------------------------------------------------------------------ */
-    /* 0. Battleship 15x15 Battle Logic                                    */
+    /* 0. Battleship Battle Logic                                          */
     /* ------------------------------------------------------------------ */
     function updateBattleshipUI(state) {
-      if ((parseInt(state.bsSize, 10) || 15) !== BS_GRID_SIZE) setBsSize(state.bsSize);
+      if ((parseInt(state.bsSize, 10) || 10) !== BS_GRID_SIZE) setBsSize(state.bsSize);
       $('bs-p1-name').textContent = state.player1Name || t('player1');
       $('bs-p2-name').textContent = state.player2Name || t('opponent');
       $('bs-p1-hits').textContent = state.bsP1Hits || 0;
@@ -2289,12 +2666,12 @@
         const alreadyShot = (cellVal === 2 || cellVal === 3);
         let cellStyle = "bg-slate-800/90 hover:bg-cyan-900/70 border-slate-700/60";
         if (cellVal === 2) cellStyle = "bg-slate-950/90 border-slate-800/80";
-        else if (cellVal === 3) cellStyle = "bg-rose-600 border-rose-300 shadow-inner";
+        else if (cellVal === 3) cellStyle = "bg-rose-600 border-rose-300 shadow-inner animate-pop";
 
         const btn = el('button', `aspect-square rounded-[2px] border flex items-center justify-center transition-colors ${cellStyle}`);
         btn.disabled = !isMyTurn || alreadyShot || finished;
         if (cellVal === 2) btn.appendChild(el('span', 'w-1.5 h-1.5 rounded-full bg-sky-400/70 block'));
-        else if (cellVal === 3) btn.appendChild(el('i', 'fa-solid fa-xmark text-[9px] text-white'));
+        else if (cellVal === 3) btn.appendChild(el('i', 'fa-solid fa-fire text-[10px] text-amber-200'));
 
         btn.addEventListener('click', () => makeBattleshipMove(idx));
         enemyFrag.appendChild(btn);
@@ -2302,18 +2679,22 @@
       $('bs-enemy-grid').replaceChildren(enemyFrag);
 
       const myFrag = document.createDocumentFragment();
+      const myShipIconSize = BS_GRID_SIZE <= 5 ? 'text-xs' : (BS_GRID_SIZE <= 10 ? 'text-[8px]' : 'text-[6px]');
       myBoard.forEach((cellVal) => {
         let cellStyle = "bg-slate-900/80 border-slate-800/60";
-        if (cellVal === 1) cellStyle = "bg-cyan-500/80 border-cyan-300/60";
+        if (cellVal === 1) cellStyle = "bg-cyan-600/90 border-cyan-300/70 text-white";
         else if (cellVal === 2) cellStyle = "bg-slate-950 border-slate-800";
-        else if (cellVal === 3) cellStyle = "bg-rose-600 border-rose-300";
+        else if (cellVal === 3) cellStyle = "bg-rose-600 border-rose-300 text-amber-200";
 
-        const div = el('div', `aspect-square rounded-[1px] border flex items-center justify-center ${cellStyle}`);
-        if (cellVal === 2) div.appendChild(el('span', 'w-1 h-1 rounded-full bg-slate-500 block'));
-        else if (cellVal === 3) div.appendChild(el('i', 'fa-solid fa-xmark text-[7px] text-white'));
+        const div = el('div', `aspect-square rounded-[2px] border flex items-center justify-center overflow-hidden ${cellStyle}`);
+        if (cellVal === 1) div.appendChild(el('i', `fa-solid fa-ship ${myShipIconSize}`));
+        else if (cellVal === 2) div.appendChild(el('span', 'w-1 h-1 rounded-full bg-slate-500 block'));
+        else if (cellVal === 3) div.appendChild(el('i', `fa-solid fa-fire ${myShipIconSize}`));
         myFrag.appendChild(div);
       });
       $('bs-my-grid').replaceChildren(myFrag);
+
+      updateRematchButtons(state);
 
       if (isAiMode && state.currentTurn === 'player2' && !finished) {
         scheduleAi(() => {
@@ -2343,6 +2724,8 @@
             if (state.bsP1Board[targetIdx] === 1) {
               state.bsP1Board[targetIdx] = 3;
               state.bsP2Hits = (state.bsP2Hits || 0) + 1;
+              SFX.hit();
+              triggerShake('battleship-screen');
               showToast(t('bsAiHitToast'));
               if (state.bsP2Hits >= BS_TOTAL_TARGET_CELLS) {
                 state.status = 'finished';
@@ -2353,6 +2736,7 @@
               return;
             } else {
               state.bsP1Board[targetIdx] = 2;
+              SFX.miss();
             }
           }
           state.currentTurn = 'player1';
@@ -2372,6 +2756,7 @@
       if (board[idx] === 1) {
         board[idx] = 3;
         gameState[myHitsKey] = (gameState[myHitsKey] || 0) + 1;
+        SFX.hit();
         showToast(t('bsHitToast'));
         if (gameState[myHitsKey] >= BS_TOTAL_TARGET_CELLS) {
           gameState.status = 'finished';
@@ -2380,6 +2765,7 @@
         }
       } else {
         board[idx] = 2;
+        SFX.miss();
         showToast(t('bsMissToast'));
         gameState.currentTurn = otherRole(playerRole);
       }
@@ -2416,8 +2802,8 @@
         for (let c = 0; c < 3; c++) {
           const mark = marks[r + '_' + c];
           let cls = canClick ? 'bg-indigo-600 hover:bg-indigo-500 shadow-md text-white' : 'bg-slate-800 text-slate-500';
-          if (mark === 'bomb') cls = 'bg-rose-950/80 border border-rose-500/60 text-rose-400';
-          else if (mark === 'step') cls = 'bg-emerald-950/60 border border-emerald-500/50 text-emerald-400';
+          if (mark === 'bomb') cls = 'bg-rose-950/80 border border-rose-500/60 text-rose-400 animate-pop';
+          else if (mark === 'step') cls = 'bg-emerald-950/60 border border-emerald-500/50 text-emerald-400 animate-pop';
           const btn = el('button', `w-11 h-11 rounded-xl font-bold flex items-center justify-center transition-all ${cls}`);
           btn.disabled = !canClick;
           btn.setAttribute('aria-label', `${t('levelLbl')} ${r + 1} / ${c + 1}`);
@@ -2429,6 +2815,7 @@
         frag.appendChild(rowDiv);
       }
       $('safepath-board').replaceChildren(frag);
+      updateRematchButtons(state);
 
       if (isAiMode && state.currentTurn === 'player2' && !finished) {
         scheduleAi(() => {
@@ -2443,9 +2830,11 @@
           if (state.mineMap[row] === aiCol) {
             known[row] = aiCol;
             state.p2Pos = 0;
+            SFX.boom();
             showToast(t('aiMineHit'));
           } else {
             state.p2Pos += 1;
+            SFX.step();
             showToast(t('aiStep'));
             if (state.p2Pos >= 5) {
               state.status = 'finished'; state.winner = 'player2';
@@ -2466,11 +2855,14 @@
       const marksKey = playerRole === 'player1' ? 'p1Marks' : 'p2Marks';
       const marks = gameState[marksKey] = gameState[marksKey] || {};
       if (gameState.mineMap[row] === col) {
+        SFX.boom();
+        triggerShake('safepath-board');
         showToast(t('mineHit'));
         gameState[key] = 0;
         Object.keys(marks).forEach(k => { if (marks[k] === 'step') delete marks[k]; });
         marks[row + '_' + col] = 'bomb';
       } else {
+        SFX.step();
         gameState[key] += 1;
         marks[row + '_' + col] = 'step';
         if (gameState[key] >= 5) {
@@ -2502,6 +2894,7 @@
     }
     const onWordTimeout = safe(async function () {
       if (!gameState || gameState.status === 'finished' || gameState.currentTurn !== playerRole) return;
+      SFX.miss();
       showToast(t('timeUp'));
       gameState.currentTurn = otherRole(gameState.currentTurn);
       gameState.activeCardId = null;
@@ -2534,6 +2927,9 @@
       $('p1-label').textContent = state.player1Name || t('player1');
       $('p2-label').textContent = state.player2Name || t('opponent');
       $('round-indicator').textContent = `${t('round')} ${state.round || 1} / ${ROUND_COUNT}`;
+
+      const langBadgeMap = { ka: '🇬🇪 KA', eng: '🇺🇸 ENG', ru: '🇷🇺 RU' };
+      $('word-lang-badge').textContent = langBadgeMap[state.lang || 'ka'] || '🇬🇪 KA';
 
       const finished = state.status === 'finished';
       const isMyTurn = state.currentTurn === playerRole && !finished;
@@ -2580,6 +2976,7 @@
         frag.appendChild(btn);
       });
       $('cards-grid').replaceChildren(frag);
+      updateRematchButtons(state);
 
       if (isAiMode && state.currentTurn === 'player2' && !finished) {
         scheduleAi(() => {
@@ -2605,6 +3002,7 @@
 
     window.selectCard = safe(async function (cardId) {
       if (!gameState || gameState.status === 'finished' || gameState.currentTurn !== playerRole || gameState.cards[cardId].isGuessed) return;
+      SFX.click();
       gameState.activeCardId = cardId;
       if (!isAiMode && roomCode) await updateDoc(roomRef(roomCode), { activeCardId: cardId });
       else updateWordGameUI(gameState);
@@ -2620,11 +3018,13 @@
       stopWordTimer();
 
       if (guess === normWord(activeCard.word)) {
+        SFX.coin();
         activeCard.isGuessed = true;
         if (playerRole === 'player1') gameState.p1Score = (gameState.p1Score || 0) + 10;
         else gameState.p2Score = (gameState.p2Score || 0) + 10;
         showToast(t('correct'));
       } else {
+        SFX.miss();
         showToast(t('wrong'));
       }
 
@@ -2655,7 +3055,7 @@
 
       const frag = document.createDocumentFragment();
       (state.boxes || []).forEach(box => {
-        const btn = el('button', `p-4 rounded-2xl border text-center text-xs font-bold shadow transition-all min-h-[84px] ${box.isOpen ? ('bg-slate-900/90 border-slate-800 ' + (box.amount < 0 ? 'text-rose-400' : 'text-amber-400')) : 'bg-slate-800/90 border-slate-700 hover:border-emerald-500'}`);
+        const btn = el('button', `p-4 rounded-2xl border text-center text-xs font-bold shadow transition-all min-h-[84px] ${box.isOpen ? ('bg-slate-900/90 border-slate-800 animate-pop ' + (box.amount < 0 ? 'text-rose-400' : 'text-amber-400')) : 'bg-slate-800/90 border-slate-700 hover:border-emerald-500'}`);
         btn.disabled = box.isOpen || state.currentTurn !== playerRole || finished;
         btn.addEventListener('click', () => selectBox(box.id));
         if (box.isOpen) {
@@ -2668,6 +3068,7 @@
         frag.appendChild(btn);
       });
       $('boxes-grid').replaceChildren(frag);
+      updateRematchButtons(state);
 
       if (isAiMode && state.currentTurn === 'player2' && !finished) {
         scheduleAi(() => {
@@ -2704,6 +3105,9 @@
       if (!box || box.isOpen) return;
 
       box.isOpen = true;
+      if (box.amount > 0) SFX.coin();
+      else { SFX.boom(); triggerShake('boxes-grid'); }
+
       if (playerRole === 'player1') gameState.p1Money = (gameState.p1Money || 0) + box.amount;
       else gameState.p2Money = (gameState.p2Money || 0) + box.amount;
 
@@ -2811,8 +3215,12 @@
         const btn = $(`ttt-cell-${i}`);
         const val = state.board[i];
         btn.textContent = val;
+        btn.classList.toggle('text-indigo-400', val === 'X');
+        btn.classList.toggle('text-pink-400', val === 'O');
         btn.disabled = !isMyTurn || val !== "" || finished;
       }
+
+      updateRematchButtons(state);
 
       if (isAiMode && state.currentTurn === 'player2' && !finished) {
         scheduleAi(() => {
@@ -2822,6 +3230,7 @@
           const idx = pickTttMove(state.board, aiSymbol, humanSymbol, aiLevel);
           if (idx >= 0) {
             state.board[idx] = aiSymbol;
+            SFX.step();
             const w = checkTicTacToeWinner(state.board);
             if (w) {
               state.status = 'finished';
@@ -2837,6 +3246,7 @@
 
     window.makeTttMove = safe(async function (index) {
       if (!gameState || gameState.status === 'finished' || gameState.currentTurn !== playerRole || gameState.board[index] !== "") return;
+      SFX.step();
       gameState.board[index] = playerRole === 'player1' ? 'X' : 'O';
 
       const winner = checkTicTacToeWinner(gameState.board);
@@ -2853,6 +3263,7 @@
     /* Leaving / screens                                                   */
     /* ------------------------------------------------------------------ */
     window.leaveGame = safe(async function () {
+      SFX.click();
       if (gameState && gameState.status === 'playing') {
         const yes = await askConfirm(t('leaveConfirm'));
         if (!yes) return;
@@ -2866,6 +3277,7 @@
 
     function returnToLobby() {
       if (roomUnsubscribe) { roomUnsubscribe(); roomUnsubscribe = null; }
+      if (afkCheckInterval) { clearInterval(afkCheckInterval); afkCheckInterval = null; }
       stopWordTimer();
       if (aiTimeout) { clearTimeout(aiTimeout); aiTimeout = null; }
       if (jeiraniTimeout) { clearTimeout(jeiraniTimeout); jeiraniTimeout = null; }
@@ -2936,7 +3348,6 @@
           showToast(t('exitHint'));
           if (!exitArmed) {
             exitArmed = true;
-            // Allow the next "back" to leave the app; re-arm the guard afterwards
             history.back();
             setTimeout(() => { exitArmed = false; try { history.pushState({ guard: true }, ''); } catch (e) { /* ignore */ } }, 2500);
           }
