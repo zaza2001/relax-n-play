@@ -146,12 +146,20 @@
         <div class="space-y-3 text-left">
           <div>
             <label for="invite-modal-game" class="text-[10px] text-slate-400 font-semibold ml-1" data-i18n="gameLbl">არჩეული თამაში:</label>
-            <select id="invite-modal-game" class="tap w-full mt-1 px-3 py-2.5 glass-input rounded-xl text-white font-medium focus:outline-none text-xs">
+            <select id="invite-modal-game" onchange="toggleInviteBsSize()" class="tap w-full mt-1 px-3 py-2.5 glass-input rounded-xl text-white font-medium focus:outline-none text-xs">
               <option value="safepath" data-prefix="💣 " data-i18n="gSafepath">💣 დანაღმული გზა</option>
               <option value="battleship" data-prefix="🚢 " data-i18n="gBattleship">🚢 ჩაძირობანა</option>
               <option value="words" data-prefix="🔤 " data-i18n="gWords">🔤 სიტყვები</option>
               <option value="boxes" data-prefix="💰 " data-i18n="gBoxes">💰 ყუთები</option>
               <option value="tictactoe" data-prefix="❌ " data-i18n="gTtt">❌ იქსიკი და ნოლიკი</option>
+            </select>
+          </div>
+          <div id="invite-bs-size-box" class="hidden">
+            <label for="invite-modal-bs-size" class="text-[10px] text-slate-400 font-semibold ml-1" data-i18n="bsSizeLbl">ველის ზომა:</label>
+            <select id="invite-modal-bs-size" class="tap w-full mt-1 px-3 py-2.5 glass-input rounded-xl text-cyan-300 font-bold focus:outline-none text-xs">
+              <option value="5">5 × 5</option>
+              <option value="10">10 × 10</option>
+              <option value="15" selected>15 × 15</option>
             </select>
           </div>
           <div>
@@ -231,7 +239,7 @@
           <div class="w-10 h-10 shrink-0 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center text-base group-hover:scale-110 transition-transform"><i class="fa-solid fa-ship"></i></div>
           <div class="min-w-0">
             <div class="text-xs font-bold text-white" data-i18n="gBattleship">ჩაძირობანა</div>
-            <div class="text-[10px] text-slate-400" data-i18n="descBattleship">საზღვაო ბრძოლა 15x15</div>
+            <div class="text-[10px] text-slate-400" data-i18n="descBattleship">საზღვაო ბრძოლა</div>
           </div>
         </button>
 
@@ -464,6 +472,15 @@
             </select>
           </div>
 
+          <div id="bs-size-box" class="hidden">
+            <label for="bs-size-select" class="text-[10px] text-slate-400 font-semibold ml-1 block text-left" data-i18n="bsSizeLbl">ველის ზომა:</label>
+            <select id="bs-size-select" class="tap w-full mt-1 px-3 py-2.5 glass-input rounded-xl text-cyan-300 font-bold focus:outline-none text-xs">
+              <option value="5">5 × 5</option>
+              <option value="10">10 × 10</option>
+              <option value="15" selected>15 × 15</option>
+            </select>
+          </div>
+
           <div id="ai-controls-box" class="flex gap-2">
             <select id="ai-difficulty" aria-label="AI" class="tap w-28 sm:w-32 shrink-0 px-2 sm:px-3 py-2.5 glass-input rounded-xl text-xs font-semibold focus:outline-none text-emerald-400">
               <option value="easy" data-i18n="aiEasy">მარტივი AI</option>
@@ -635,7 +652,7 @@
       <div class="glass-card p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-center gap-2 border border-slate-700/50">
         <div class="text-center sm:text-left">
           <div class="text-[11px] text-slate-400"><span data-i18n="gameLblShort">თამაში</span>: <span class="text-emerald-400 font-bold" data-i18n="gBoxes">თანხის ყუთები</span></div>
-          <div id="boxes-round-title" class="text-base font-bold text-amber-400 mt-0.5">რაუნდი 1 / 4</div>
+          <div id="boxes-round-title" class="text-base font-bold text-amber-400 mt-0.5">რაუნდი 1 / 5</div>
         </div>
         <div class="px-3.5 py-2 bg-slate-800/80 border border-slate-700 rounded-xl text-xs font-semibold">
           <span data-i18n="myBalance">შენი ბალანსი</span>: <span id="my-box-balance" class="text-emerald-400 font-bold ml-1">0 ₾</span>
@@ -852,20 +869,10 @@
     let confirmResolver = null;
 
     /* Battleship 15x15 State */
-    const BS_GRID_SIZE = 15;
-    const BS_FLEET_TEMPLATE = [
-      { id: 0, len: 4, placed: false },
-      { id: 1, len: 3, placed: false },
-      { id: 2, len: 3, placed: false },
-      { id: 3, len: 2, placed: false },
-      { id: 4, len: 2, placed: false },
-      { id: 5, len: 2, placed: false },
-      { id: 6, len: 1, placed: false },
-      { id: 7, len: 1, placed: false },
-      { id: 8, len: 1, placed: false },
-      { id: 9, len: 1, placed: false }
-    ]; // 10 ships, 20 cells total
-    const BS_TOTAL_TARGET_CELLS = 20;
+    const BS_FLEETS = { 5: [2, 2, 1, 1], 10: [4, 3, 3, 2, 2, 2, 1, 1, 1, 1], 15: [4, 3, 3, 2, 2, 2, 1, 1, 1, 1] };
+    let BS_GRID_SIZE = 15;
+    let BS_FLEET_TEMPLATE = BS_FLEETS[15].map((len, id) => ({ id, len, placed: false }));
+    let BS_TOTAL_TARGET_CELLS = 20;
 
     let bsSetupBoard = Array(225).fill(0);
     let bsSetupFleet = [];
@@ -898,7 +905,7 @@
         menuTitle: "თამაშების მენიუ", menuSub: "არკადული სივრცე", social: "სოციალური",
         friends: "მეგობრები", friendsDesc: "დამატება და მოწვევა", catalog: "კატალოგი",
         gSafepath: "დანაღმული გზა", descSafepath: "არკადული მულტიფლეიერი",
-        gBattleship: "ჩაძირობანა", descBattleship: "საზღვაო ბრძოლა 15x15",
+        gBattleship: "ჩაძირობანა", descBattleship: "საზღვაო ბრძოლა",
         gWords: "სიტყვების გამოცნობა", descWords: "ინტელექტუალური დუელი",
         gBoxes: "თანხის ყუთები", descBoxes: "იღბლიანი ყუთები",
         gTtt: "იქსიკი და ნოლიკი", descTtt: "კლასიკური თამაში",
@@ -955,7 +962,7 @@
         bsHits: "გარტყმა", bsEnemyBoard: "მოწინააღმდეგის ზღვა 15x15 (დაარტყი)", bsMyBoard: "შენი ფლოტი (15x15)",
         bsHitToast: "💥 ზუსტი გარტყმა! კიდევ ერთი სვლა შენია!", bsMissToast: "🌊 აცდა! წყალში ჩავარდა.",
         bsAiHitToast: "💥 AI-მ შენს გემს გაარტყა!",
-        bsSetupTitle: "ფლოტის განლაგება (15x15)", bsSetupDesc: "აირჩიე გემი და დააკლიკე რუკაზე (გემებს შორის 1 უჯრა დაშორებაა)",
+        bsSizeLbl: "ველის ზომა:", bsSetupTitle: "ფლოტის განლაგება (15x15)", bsSetupDesc: "აირჩიე გემი და დააკლიკე რუკაზე (გემებს შორის 1 უჯრა დაშორებაა)",
         bsHoriz: "ჰორიზონტ.", bsVert: "ვერტიკალ.", bsRandom: "ავტო", bsClear: "გასუფთავება",
         bsReady: "მზად ვარ", bsWaitingOpponentFleet: "⏳ ველით მოწინააღმდეგის ფლოტის განლაგებას...",
         bsInvalidSpot: "⚠️ აქ გემის დაყენება არ შეიძლება!"
@@ -967,7 +974,7 @@
         menuTitle: "Games Menu", menuSub: "Arcade Space", social: "Social",
         friends: "Friends", friendsDesc: "Add and invite", catalog: "Catalog",
         gSafepath: "Safe Path", descSafepath: "Arcade Multiplayer",
-        gBattleship: "Battleship", descBattleship: "Naval Combat 15x15",
+        gBattleship: "Battleship", descBattleship: "Naval Combat",
         gWords: "Word Guessing", descWords: "Intellectual Duel",
         gBoxes: "Cash Boxes", descBoxes: "Lucky Boxes",
         gTtt: "Tic-Tac-Toe", descTtt: "Classic Game",
@@ -1024,7 +1031,7 @@
         bsHits: "Hits", bsEnemyBoard: "Enemy Waters 15x15 (Attack)", bsMyBoard: "Your Fleet (15x15)",
         bsHitToast: "💥 Direct hit! Bonus turn!", bsMissToast: "🌊 Splash! Missed.",
         bsAiHitToast: "💥 AI hit your ship!",
-        bsSetupTitle: "Deploy Your Fleet (15x15)", bsSetupDesc: "Select a ship and tap the grid (1-cell buffer between ships)",
+        bsSizeLbl: "Board size:", bsSetupTitle: "Deploy Your Fleet (15x15)", bsSetupDesc: "Select a ship and tap the grid (1-cell buffer between ships)",
         bsHoriz: "Horizontal", bsVert: "Vertical", bsRandom: "Auto", bsClear: "Clear",
         bsReady: "Ready", bsWaitingOpponentFleet: "⏳ Waiting for opponent to deploy fleet...",
         bsInvalidSpot: "⚠️ Cannot place ship here!"
@@ -1036,7 +1043,7 @@
         menuTitle: "Меню игр", menuSub: "Аркадное пространство", social: "Социальные",
         friends: "Друзья", friendsDesc: "Добавление и приглашение", catalog: "Каталог",
         gSafepath: "Безопасный путь", descSafepath: "Аркадный мультиплеер",
-        gBattleship: "Морской бой", descBattleship: "Морская битва 15x15",
+        gBattleship: "Морской бой", descBattleship: "Морская битва",
         gWords: "Угадай слова", descWords: "Интеллектуальная дуэль",
         gBoxes: "Денежные ящики", descBoxes: "Счастливые ящики",
         gTtt: "Крестики-нолики", descTtt: "Классическая игра",
@@ -1093,7 +1100,7 @@
         bsHits: "Попадания", bsEnemyBoard: "Море противника 15x15 (Атака)", bsMyBoard: "Ваш флот (15x15)",
         bsHitToast: "💥 Точное попадание! Дополнительный ход!", bsMissToast: "🌊 Мимо!",
         bsAiHitToast: "💥 AI попал в ваш корабль!",
-        bsSetupTitle: "Расстановка флота (15x15)", bsSetupDesc: "Выберите корабль и нажмите на поле (между кораблями 1 клетка)",
+        bsSizeLbl: "Размер поля:", bsSetupTitle: "Расстановка флота (15x15)", bsSetupDesc: "Выберите корабль и нажмите на поле (между кораблями 1 клетка)",
         bsHoriz: "Горизонт.", bsVert: "Вертикал.", bsRandom: "Авто", bsClear: "Очистить",
         bsReady: "Готов", bsWaitingOpponentFleet: "⏳ Ожидание расстановки флота противника...",
         bsInvalidSpot: "⚠️ Сюда нельзя поставить корабль!"
@@ -1205,6 +1212,7 @@
       $('active-game-title').textContent = t(m.nameKey);
       $('active-game-desc').textContent = t(m.descKey);
       $('active-game-icon-box').innerHTML = `<i class="fa-solid ${m.icon}"></i>`;
+      $('bs-size-box').classList.toggle('hidden', activeGameMode !== 'battleship');
     }
 
     window.changeLanguage = function (lang) {
@@ -1225,6 +1233,7 @@
 
       $('txt-bs-orient').textContent = bsIsHorizontal ? t('bsHoriz') : t('bsVert');
       if (currentScreen === 'battleship-setup-screen') renderBsSetupUI();
+      applyBsSizeText();
 
       renderAuthMode();
       applyGameLabels();
@@ -1428,7 +1437,7 @@
       });
     }
 
-    async function openRoom(gameMode, wager) {
+    async function openRoom(gameMode, wager, bsSize) {
       await updateUserCoins(-wager);
       try {
         let code = null;
@@ -1440,7 +1449,8 @@
         if (!code) throw new Error('no-free-room-code');
         await setDoc(roomRef(code), {
           code, gameMode, wager, player1Id: currentUser.uid, player1Name: playerName,
-          status: 'waiting', currentTurn: 'player1', createdAt: Date.now()
+          status: 'waiting', currentTurn: 'player1', createdAt: Date.now(),
+          ...(gameMode === 'battleship' ? { bsSize: [5, 10, 15].includes(bsSize) ? bsSize : 15 } : {})
         });
         roomCode = code; playerRole = 'player1'; isAiMode = false; finishHandled = false; roomWager = wager;
         return code;
@@ -1519,6 +1529,10 @@
       targetFriendForInvite = null;
     };
 
+    window.toggleInviteBsSize = () => {
+      $('invite-bs-size-box').classList.toggle('hidden', $('invite-modal-game').value !== 'battleship');
+    };
+
     window.confirmAndSendInvite = safe(async function () {
       if (!targetFriendForInvite) return showToast(t('friendNotSet'));
       if (roomCode || isAiMode) return showToast(t('busyNow'));
@@ -1527,7 +1541,7 @@
       const wager = parseInt($('invite-modal-wager').value, 10) || 100;
       if ((userStats.coins ?? 0) < wager) return showToast(t('noCoins'));
 
-      const code = await openRoom(selectedGameMode, wager);
+      const code = await openRoom(selectedGameMode, wager, parseInt($('invite-modal-bs-size').value, 10));
       try {
         await updateDoc(userRef(target.uid), {
           incomingInvite: { senderName: playerName, roomCode: code, gameMode: selectedGameMode, wager }
@@ -1773,6 +1787,56 @@
     /* ------------------------------------------------------------------ */
     /* Battleship 15x15 Helpers & Fleet Setup                              */
     /* ------------------------------------------------------------------ */
+    function applyBsSizeText() {
+      ['bsSetupTitle', 'bsEnemyBoard', 'bsMyBoard'].forEach(key => {
+        document.querySelectorAll('[data-i18n="' + key + '"]').forEach(node => {
+          node.textContent = t(key).replace(/15x15/g, BS_GRID_SIZE + 'x' + BS_GRID_SIZE);
+        });
+      });
+    }
+
+    function setBsSize(n) {
+      n = parseInt(n, 10);
+      if (!BS_FLEETS[n]) n = 15;
+      BS_GRID_SIZE = n;
+      BS_FLEET_TEMPLATE = BS_FLEETS[n].map((len, id) => ({ id, len, placed: false }));
+      BS_TOTAL_TARGET_CELLS = BS_FLEETS[n].reduce((a, b) => a + b, 0);
+      ['bs-setup-grid', 'bs-enemy-grid', 'bs-my-grid'].forEach(id => {
+        $(id).style.gridTemplateColumns = 'repeat(' + n + ', minmax(0, 1fr))';
+      });
+      applyBsSizeText();
+    }
+
+    function randomFleetLayout() {
+      const lens = BS_FLEETS[BS_GRID_SIZE];
+      let last = null;
+      for (let attempt = 0; attempt < 100; attempt++) {
+        const board = Array(BS_GRID_SIZE * BS_GRID_SIZE).fill(0);
+        const ships = [];
+        let ok = true;
+        for (const len of lens) {
+          let cells = null;
+          for (let i = 0; i < 300 && !cells; i++) {
+            const horiz = Math.random() < 0.5;
+            const r = Math.floor(Math.random() * BS_GRID_SIZE);
+            const c = Math.floor(Math.random() * BS_GRID_SIZE);
+            if (canPlaceShipOn15x15(board, r, c, len, horiz)) {
+              cells = [];
+              for (let k = 0; k < len; k++) {
+                const idx = horiz ? r * BS_GRID_SIZE + (c + k) : (r + k) * BS_GRID_SIZE + c;
+                board[idx] = 1; cells.push(idx);
+              }
+            }
+          }
+          if (!cells) { ok = false; break; }
+          ships.push(cells);
+        }
+        last = { board, ships };
+        if (ok) return last;
+      }
+      return last;
+    }
+
     function canPlaceShipOn15x15(board, r, c, len, isHorizontal) {
       for (let i = 0; i < len; i++) {
         const nr = isHorizontal ? r : r + i;
@@ -1793,29 +1857,11 @@
     }
 
     function generateRandom15x15Board() {
-      const board = Array(BS_GRID_SIZE * BS_GRID_SIZE).fill(0);
-      const lengths = [4, 3, 3, 2, 2, 2, 1, 1, 1, 1];
-      for (const len of lengths) {
-        let placed = false;
-        let attempts = 0;
-        while (!placed && attempts < 500) {
-          attempts++;
-          const horiz = Math.random() < 0.5;
-          const r = Math.floor(Math.random() * BS_GRID_SIZE);
-          const c = Math.floor(Math.random() * BS_GRID_SIZE);
-          if (canPlaceShipOn15x15(board, r, c, len, horiz)) {
-            for (let i = 0; i < len; i++) {
-              const idx = horiz ? r * BS_GRID_SIZE + (c + i) : (r + i) * BS_GRID_SIZE + c;
-              board[idx] = 1;
-            }
-            placed = true;
-          }
-        }
-      }
-      return board;
+      return randomFleetLayout().board;
     }
 
     function initBsSetupScreen() {
+      setBsSize(gameState && gameState.bsSize);
       bsSetupBoard = Array(BS_GRID_SIZE * BS_GRID_SIZE).fill(0);
       bsSetupFleet = BS_FLEET_TEMPLATE.map(s => ({ ...s, placed: false, cells: [] }));
       bsSelectedShipId = 0;
@@ -1846,30 +1892,9 @@
 
     window.autoPlaceMyShips = function () {
       if (bsSetupSubmitted) return;
-      bsSetupBoard = Array(BS_GRID_SIZE * BS_GRID_SIZE).fill(0);
-      bsSetupFleet = BS_FLEET_TEMPLATE.map(s => ({ ...s, placed: false, cells: [] }));
-
-      for (const ship of bsSetupFleet) {
-        let placed = false;
-        let attempts = 0;
-        while (!placed && attempts < 500) {
-          attempts++;
-          const horiz = Math.random() < 0.5;
-          const r = Math.floor(Math.random() * BS_GRID_SIZE);
-          const c = Math.floor(Math.random() * BS_GRID_SIZE);
-          if (canPlaceShipOn15x15(bsSetupBoard, r, c, ship.len, horiz)) {
-            const cells = [];
-            for (let i = 0; i < ship.len; i++) {
-              const idx = horiz ? r * BS_GRID_SIZE + (c + i) : (r + i) * BS_GRID_SIZE + c;
-              bsSetupBoard[idx] = 1;
-              cells.push(idx);
-            }
-            ship.cells = cells;
-            ship.placed = true;
-            placed = true;
-          }
-        }
-      }
+      const layout = randomFleetLayout();
+      bsSetupBoard = layout.board;
+      bsSetupFleet = BS_FLEET_TEMPLATE.map((s, i) => ({ ...s, placed: !!layout.ships[i], cells: layout.ships[i] || [] }));
       bsSelectedShipId = null;
       renderBsSetupUI();
     };
@@ -1957,11 +1982,11 @@
       } else if (placedCount === BS_FLEET_TEMPLATE.length) {
         readyBtn.disabled = false;
         readyBtn.className = "tap w-2/3 py-3 play-btn text-white font-extrabold rounded-xl text-xs transition-all shadow-lg cursor-pointer";
-        readyBtn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> ${t('bsReady')} (10/10)`;
+        readyBtn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> ${t('bsReady')} (${BS_FLEET_TEMPLATE.length}/${BS_FLEET_TEMPLATE.length})`;
       } else {
         readyBtn.disabled = true;
         readyBtn.className = "tap w-2/3 py-3 bg-slate-700 text-slate-400 font-extrabold rounded-xl text-xs cursor-not-allowed";
-        readyBtn.textContent = `${t('bsReady')} (${placedCount}/10)`;
+        readyBtn.textContent = `${t('bsReady')} (${placedCount}/${BS_FLEET_TEMPLATE.length})`;
       }
     }
 
@@ -2027,7 +2052,7 @@
       aiLevel = $('ai-difficulty').value || 'medium';
       playerRole = 'player1';
       finishHandled = false;
-      pendingGameData = { gameMode: activeGameMode, wager };
+      pendingGameData = { gameMode: activeGameMode, wager, bsSize: parseInt($('bs-size-select').value, 10) || 15 };
       resetJeiraniUI();
       switchScreen('jeirani-screen');
     });
@@ -2037,7 +2062,7 @@
       const wager = parseInt($('table-wager-select').value, 10) || 100;
       if ((userStats.coins ?? 0) < wager) return showToast(t('noCoins'));
 
-      const code = await openRoom(activeGameMode, wager);
+      const code = await openRoom(activeGameMode, wager, parseInt($('bs-size-select').value, 10));
       $('display-room-code').textContent = code;
       $('waiting-room-wager').textContent = wager;
       switchScreen('waiting-screen');
@@ -2094,7 +2119,7 @@
         jeiraniTimeout = setTimeout(() => {
           jeiraniTimeout = null;
           if (!isAiMode || !data) return;
-          initializeGameDataAndStart(winner, data.gameMode, data.wager);
+          initializeGameDataAndStart(winner, data.gameMode, data.wager, data.bsSize);
         }, 1500);
       } else {
         $('jeirani-result').textContent = t('jeiWait', { me: names[myChoice] });
@@ -2118,7 +2143,7 @@
       returnToLobby();
     });
 
-    function initializeGameDataAndStart(firstTurn, gameMode, wager) {
+    function initializeGameDataAndStart(firstTurn, gameMode, wager, bsSize) {
       finishHandled = false;
       const initialData = {
         currentTurn: firstTurn,
@@ -2133,7 +2158,7 @@
         lastWordTurn = null; timeLeft = 15;
       } else if (gameMode === 'boxes') {
         initialData.p1Money = 0; initialData.p2Money = 0; initialData.round = 1;
-        initialData.boxes = shuffle([500, 1000, 5000, 10000]).map((amount, id) => ({ id, amount, isOpen: false }));
+        initialData.boxes = makeBoxRound(1);
       } else if (gameMode === 'tictactoe') {
         initialData.board = Array(9).fill("");
       } else if (gameMode === 'battleship') {
@@ -2144,7 +2169,7 @@
       }
 
       if (isAiMode) {
-        gameState = Object.assign({ gameMode, wager, player1Name: playerName, player2Name: "🤖 AI" }, initialData);
+        gameState = Object.assign({ gameMode, wager, bsSize: bsSize || 15, player1Name: playerName, player2Name: "🤖 AI" }, initialData);
         if (gameMode === 'battleship') initBsSetupScreen();
         else enterGameScreen(gameMode, gameState);
       } else if (playerRole === 'player1') {
@@ -2246,6 +2271,7 @@
     /* 0. Battleship 15x15 Battle Logic                                    */
     /* ------------------------------------------------------------------ */
     function updateBattleshipUI(state) {
+      if ((parseInt(state.bsSize, 10) || 15) !== BS_GRID_SIZE) setBsSize(state.bsSize);
       $('bs-p1-name').textContent = state.player1Name || t('player1');
       $('bs-p2-name').textContent = state.player2Name || t('opponent');
       $('bs-p1-hits').textContent = state.bsP1Hits || 0;
@@ -2377,6 +2403,7 @@
 
       const myPos = playerRole === 'player1' ? state.p1Pos : state.p2Pos;
       const canClickRow = (r) => isMyTurn && r === myPos && !finished;
+      const marks = (playerRole === 'player1' ? state.p1Marks : state.p2Marks) || {};
 
       const frag = document.createDocumentFragment();
       frag.appendChild(el('div', 'p-2 bg-amber-500/15 text-amber-300 font-bold text-center rounded-xl text-xs border border-amber-500/30', t('finishLine')));
@@ -2387,10 +2414,14 @@
         const btns = el('div', 'flex gap-2');
         const canClick = canClickRow(r);
         for (let c = 0; c < 3; c++) {
-          const btn = el('button', `w-11 h-11 rounded-xl font-bold flex items-center justify-center transition-all ${canClick ? 'bg-indigo-600 hover:bg-indigo-500 shadow-md text-white' : 'bg-slate-800 text-slate-500'}`);
+          const mark = marks[r + '_' + c];
+          let cls = canClick ? 'bg-indigo-600 hover:bg-indigo-500 shadow-md text-white' : 'bg-slate-800 text-slate-500';
+          if (mark === 'bomb') cls = 'bg-rose-950/80 border border-rose-500/60 text-rose-400';
+          else if (mark === 'step') cls = 'bg-emerald-950/60 border border-emerald-500/50 text-emerald-400';
+          const btn = el('button', `w-11 h-11 rounded-xl font-bold flex items-center justify-center transition-all ${cls}`);
           btn.disabled = !canClick;
           btn.setAttribute('aria-label', `${t('levelLbl')} ${r + 1} / ${c + 1}`);
-          btn.appendChild(el('i', 'fa-solid fa-shoe-prints text-xs'));
+          btn.appendChild(el('i', mark === 'bomb' ? 'fa-solid fa-bomb text-base' : (mark === 'step' ? 'fa-solid fa-shoe-prints text-xs text-emerald-400' : 'fa-solid fa-shoe-prints text-xs')));
           btn.addEventListener('click', () => makeSafePathMove(r, c));
           btns.appendChild(btn);
         }
@@ -2432,11 +2463,16 @@
       const key = playerRole === 'player1' ? 'p1Pos' : 'p2Pos';
       if (row !== gameState[key]) return;
 
+      const marksKey = playerRole === 'player1' ? 'p1Marks' : 'p2Marks';
+      const marks = gameState[marksKey] = gameState[marksKey] || {};
       if (gameState.mineMap[row] === col) {
         showToast(t('mineHit'));
         gameState[key] = 0;
+        Object.keys(marks).forEach(k => { if (marks[k] === 'step') delete marks[k]; });
+        marks[row + '_' + col] = 'bomb';
       } else {
         gameState[key] += 1;
+        marks[row + '_' + col] = 'step';
         if (gameState[key] >= 5) {
           gameState.status = 'finished'; gameState.winner = playerRole;
           handleGameFinish(playerRole);
@@ -2602,8 +2638,15 @@
     /* ------------------------------------------------------------------ */
     /* 3. Cash boxes                                                       */
     /* ------------------------------------------------------------------ */
+    const BOX_ROUND_SIZES = [4, 8, 6, 10, 2];
+    const BOX_AMOUNTS = [1, 100, 5, 200, 500, -100, -200, -300, -1000, 1000];
+    function makeBoxRound(round) {
+      const n = BOX_ROUND_SIZES[round - 1] || 4;
+      return Array.from({ length: n }, (_, id) => ({ id, amount: BOX_AMOUNTS[Math.floor(Math.random() * BOX_AMOUNTS.length)], isOpen: false }));
+    }
+
     function updateBoxesUI(state) {
-      const total = (state.boxes && state.boxes.length) || 4;
+      const total = BOX_ROUND_SIZES.length;
       const finished = state.status === 'finished';
       $('boxes-round-title').textContent = `${t('round')} ${Math.min(state.round || 1, total)} / ${total}`;
       const myM = playerRole === 'player1' ? (state.p1Money || 0) : (state.p2Money || 0);
@@ -2612,7 +2655,7 @@
 
       const frag = document.createDocumentFragment();
       (state.boxes || []).forEach(box => {
-        const btn = el('button', `p-4 rounded-2xl border text-center text-xs font-bold shadow transition-all min-h-[84px] ${box.isOpen ? 'bg-slate-900/90 border-slate-800 text-amber-400' : 'bg-slate-800/90 border-slate-700 hover:border-emerald-500'}`);
+        const btn = el('button', `p-4 rounded-2xl border text-center text-xs font-bold shadow transition-all min-h-[84px] ${box.isOpen ? ('bg-slate-900/90 border-slate-800 ' + (box.amount < 0 ? 'text-rose-400' : 'text-amber-400')) : 'bg-slate-800/90 border-slate-700 hover:border-emerald-500'}`);
         btn.disabled = box.isOpen || state.currentTurn !== playerRole || finished;
         btn.addEventListener('click', () => selectBox(box.id));
         if (box.isOpen) {
@@ -2638,11 +2681,15 @@
             aiBox.isOpen = true;
             state.p2Money = (state.p2Money || 0) + aiBox.amount;
             showToast(t('aiBox', { n: aiBox.amount }));
-            state.round = (state.round || 1) + 1;
             if (state.boxes.every(b => b.isOpen)) {
-              state.status = 'finished';
-              state.winner = decideWinner(state.p1Money || 0, state.p2Money || 0);
-              handleGameFinish(state.winner);
+              if ((state.round || 1) < BOX_ROUND_SIZES.length) {
+                state.round = (state.round || 1) + 1;
+                state.boxes = makeBoxRound(state.round);
+              } else {
+                state.status = 'finished';
+                state.winner = decideWinner(state.p1Money || 0, state.p2Money || 0);
+                handleGameFinish(state.winner);
+              }
             }
           }
           if (state.status !== 'finished') state.currentTurn = 'player1';
@@ -2661,12 +2708,16 @@
       else gameState.p2Money = (gameState.p2Money || 0) + box.amount;
 
       showToast(t('boxWon', { n: box.amount }));
-      gameState.round = (gameState.round || 1) + 1;
-
       if (gameState.boxes.every(b => b.isOpen)) {
-        gameState.status = 'finished';
-        gameState.winner = decideWinner(gameState.p1Money || 0, gameState.p2Money || 0);
-        handleGameFinish(gameState.winner);
+        if ((gameState.round || 1) < BOX_ROUND_SIZES.length) {
+          gameState.round = (gameState.round || 1) + 1;
+          gameState.boxes = makeBoxRound(gameState.round);
+          showToast(`${t('round')} ${gameState.round} / ${BOX_ROUND_SIZES.length}`);
+        } else {
+          gameState.status = 'finished';
+          gameState.winner = decideWinner(gameState.p1Money || 0, gameState.p2Money || 0);
+          handleGameFinish(gameState.winner);
+        }
       }
       gameState.currentTurn = otherRole(playerRole);
       await commit(updateBoxesUI);
